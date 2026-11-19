@@ -315,3 +315,153 @@ class McpTest(_Fixture):
         self.assertIn('get_report_checks', names)
         for hidden in ('add_report_block', 'publish_report', 'delete_report'):
             self.assertNotIn(hidden, names)
+
+
+class MapSettingsTest(_Fixture):
+    """Requirement: Map and cross-tab settings through the API and MCP (change report-api-map-layers)."""
+
+    def setUp(self):
+        super().setUp()
+        self.api = V1Client(self.client, self.token)
+        self.trees = Question.objects.create(survey_section=self.section, code='TREES', name='Where trees',
+                                             input_type='point')
+        self.kind = Question.objects.create(survey_section=self.section, code='KIND', name='Which kind',
+                                            input_type='choice', parent_question_id=self.trees,
+                                            choices=[{'code': 1, 'name': 'Oak'}])
+        self.why = Question.objects.create(survey_section=self.section, code='WHY', name='Why',
+                                           input_type='text', parent_question_id=self.trees)
+        self.route = Question.objects.create(survey_section=self.section, code='ROUTE', name='Your route',
+                                             input_type='line')
+        self.area = Question.objects.create(survey_section=self.section, code='AREA', name='Your area',
+                                            input_type='polygon')
+        self.uuid = self.report(published=False).uuid
+
+    def add_map(self, **values):
+        response = self.api.post(f'/reports/{self.uuid}/blocks', {'type': 'map', 'question': 'TREES', **values})
+        self.assertEqual(response.status_code, 201, response.content)
+        return response.json()
+
+    def test_an_agent_rebuilds_a_map_of_two_layers(self):
+        """
+        GIVEN a report and a survey with a point and a line question
+        WHEN the token adds a map of the points as hot spots (top 10) with a frame, a layer switch, a popup field
+             and the line question as a second layer drawn as squares in #0f766e
+        THEN the block's config holds those values, the layer has an id from the server, and get_report returns them
+        """
+        block = self.add_map(view='hotspots', opts={'top': 10}, frame=[7.0, 50.0, 7.2, 50.1], toggle=True,
+                             popup_fields=['KIND'],
+                             layers=[{'question': 'ROUTE', 'view': 'squares', 'color': '#0f766E', 'name': 'Routes'}])
+        stored = ReportBlock.objects.get(pk=block['id'])
+        self.assertEqual((stored.config['view'], stored.config['opts'], stored.config['frame'], stored.config['toggle']),
+                         ('hotspots', {'top': 10}, [7.0, 50.0, 7.2, 50.1], True))
+        self.assertEqual(stored.geo_label_fields, ['KIND'])
+        layer = stored.config['layers'][0]
+        self.assertEqual((layer['id'], layer['code'], layer['view'], layer['color'], layer['name'], layer['survey']),
+                         ('a', 'ROUTE', 'squares', '#0f766e', 'Routes', str(self.survey.uuid)))
+        read = [b for b in self.api.get(f'/reports/{self.uuid}').json()['blocks'] if b['id'] == block['id']][0]
+        self.assertEqual((read['view'], read['layers'][0]['code'], read['popup_fields']), ('hotspots', 'ROUTE', ['KIND']))
+
+    def test_sending_back_what_was_read(self):
+        """
+        GIVEN a map with two other layers
+        WHEN the token sends the layers exactly as get_report returned them, with a new name on the first
+        THEN both layers keep their ids and settings, and the first has the new name
+        """
+        block = self.add_map(layers=[{'question': 'ROUTE', 'view': 'squares', 'opts': {'cell': 'finer'}},
+                                     {'question': 'AREA', 'show_marks': True}])
+        layers = block['layers']
+        self.assertEqual([layer['id'] for layer in layers], ['a', 'b'])
+        layers[0]['name'] = 'Routes people take'
+        response = self.api.patch(f'/reports/{self.uuid}/blocks/{block["id"]}', {'layers': layers})
+        self.assertEqual(response.status_code, 200, response.content)
+        after = response.json()['layers']
+        self.assertEqual([(layer['id'], layer['code']) for layer in after], [('a', 'ROUTE'), ('b', 'AREA')])
+        self.assertEqual((after[0]['name'], after[0]['opts'], after[1]['marks'], after[1]['view']),
+                         ('Routes people take', {'cell': 'finer'}, True, 'heat'))
+
+    def test_clearing_the_frame(self):
+        """
+        GIVEN a map with a kept frame, the heat view and a colour
+        WHEN the token patches it with frame null
+        THEN the frame is gone and the view and the colour stay
+        """
+        block = self.add_map(view='heat', color='#123456', frame=[7.0, 50.0, 7.2, 50.1])
+        response = self.api.patch(f'/reports/{self.uuid}/blocks/{block["id"]}', {'frame': None})
+        self.assertEqual(response.status_code, 200, response.content)
+        config = ReportBlock.objects.get(pk=block['id']).config
+        self.assertNotIn('frame', config)
+        self.assertEqual((config['view'], config['color']), ('heat', '#123456'))
+
+    def test_strict_where_the_editor_is_forgiving(self):
+        """
+        GIVEN a map of points in the heat view with one layer
+        WHEN the token sends values the editor would drop
+        THEN each answer is 422 naming the field and the block is as it was
+        """
+        block = self.add_map(view='heat', layers=[{'question': 'ROUTE'}])
+        url = f'/reports/{self.uuid}/blocks/{block["id"]}'
+        before = ReportBlock.objects.get(pk=block['id']).config
+        refused = {
+            'layers.0.view': {'layers': [{'question': 'ROUTE', 'view': 'hotspots'}]},
+            'layers.0.question': {'layers': [{'question': 'NOPE'}]},
+            'layers.1.question': {'layers': [{'question': 'ROUTE'}, {'code': 'ROUTE'}]},
+            'layers.0.popup_fields': {'layers': [{'question': 'ROUTE', 'popup_fields': ['KIND']}]},
+            'popup_fields': {'popup_fields': ['WHY']},
+            'frame': {'frame': [8.0, 50.0, 7.0, 50.1]},
+            'basemap': {'basemap': 'no-such-basemap'},
+            'view': {'view': 'marks', 'show_marks': False},
+        }
+        for field, body in refused.items():
+            response = self.api.patch(url, body)
+            self.assertEqual(response.status_code, 422, (field, response.content))
+            self.assertIn(field, response.json()['fields'], (field, response.content))
+        self.assertEqual(self.api.patch(url, {'layers': [{'question': 'TREES'}]}).status_code, 422)
+        for body in ({'opts': {'spread': 'huge'}}, {'layers': [{'question': 'ROUTE'}] * 4},
+                     {'color': 'teal'}, {'frame': [1, 2, 3]}):
+            self.assertEqual(self.api.patch(url, body).status_code, 422, body)
+        self.assertEqual(ReportBlock.objects.get(pk=block['id']).config, before)
+        line = self.api.post(f'/reports/{self.uuid}/blocks', {'type': 'map', 'question': 'ROUTE', 'view': 'hotspots'})
+        self.assertEqual(line.status_code, 422)
+        self.assertEqual(ReportBlock.objects.filter(report__uuid=self.uuid, block_type='map').count(), 1)
+
+    def test_a_cross_tabs_look(self):
+        """
+        GIVEN a cross-tab of two choice questions
+        WHEN the token patches it with display ranking of counts
+        THEN the block is drawn as a ranking of counts and get_report returns that display
+        """
+        Question.objects.create(survey_section=self.section, code='AGE', name='Age', input_type='choice',
+                                choices=[{'code': 1, 'name': 'Young'}, {'code': 2, 'name': 'Old'}])
+        added = self.api.post(f'/reports/{self.uuid}/blocks', {'type': 'crosstab', 'rows': 'PRIO', 'columns': 'AGE'})
+        self.assertEqual(added.status_code, 201, added.content)
+        url = f'/reports/{self.uuid}/blocks/{added.json()["id"]}'
+        response = self.api.patch(url, {'display': {'view': 'ranking', 'values': 'count'}})
+        self.assertEqual(response.status_code, 200, response.content)
+        self.assertEqual(response.json()['display'], {'view': 'ranking', 'values': 'count'})
+        self.assertEqual(self.api.patch(url, {'display': {'view': 'pie'}}).status_code, 422)
+
+    def test_the_same_through_mcp(self):
+        """
+        GIVEN a map block and an MCP session
+        WHEN the agent calls update_report_block with the heat view, opts {spread: wide, strength: 5} and a layer
+             written with get_report's names
+        THEN the block's config holds them, a bad layer is a validation error, and tools/list describes the map
+             settings on both block tools
+        """
+        block = self.add_map(view='squares')
+        mcp = McpClient(self.client, self.token)
+        mcp.initialize()
+        data_of(mcp.call('update_report_block', {'report': str(self.uuid), 'block_id': block['id'], 'view': 'heat',
+                                                  'opts': {'spread': 'wide', 'strength': 5},
+                                                  'layers': [{'code': 'ROUTE', 'marks': False}]}))
+        config = ReportBlock.objects.get(pk=block['id']).config
+        self.assertEqual((config['view'], config['opts'], config['layers'][0]['code']),
+                         ('heat', {'spread': 'wide', 'strength': 5}, 'ROUTE'))
+        refused = error_of(mcp.call('update_report_block', {'report': str(self.uuid), 'block_id': block['id'],
+                                                             'layers': [{'question': 'NOPE'}]}))
+        self.assertEqual(refused['error'], 'validation')
+        tools = {t['name']: t for t in mcp.rpc('tools/list').json()['result']['tools']}
+        for name in ('add_report_block', 'update_report_block'):
+            properties = tools[name]['inputSchema']['properties']
+            self.assertIn('layers', properties)
+            self.assertIn('opts', properties)

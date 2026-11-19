@@ -1716,6 +1716,18 @@ Small groups are hidden in every data block.
 | `show_marks` | boolean or null |  | map: the marks themselves instead of squares that count respondents. A mark can point at someone's home. |
 | `style` | `list` | `pull` | `cards` or null |  | quotes: one under another (list), each large (pull), or two columns (cards). |
 | `description` | string or null |  | map: what it shows, in a sentence (also read by screen readers). |
+| `view` | `heat` | `hotspots` | `squares` | `marks` or null |  | map: heat (soft shading), hotspots (numbered places, point questions only), squares (cells that count respondents) or marks (every mark; needs show_marks). |
+| `opts` | MapOptsIn or null |  | map: the view's settings — the whole set. |
+| `color` | string or null |  | map: the colour of its own question, #rrggbb. |
+| `name` | string or null |  | map: the name of its own question in the legend. |
+| `frame` | list of number or null |  | map: the part kept in view, [west, south, east, north] in degrees; null clears it (the whole of the answers). |
+| `legend` | boolean or null |  | map: the legend (on by default). |
+| `scale` | boolean or null |  | map: the scale bar (on by default). |
+| `toggle` | boolean or null |  | map: readers may switch layers on and off. |
+| `basemap` | string or null |  | map: a basemap key the workspace offers. |
+| `popup_fields` | list of string or null |  | map: codes of sub-questions a popup shows (never free text). |
+| `layers` | list of MapLayerIn or null |  | map: the other map questions on the same map — the whole list, at most 3; [] removes them. |
+| `display` | CrosstabDisplayIn or null |  | crosstab: how it is drawn. |
 
 **201** object
 
@@ -1746,6 +1758,18 @@ to show another question, add another block.
 | `show_marks` | boolean or null |  |  |
 | `style` | `list` | `pull` | `cards` or null |  |  |
 | `description` | string or null |  |  |
+| `view` | `heat` | `hotspots` | `squares` | `marks` or null |  | map: heat (soft shading), hotspots (numbered places, point questions only), squares (cells that count respondents) or marks (every mark; needs show_marks). |
+| `opts` | MapOptsIn or null |  | map: the view's settings — the whole set. |
+| `color` | string or null |  | map: the colour of its own question, #rrggbb. |
+| `name` | string or null |  | map: the name of its own question in the legend. |
+| `frame` | list of number or null |  | map: the part kept in view, [west, south, east, north] in degrees; null clears it (the whole of the answers). |
+| `legend` | boolean or null |  | map: the legend (on by default). |
+| `scale` | boolean or null |  | map: the scale bar (on by default). |
+| `toggle` | boolean or null |  | map: readers may switch layers on and off. |
+| `basemap` | string or null |  | map: a basemap key the workspace offers. |
+| `popup_fields` | list of string or null |  | map: codes of sub-questions a popup shows (never free text). |
+| `layers` | list of MapLayerIn or null |  | map: the other map questions on the same map — the whole list, at most 3; [] removes them. |
+| `display` | CrosstabDisplayIn or null |  | crosstab: how it is drawn. |
 
 **200** object
 

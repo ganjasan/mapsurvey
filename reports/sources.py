@@ -69,3 +69,16 @@ def source_surveys(report):
     out = [home] if home is not None else []
     out += [s for sid, s in surveys.items() if home is None or sid != home.id]
     return out
+
+
+def popup_subquestions(question_ids):
+    """{geo question id: its sub-questions whose answers a map popup may show} — never free text,
+    which is not published (change report-api-map-layers: the editor's panel and the API's check)."""
+    from reports.render import TEXT_INPUT_TYPES
+    from survey.models import Question
+    out = {}
+    if question_ids:
+        for sub in (Question.objects.filter(parent_question_id__in=question_ids)
+                    .exclude(input_type__in=TEXT_INPUT_TYPES).order_by('order_number')):
+            out.setdefault(sub.parent_question_id_id, []).append(sub)
+    return out
