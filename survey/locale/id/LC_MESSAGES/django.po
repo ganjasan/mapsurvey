@@ -14925,3 +14925,27 @@ msgstr "Kecil"
 #: report-map-layers (#753)
 msgid "Large"
 msgstr "Besar"
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "Nothing to fill in yet"
+msgstr "Belum ada yang perlu diisi"
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "This survey has nothing to fill in yet."
+msgstr "Survei ini belum memiliki apa pun untuk diisi."
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "Every section of this survey is set to <strong>Operators only</strong> in <em>Who sees this</em>, so people who open the public link see nothing to answer."
+msgstr "Setiap bagian survei ini diatur ke <strong>Hanya operator</strong> di <em>Siapa yang melihat ini</em>, sehingga orang yang membuka tautan publik tidak menemukan apa pun untuk dijawab."
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "Open a section's settings in the editor and choose Everyone or Respondents only."
+msgstr "Buka pengaturan bagian di editor dan pilih Semua orang atau Hanya responden."
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "The public link shows nothing to answer."
+msgstr "Tautan publik tidak menampilkan apa pun untuk dijawab."
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "Every section is set to <em>Operators only</em> in <em>Who sees this</em>. Open a section's settings and choose Everyone or Respondents only."
+msgstr "Setiap bagian diatur ke <em>Hanya operator</em> di <em>Siapa yang melihat ini</em>. Buka pengaturan bagian dan pilih Semua orang atau Hanya responden."

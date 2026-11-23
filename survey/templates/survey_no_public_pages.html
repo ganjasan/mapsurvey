@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load i18n %}
+{% comment %}Every section of the survey is hidden on the public link — set to "Operators only"
+(change audience-entry-loop, #776). Served with 200 and noindex by survey_header; no session is
+created. Mirrors survey_not_yet_open.html. A collaborator also gets the cause and the way to fix it.{% endcomment %}
+
+{% block title %}{{ survey.name }} - {% trans "Nothing to fill in yet" %}{% endblock %}
+
+{% block content %}
+<div class="container text-center" style="max-width: 500px; margin-top: 100px;" data-testid="no-public-pages">
+    <i class="fas fa-map-marked-alt fa-3x text-muted mb-4" style="display:block;"></i>
+    <h3>{{ survey.name }}</h3>
+    <p class="text-muted mt-3">{% trans "This survey has nothing to fill in yet." %}</p>
+    {% if is_collaborator %}
+    <div class="alert alert-warning text-left mt-4" data-testid="no-public-pages-hint">
+        <p class="mb-2">{% blocktrans %}Every section of this survey is set to <strong>Operators only</strong> in <em>Who sees this</em>, so people who open the public link see nothing to answer.{% endblocktrans %}</p>
+        <p class="mb-0">{% trans "Open a section's settings in the editor and choose Everyone or Respondents only." %}</p>
+    </div>
+    <a href="{% url 'editor_survey_detail' survey.uuid %}" class="btn btn-primary mt-2">{% trans "Open in the editor" %}</a>
+    {% else %}
+    <a href="{% url 'index' %}" class="btn btn-outline-primary mt-4">{% trans "Back to Home" %}</a>
+    {% endif %}
+</div>
+{% endblock %}

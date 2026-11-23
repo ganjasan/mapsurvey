@@ -15008,3 +15008,27 @@ msgstr "Pequeno"
 #: report-map-layers (#753)
 msgid "Large"
 msgstr "Grande"
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "Nothing to fill in yet"
+msgstr "Ainda não há nada para preencher"
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "This survey has nothing to fill in yet."
+msgstr "Este inquérito ainda não tem nada para preencher."
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "Every section of this survey is set to <strong>Operators only</strong> in <em>Who sees this</em>, so people who open the public link see nothing to answer."
+msgstr "Todas as secções deste inquérito estão definidas como <strong>Apenas operadores</strong> em <em>Quem vê isto</em>, por isso quem abre a ligação pública não encontra nada para responder."
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "Open a section's settings in the editor and choose Everyone or Respondents only."
+msgstr "Abra as definições de uma secção no editor e escolha Todos ou Apenas respondentes."
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "The public link shows nothing to answer."
+msgstr "A ligação pública não mostra nada para responder."
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "Every section is set to <em>Operators only</em> in <em>Who sees this</em>. Open a section's settings and choose Everyone or Respondents only."
+msgstr "Todas as secções estão definidas como <em>Apenas operadores</em> em <em>Quem vê isto</em>. Abra as definições de uma secção e escolha Todos ou Apenas respondentes."

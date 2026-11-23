@@ -10718,3 +10718,11 @@ msgstr "Список изменений"
 #: survey/templates/editor/whats_new.html
 msgid "Read the article"
 msgstr "Читать статью"
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "Nothing to fill in yet"
+msgstr "Пока нечего заполнять"
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "This survey has nothing to fill in yet."
+msgstr "В этом опросе пока нечего заполнять."

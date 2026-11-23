@@ -24,6 +24,7 @@ from datetime import datetime
 from django import forms
 from django.views.generic import UpdateView
 from .forms import SurveySectionAnswerForm
+from .visibility import respondent_entry_section
 from . import product_events as pe
 from . import invitations
 from .events import (
@@ -913,6 +914,12 @@ def survey_language_select(request, survey_slug):
 		# Single-language survey - redirect directly to first section
 		return redirect('survey', survey_slug=str(survey.uuid))
 
+	# Same dead end as the entry view (#776): no language leads anywhere.
+	has_sections = survey.surveysection_set.exists()
+	entry_section = respondent_entry_section(survey) if has_sections else None
+	if has_sections and entry_section is None:
+		return _no_public_pages(request, survey)
+
 	if request.method == 'POST':
 		selected_language = request.POST.get('language')
 		if selected_language and selected_language in survey.available_languages:
@@ -938,10 +945,9 @@ def survey_language_select(request, survey_slug):
 			emit_event(survey_session, 'session_start', build_session_start_metadata(request))
 			record_demo_open(survey_session, request)
 
-			# Redirect to first section
-			start_section = survey.start_section()
-			if start_section:
-				return redirect('section', survey_slug=str(survey.uuid), section_name=start_section.name)
+			# Redirect to the first section the public link shows
+			if entry_section is not None:
+				return redirect('section', survey_slug=str(survey.uuid), section_name=entry_section.name)
 			return redirect(completion_url(survey, framed=framed_request(request)))
 
 	# Build language list with native names
@@ -975,19 +981,37 @@ def survey_header(request, survey_slug):
 	if access_response is not None:
 		return access_response
 
+	# The first section the public link shows, not the head row: an operators-only
+	# head redirected here forever (#776). Asked before the language picker, which
+	# would otherwise lead to the same dead end.
+	has_sections = survey.surveysection_set.exists()
+	entry_section = respondent_entry_section(survey) if has_sections else None
+	if has_sections and entry_section is None:
+		return _no_public_pages(request, survey)
+
 	# Redirect to language selection for multilingual surveys
 	if survey.is_multilingual():
 		return redirect('survey_language_select', survey_slug=str(survey.uuid))
 
-	start_section = survey.start_section()
-	slug = str(survey.uuid)
-	redirect_page = ("../" + slug + "/" + start_section.name) if start_section else completion_url(survey, framed=framed_request(request))
+	if entry_section is None:
+		return HttpResponseRedirect(completion_url(survey, framed=framed_request(request)))
+	return redirect('section', survey_slug=str(survey.uuid), section_name=entry_section.name)
 
-	return HttpResponseRedirect(redirect_page)
-	
-	#context = {'survey': survey, 'section': survey.start_section()}
 
-	#return render(request, 'survey_header.html', context)
+def _no_public_pages(request, survey):
+	"""Every section is hidden on the public link (change audience-entry-loop).
+
+	A calm 200 instead of a redirect, and no session: the respondent has nothing
+	to answer. A collaborator is told why, because the editor is the only place
+	it can be fixed."""
+	request.survey_noindex = True
+	is_collaborator = bool(
+		request.user.is_authenticated and get_effective_survey_role(request.user, survey)
+	)
+	return render(request, 'survey_no_public_pages.html', {
+		'survey': survey,
+		'is_collaborator': is_collaborator,
+	})
 
 
 def _session_visibility(session_survey, survey_session_id, surface=SURFACE_RESPONDENT):
