@@ -698,8 +698,14 @@ def editor_survey_detail(request, survey_uuid):
                 f'{"" if len(missing) > 1 else "es"} not show any section.'
             )
 
+    # Every section set to "Operators only": the public link has nothing to show
+    # (change audience-entry-loop, #776). Same helper the respondent entry asks.
+    from .visibility import respondent_entry_section
+    no_public_pages = bool(sections) and respondent_entry_section(survey) is None
+
     return render(request, 'editor/survey_detail.html', {
         'pending_review': pending_review_for(survey) if survey.status == 'published' else None,
+        'no_public_pages': no_public_pages,
         'thread_counts': _thread_counts(survey, request.user),
         'visibility_lint_hints': visibility_lint_hints,
         'session_count': survey.surveysession_set.count(),

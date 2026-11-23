@@ -14944,3 +14944,27 @@ msgstr "Pieni"
 #: report-map-layers (#753)
 msgid "Large"
 msgstr "Suuri"
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "Nothing to fill in yet"
+msgstr "Ei vielä mitään täytettävää"
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "This survey has nothing to fill in yet."
+msgstr "Tässä kyselyssä ei ole vielä mitään täytettävää."
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "Every section of this survey is set to <strong>Operators only</strong> in <em>Who sees this</em>, so people who open the public link see nothing to answer."
+msgstr "Kyselyn jokaisen osion <em>Kuka tämän näkee</em> -asetus on <strong>Vain syöttäjät</strong>, joten julkisen linkin avaajat eivät löydä mitään vastattavaa."
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "Open a section's settings in the editor and choose Everyone or Respondents only."
+msgstr "Avaa osion asetukset editorissa ja valitse Kaikki tai Vain vastaajat."
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "The public link shows nothing to answer."
+msgstr "Julkinen linkki ei näytä mitään vastattavaa."
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "Every section is set to <em>Operators only</em> in <em>Who sees this</em>. Open a section's settings and choose Everyone or Respondents only."
+msgstr "Jokaisen osion <em>Kuka tämän näkee</em> -asetus on <em>Vain syöttäjät</em>. Avaa osion asetukset ja valitse Kaikki tai Vain vastaajat."

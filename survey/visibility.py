@@ -264,6 +264,21 @@ def compute_visibility(survey, answers_by_code, enabled=None, surface=SURFACE_RE
 	return vmap
 
 
+def respondent_entry_section(survey):
+	"""The section the public link opens on, or None when no section reaches it.
+
+	The first section of the chain the respondent surface shows before anything is
+	answered (change audience-entry-loop, #776). Not ``start_section()``: an
+	operators-only head is hidden on the public link, and the entry pointing at it
+	while the section view sends hidden sections back to the entry was an endless
+	redirect. With no answers a head can only be hidden by audience (its rule has
+	no earlier controller, so it is broken and fails open). The respondent entry,
+	the language picker and the editor's no-public-pages banner all ask here.
+	"""
+	vmap = compute_visibility(survey, {}, surface=SURFACE_RESPONDENT)
+	return vmap.visible_sections[0] if vmap.visible_sections else None
+
+
 def _section_groups(survey):
 	"""Top-level groups of every section of ``survey``: {section_id: [group]} (one query)."""
 	from .models import QuestionGroup

@@ -413,3 +413,117 @@ class AudienceTravelTest(TestCase):
         section = envelope["survey"]["sections"][0]
         self.assertNotIn("audience", section)
         self.assertNotIn("audience", section["questions"][0])
+
+
+class AudienceEntryTest(TestCase):
+    """The public link starts at the first section respondents see and never loops (#776)."""
+
+    def setUp(self):
+        from django.contrib.auth.models import User
+        from survey.models import Membership
+        self.survey = _survey("aud_entry")
+        self.survey.status = "published"
+        self.survey.save()
+        self.owner = User.objects.create_user("aud_entry_owner", password="x")
+        Membership.objects.create(user=self.owner, organization=self.survey.organization, role="owner")
+        self.entry_url = f"/surveys/{self.survey.uuid}/"
+
+    def _sessions(self):
+        from survey.models import SurveySession
+        return SurveySession.objects.filter(survey=self.survey).count()
+
+    def test_operators_only_head_is_skipped(self):
+        """
+        GIVEN a published survey whose head section is `operators` and whose next section is `everyone`
+        WHEN a respondent opens the public link
+        THEN they are redirected to the second section
+        """
+        s1 = _section(self.survey, "s1", is_head=True, audience="operators")
+        _q(s1, "Q1", 1)
+        s2 = _section(self.survey, "s2", prev=s1)
+        _q(s2, "Q2", 1)
+        response = self.client.get(self.entry_url)
+        self.assertRedirects(response, f"/surveys/{self.survey.uuid}/s2/", fetch_redirect_response=False)
+
+    def test_no_public_section_renders_page_without_session(self):
+        """
+        GIVEN a published survey whose only section is `operators`
+        WHEN a respondent opens the public link
+        THEN the response is a 200 nothing-to-fill page: no redirect, no session, no owner hint
+        """
+        s1 = _section(self.survey, "s1", is_head=True, audience="operators")
+        _q(s1, "Q1", 1)
+        response = self.client.get(self.entry_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-testid="no-public-pages"')
+        self.assertNotContains(response, 'data-testid="no-public-pages-hint"')
+        self.assertEqual(self._sessions(), 0)
+
+    def test_direct_section_link_ends(self):
+        """
+        GIVEN the same survey
+        WHEN a respondent opens the operators-only section URL and follows every redirect
+        THEN the chain ends on the nothing-to-fill page after one hop
+        """
+        s1 = _section(self.survey, "s1", is_head=True, audience="operators")
+        _q(s1, "Q1", 1)
+        response = self.client.get(f"/surveys/{self.survey.uuid}/s1/", follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'data-testid="no-public-pages"')
+        self.assertEqual(len(response.redirect_chain), 1)
+
+    def test_owner_sees_the_cause(self):
+        """
+        GIVEN the same survey
+        WHEN its owner opens the public link while signed in
+        THEN the page names "Operators only" and links to the editor
+        """
+        s1 = _section(self.survey, "s1", is_head=True, audience="operators")
+        _q(s1, "Q1", 1)
+        self.client.force_login(self.owner)
+        response = self.client.get(self.entry_url)
+        self.assertContains(response, 'data-testid="no-public-pages-hint"')
+        self.assertContains(response, f"/editor/surveys/{self.survey.uuid}/")
+
+    def test_multilingual_skips_operators_head(self):
+        """
+        GIVEN a multilingual survey whose head section is `operators` and whose next section is `everyone`
+        WHEN a respondent picks a language
+        THEN they are redirected to the second section
+        """
+        self.survey.available_languages = ["en", "de"]
+        self.survey.save()
+        s1 = _section(self.survey, "s1", is_head=True, audience="operators")
+        _q(s1, "Q1", 1)
+        s2 = _section(self.survey, "s2", prev=s1)
+        _q(s2, "Q2", 1)
+        response = self.client.post(f"/surveys/{self.survey.uuid}/language/", {"language": "de"})
+        self.assertRedirects(response, f"/surveys/{self.survey.uuid}/s2/", fetch_redirect_response=False)
+
+    def test_everyone_head_unchanged(self):
+        """
+        GIVEN a published survey whose head section is `everyone`
+        WHEN a respondent opens the public link
+        THEN they are redirected to the head section as before
+        """
+        s1 = _section(self.survey, "s1", is_head=True)
+        _q(s1, "Q1", 1)
+        response = self.client.get(self.entry_url)
+        self.assertRedirects(response, f"/surveys/{self.survey.uuid}/s1/", fetch_redirect_response=False)
+
+    def test_editor_banner(self):
+        """
+        GIVEN a draft survey whose only section is `operators`, then the same section set to `everyone`
+        WHEN its owner opens the Build pane
+        THEN the no-public-pages banner is shown first and absent after
+        """
+        s1 = _section(self.survey, "s1", is_head=True, audience="operators")
+        _q(s1, "Q1", 1)
+        self.survey.status = "draft"
+        self.survey.save()
+        self.client.force_login(self.owner)
+        url = f"/editor/surveys/{self.survey.uuid}/"
+        self.assertContains(self.client.get(url), 'data-testid="no-public-pages-banner"')
+        s1.audience = "everyone"
+        s1.save()
+        self.assertNotContains(self.client.get(url), 'data-testid="no-public-pages-banner"')

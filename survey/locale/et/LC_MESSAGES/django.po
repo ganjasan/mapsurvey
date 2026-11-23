@@ -14923,3 +14923,27 @@ msgstr "Väike"
 #: report-map-layers (#753)
 msgid "Large"
 msgstr "Suur"
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "Nothing to fill in yet"
+msgstr "Veel pole midagi täita"
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "This survey has nothing to fill in yet."
+msgstr "Selles küsitluses pole veel midagi täita."
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "Every section of this survey is set to <strong>Operators only</strong> in <em>Who sees this</em>, so people who open the public link see nothing to answer."
+msgstr "Selle küsitluse iga jaotise <em>Kes seda näeb</em> väärtus on <strong>Ainult sisestajad</strong>, nii et avaliku lingi avajad ei leia midagi, millele vastata."
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "Open a section's settings in the editor and choose Everyone or Respondents only."
+msgstr "Ava redaktoris jaotise seaded ja vali Kõik või Ainult vastajad."
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "The public link shows nothing to answer."
+msgstr "Avalik link ei näita midagi, millele vastata."
+
+#: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
+msgid "Every section is set to <em>Operators only</em> in <em>Who sees this</em>. Open a section's settings and choose Everyone or Respondents only."
+msgstr "Iga jaotise <em>Kes seda näeb</em> väärtus on <em>Ainult sisestajad</em>. Ava jaotise seaded ja vali Kõik või Ainult vastajad."
