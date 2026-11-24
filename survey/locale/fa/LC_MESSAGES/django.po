@@ -1387,3 +1387,7 @@ msgstr "پس از آن {left} باقی می‌ماند"
 #. change map-layers-study-area
 msgid "On this map"
 msgstr "روی این نقشه"
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "نتایج بیشتر"

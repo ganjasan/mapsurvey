@@ -1391,3 +1391,7 @@ msgstr "po to lieka {left}"
 #. change map-layers-study-area
 msgid "On this map"
 msgstr "Šiame žemėlapyje"
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "Daugiau rezultatų"

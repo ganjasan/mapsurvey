@@ -174,8 +174,8 @@ navigation from #section-data[data-stage-image].{% endcomment %}
 
 {# Reference layer config (geometry stays behind the gated endpoint) #}
 {{ map_layers|json_script:"ref-layers-data" }}
-{# The study area (change map-layers-study-area): config only, the outline comes from its gated endpoint #}
-{{ study_area_meta|json_script:"study-area-data" }}
+{% comment %}The study area (changes map-layers-study-area, section-study-area): each section carries its
+effective area as #section-data[data-study-area] (config only, the outline comes from its gated endpoint).{% endcomment %}
 <script src="{% static 'js/study_area.js' %}"></script>
 
 <script type="text/javascript">
@@ -303,12 +303,6 @@ navigation from #section-data[data-stage-image].{% endcomment %}
     {% include "partials/ref_layer_factory.html" %}
     {% include "partials/reference_layers.html" %}
     {% include "partials/layer_objects_block.html" %}
-    (function () {
-        var el = document.getElementById('study-area-data');
-        var meta = null;
-        if (el) { try { meta = JSON.parse(el.textContent); } catch (e) {} }
-        if (meta && window.StudyArea) window.StudyArea.init(map, meta);
-    })();
 
     // Geolocation
     var geoMarker = null;
@@ -371,6 +365,7 @@ navigation from #section-data[data-stage-image].{% endcomment %}
             placeholder: i18n.searchAddress,
             ariaLabel: i18n.searchAddress,
             noResults: i18n.noResultsFound,
+            moreResults: i18n.moreResults,
             failed: i18n.searchFailed
         }
     });
@@ -1621,16 +1616,26 @@ navigation from #section-data[data-stage-image].{% endcomment %}
         var lat = parseFloat(dataEl.dataset.mapLat);
         var lng = parseFloat(dataEl.dataset.mapLng);
         var zoom = parseInt(dataEl.dataset.mapZoom, 10);
+        // The section's effective study area (change section-study-area): its own, the
+        // survey's, or none. Swapped only on map sections, so a form section in between
+        // keeps the outline; true when the outline changed.
+        var areaChanged = false;
+        if (hasMap && window.StudyArea) {
+            var areaMeta = null;
+            try { areaMeta = JSON.parse(dataEl.dataset.studyArea || 'null'); } catch (e) {}
+            areaChanged = window.StudyArea.show(map, areaMeta);
+        }
         if (!isFirstLoad) {
             // moveMapTo also rejects a zero-size container, which the previous
             // isNaN checks on the inputs did not -- and that was the case that
             // actually threw.
             moveMapTo(lat, lng, zoom);
-        } else if (hasMap && window.StudyArea && window.StudyArea.active) {
+        }
+        if (hasMap && (isFirstLoad || areaChanged) && window.StudyArea && window.StudyArea.active) {
             // The map opens on the study area unless the start already lies inside it
-            // (change map-layers-study-area).
-            var startLat = isFinite(lat) ? lat : _initialMapState.lat;
-            var startLng = isFinite(lng) ? lng : _initialMapState.lng;
+            // (change map-layers-study-area), and again whenever the next section's area differs.
+            var startLat = isFinite(lat) ? lat : (isFirstLoad ? _initialMapState.lat : NaN);
+            var startLng = isFinite(lng) ? lng : (isFirstLoad ? _initialMapState.lng : NaN);
             window.StudyArea.openOn(startLat, startLng);
         }
         _mapInitialized = true;

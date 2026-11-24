@@ -15432,3 +15432,72 @@ msgstr "Käytä rajaa: %%(place)s"
 #. change map-layers-study-area
 msgid "Drag a corner to move it"
 msgstr "Siirrä kulmaa vetämällä"
+
+# change section-study-area (#781)
+msgid "Survey's area"
+msgstr "Kyselyn alue"
+
+msgid "The survey has none yet."
+msgstr "Kyselyllä ei ole vielä aluetta."
+
+msgid "Set it in Survey settings"
+msgstr "Määritä se kyselyn asetuksissa"
+
+msgid "Own area"
+msgstr "Oma alue"
+
+msgid "Only this section: e.g. one street of the city."
+msgstr "Vain tämä osio: esim. yksi kaupungin katu."
+
+msgid "No area"
+msgstr "Ei aluetta"
+
+msgid "No fog, answers anywhere on this section."
+msgstr "Ei harmaata, vastauksia missä tahansa tässä osiossa."
+
+msgid "Use the survey's area on this section again? Its own outline is kept for later."
+msgstr "Käytetäänkö tässä osiossa taas kyselyn aluetta? Oma rajaus säilyy myöhempää varten."
+
+msgid "Use the survey's area"
+msgstr "Käytä kyselyn aluetta"
+
+msgid "Own study area"
+msgstr "Oma tutkimusalue"
+
+msgid "Back to the section"
+msgstr "Takaisin osioon"
+
+msgid "This section's own area. It starts from the survey's outline: adjust it, then Save. The survey's area stays as it is."
+msgstr "Tämän osion oma alue. Se alkaa kyselyn rajauksesta: muokkaa sitä ja valitse Tallenna. Kyselyn alue pysyy ennallaan."
+
+msgid "This section's own area: only this section's map uses it. The survey's area stays as it is."
+msgstr "Tämän osion oma alue: vain tämän osion kartta käyttää sitä. Kyselyn alue pysyy ennallaan."
+
+msgid "Drawn area"
+msgstr "Piirretty alue"
+
+msgid "Not set. The map opens on it, can grey out the rest and refuse answers outside."
+msgstr "Ei määritetty. Kartta avautuu sille, voi harmaannuttaa muun ja hylätä vastaukset sen ulkopuolelta."
+
+msgid "Refuse map answers outside"
+msgstr "Hylkää karttavastaukset alueen ulkopuolelta"
+
+msgid "the mark is not placed; the message is in the editor"
+msgstr "merkintää ei aseteta; viesti on editorissa"
+
+#, python-format
+msgid "Sections with their own choice: %(names)s."
+msgstr "Osiot, joilla on oma valinta: %(names)s."
+
+msgid "Each map section can use this area, its own or none — on its Map card."
+msgstr "Jokainen karttaosio voi käyttää tätä aluetta, omaansa tai ei mitään — Kartta-kortillaan."
+
+msgid "The base map, starting position, zoom and study area respondents open on. Sections can override the position and the area individually."
+msgstr "Taustakartta, aloitussijainti, zoom ja tutkimusalue, joilla vastaajat aloittavat. Osiot voivat muuttaa sijaintia ja aluetta erikseen."
+
+msgid "Pick a section."
+msgstr "Valitse osio."
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "Lisää tuloksia"

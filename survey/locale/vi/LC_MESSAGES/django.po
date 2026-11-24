@@ -1388,3 +1388,7 @@ msgstr "còn lại {left} sau đó"
 #. change map-layers-study-area
 msgid "On this map"
 msgstr "Trên bản đồ này"
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "Thêm kết quả"

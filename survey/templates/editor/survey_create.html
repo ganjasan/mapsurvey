@@ -96,6 +96,7 @@
   .create-map-search .map-search-result:hover { background: var(--accent-light); }
   .create-map-search .map-search-name { font-size: 0.85rem; color: var(--color-text); }
   .create-map-search .map-search-context { font-size: 0.76rem; color: var(--color-text-muted); }
+  .create-map-search .map-search-more { align-items: center; font-size: 0.82rem; font-weight: 500; color: var(--accent); }
   .create-map-search .map-search-message { padding: 8px 12px; font-size: 0.82rem; color: var(--color-text-muted); }
   .create-map-search .map-search-category {
     display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 9px;
@@ -643,6 +644,9 @@
         var zoomEl = document.getElementById('create-map-zoom');
         var coordsEl = document.getElementById('create-map-coords');
         var userInteracted = false;
+        // The map was moved to a real place on the creator's behalf (their
+        // granted location, the place their brief names): search ranks from it.
+        var mapPlaced = false;
         var touchedEl = document.getElementById('create-map-touched');
         // The creator's own gesture. Everything that moves the map on the
         // creator's behalf (geolocation on load, the brief prefill) must NOT
@@ -652,6 +656,7 @@
             if (touchedEl) touchedEl.value = '1';
         }
         window._createMapTouched = function() { return userInteracted; };
+        window._createMapPlaced = function() { mapPlaced = true; };
 
         function syncFromCentre() {
             var c = map.getCenter();
@@ -687,6 +692,7 @@
                 if (status.state !== 'granted') return;
                 navigator.geolocation.getCurrentPosition(function(pos) {
                     if (userInteracted) return;
+                    mapPlaced = true;
                     map.setView([pos.coords.latitude, pos.coords.longitude], 13);
                     var hint = document.getElementById('create-geo-hint');
                     if (hint) hint.remove();
@@ -742,7 +748,13 @@
         MapPlaceSearch.attach(map, {
             accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
             container: document.getElementById('create-map-search'),
-            labels: { placeholder: '{% trans "Search for a place — city, address, landmark…" %}' },
+            labels: { placeholder: '{% trans "Search for a place — city, address, landmark…" %}',
+                      moreResults: '{% filter escapejs %}{% trans "More results" %}{% endfilter %}' },
+            // Rank by distance only from a centre that means something: the
+            // creator's own location or move, the workspace's last survey —
+            // never the country or world default nobody chose.
+            rankFromCentre: function() { return userInteracted || mapPlaced
+                || ['country', 'world'].indexOf(document.getElementById('create-map-source').value) === -1; },
             onSelect: function(result) {
                 markTouched();
                 // A place picked by hand gets its boundary proposed too (D8b).
@@ -1161,6 +1173,7 @@
                 var f = hits[0].f, props = f.properties || {};
                 var t = props.type || '';
                 var zoom = t === 'country' ? 6 : (t === 'state' || t === 'county' ? 9 : 12);
+                if (window._createMapPlaced) window._createMapPlaced();
                 window._createMap.setView([f.geometry.coordinates[1], f.geometry.coordinates[0]], zoom);
                 // Say WHY the map jumped: the resolved name lands in
                 // the search box, visible and correctable (H1).

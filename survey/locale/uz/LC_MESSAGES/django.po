@@ -1388,3 +1388,7 @@ msgstr "undan keyin {left} qoladi"
 #. change map-layers-study-area
 msgid "On this map"
 msgstr "Ushbu xaritada"
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "Koʻproq natijalar"

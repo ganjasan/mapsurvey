@@ -1388,3 +1388,7 @@ msgstr "baki {left} selepasnya"
 #. change map-layers-study-area
 msgid "On this map"
 msgstr "Pada peta ini"
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "Lebih banyak hasil"

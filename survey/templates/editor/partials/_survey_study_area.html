@@ -1,0 +1,89 @@
+{% load i18n %}{% comment %}
+The survey's study area in Survey settings → Respondent map (change section-study-area, spec
+survey-editor "The survey's study area is set in Survey settings"): summary, Set / Edit (the study
+area editor), Remove, fog and the refusal rule, saved at once through the study area endpoints.
+The message stays in the editor. Map sections choose this area, their own or none on their Map card.
+The controls carry no name= and `data-no-autosave` on purpose: they sit inside the autosaving
+settings form but save through their own endpoint.
+Context: `survey`, `survey_area` (StudyArea or None), `survey_area_km2`, `own_area_sections`.
+{% endcomment %}
+<div class="pr-field survey-area" id="survey-area-block"
+     data-settings-url="{% url 'editor_study_area_settings' survey.uuid %}"
+     data-clear-url="{% url 'editor_study_area_clear' survey.uuid %}"
+     data-remove-ask="{% trans 'Remove the study area? The map then opens as before and nothing is refused.' %}"
+     data-remove-label="{% trans 'Remove' %}">
+  <label>{% trans "Study area" %}</label>
+  <div class="survey-area-row">
+    <span class="survey-area-main">
+      {% if survey_area %}
+      <b>{{ survey_area.place_name|default:_("Drawn area") }}</b>
+      <span class="pr-help">{{ survey_area_km2 }} km²</span>
+      {% else %}
+      <span class="pr-help">{% trans "Not set. The map opens on it, can grey out the rest and refuse answers outside." %}</span>
+      {% endif %}
+    </span>
+    {% if survey_area %}
+    <a class="btn btn-sm btn-outline-primary" href="{% url 'editor_study_area' survey.uuid %}">{% trans "Edit" %}</a>
+    <button type="button" class="btn btn-sm btn-link text-danger" data-survey-area-remove>{% trans "Remove" %}</button>
+    {% else %}
+    <a class="btn btn-sm btn-outline-primary" href="{% url 'editor_study_area' survey.uuid %}">{% trans "Set" %}</a>
+    {% endif %}
+  </div>
+  {% if survey_area %}
+  <label class="pr-switch">
+    <span>{% trans "Grey out the map outside" %}</span>
+    <input type="checkbox" data-no-autosave data-survey-area-fog {% if survey_area.fog %}checked{% endif %}>
+  </label>
+  <label class="pr-switch">
+    <span>{% trans "Refuse map answers outside" %} <small class="pr-help">{% trans "the mark is not placed; the message is in the editor" %}</small></span>
+    <input type="checkbox" data-no-autosave data-survey-area-refuse {% if survey_area.refuse_outside %}checked{% endif %}>
+  </label>
+  {% endif %}
+  <div class="pr-help">
+    {% if own_area_sections %}{% blocktrans with names=own_area_sections|join:", " %}Sections with their own choice: {{ names }}.{% endblocktrans %} {% endif %}{% trans "Each map section can use this area, its own or none — on its Map card." %}
+  </div>
+  <div class="text-danger" data-survey-area-error aria-live="polite"></div>
+</div>
+<style>
+  .survey-area-row { display:flex; align-items:center; gap:.5rem; margin-bottom:.35rem; }
+  .survey-area-main { flex:1; min-width:0; font-size:.85rem; }
+  .survey-area-main .pr-help { display:block; margin:0; }
+  [data-survey-area-error]:empty { display:none; }
+</style>
+<script>
+(function () {
+    var box = document.getElementById('survey-area-block');
+    if (!box) return;
+    var csrfEl = document.querySelector('[name=csrfmiddlewaretoken]');
+    var errorBox = box.querySelector('[data-survey-area-error]');
+    function post(url, fd) {
+        return fetch(url, {method: 'POST', headers: {'X-CSRFToken': csrfEl ? csrfEl.value : ''}, body: fd}).then(function (r) {
+            if (r.status === 204) return null;
+            return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Request failed'); return d; });
+        });
+    }
+    function setting(input, field) {
+        if (!input) return;
+        input.addEventListener('change', function (ev) {
+            var fd = new FormData();
+            fd.append(field, input.checked ? '1' : '0');
+            errorBox.textContent = '';
+            post(box.dataset.settingsUrl, fd).then(function () {
+                if (window.refreshBuildPreview) window.refreshBuildPreview();
+            }).catch(function (e) { input.checked = !input.checked; errorBox.textContent = e.message; });
+        });
+    }
+    setting(box.querySelector('[data-survey-area-fog]'), 'fog');
+    setting(box.querySelector('[data-survey-area-refuse]'), 'refuse_outside');
+    var remove = box.querySelector('[data-survey-area-remove]');
+    if (remove) remove.addEventListener('click', function () {
+        var go = function () {
+            post(box.dataset.clearUrl, new FormData()).then(function () { window.location.reload(); })
+                .catch(function (e) { errorBox.textContent = e.message; });
+        };
+        if (window.Dialog) Dialog.confirm(box.dataset.removeAsk, {okLabel: box.dataset.removeLabel, danger: true})
+            .then(function (ok) { if (ok) go(); });
+        else go();
+    });
+})();
+</script>

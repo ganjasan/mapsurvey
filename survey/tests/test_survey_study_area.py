@@ -276,7 +276,7 @@ class RefusalOutsideTest(_Fixture):
         svc_area.set_area(self.actor, self.survey, SQUARE, refuse_outside=True,
                           message={'en': 'Inside only.', 'de': 'Nur innerhalb.'})
         html = self.client.get(self.url).content.decode()
-        self.assertIn('study-area-data', html)
+        self.assertIn('data-study-area=', html)
         self.assertIn('study-area.geojson', html)
         self.assertNotIn('[-84.38, 33.78]', html)   # a ring corner: the outline is not inlined
         geo = self.client.get(f'/surveys/{self.survey.uuid}/study-area.geojson')
@@ -287,7 +287,7 @@ class RefusalOutsideTest(_Fixture):
         self.survey.available_languages = ['en', 'de']
         self.survey.save()
         with translation.override('de'):
-            meta = study_area_meta(self.survey)
+            meta = study_area_meta(self.section)
         self.assertEqual((meta['fog'], meta['refuse_outside'], meta['message']), (True, True, 'Nur innerhalb.'))
 
     def test_editor_preview_shows_the_study_area(self):
@@ -305,9 +305,9 @@ class RefusalOutsideTest(_Fixture):
         session.save()
         svc_area.set_area(self.actor, self.survey, SQUARE, refuse_outside=True)
         html = self.client.get(f'/editor/surveys/{self.survey.uuid}/preview/{self.section.name}/').content.decode()
-        self.assertIn('study-area-data', html)
+        self.assertIn('data-study-area=', html)
         self.assertIn('study-area.geojson', html)
-        self.assertIn('"refuse_outside": true', html)
+        self.assertIn('&quot;refuse_outside&quot;: true', html)
 
     def test_outline_of_a_draft_survey_is_hidden(self):
         """
@@ -515,3 +515,369 @@ class PlaceLookupTest(_Fixture):
         lng, lat = ring[0]
         self.assertAlmostEqual(lat, 33.78, delta=0.1)
         self.assertAlmostEqual(lng, -84.39, delta=0.1)
+
+
+# ─── Change section-study-area (#781): a map section uses the survey's area, its own, or none ───
+
+# A square of the same size 10 km east of SQUARE: a section's own area.
+EAST = {'type': 'Polygon', 'coordinates': [[
+    [-84.29, 33.78], [-84.28, 33.78], [-84.28, 33.79], [-84.29, 33.79], [-84.29, 33.78]]]}
+
+
+class SectionChoiceServiceTest(_Fixture):
+    """Spec survey-study-area / Requirement: A map section uses the survey's area, its own, or none."""
+
+    def setUp(self):
+        super().setUp()
+        self.second = SurveySection.objects.create(survey_header=self.survey, name='s2', title='Corridor',
+                                                   code='S2', layout='map')
+
+    def test_default_is_the_survey_area(self):
+        """
+        GIVEN a map section that never chose
+        WHEN its effective area is read before and after the survey gets one
+        THEN it is none, then the survey's area
+        """
+        self.assertEqual(svc_area.effective(self.second), ('survey', None))
+        area = svc_area.set_area(self.actor, self.survey, SQUARE)
+        self.assertEqual(svc_area.effective(self.second), ('survey', area))
+
+    def test_own_area_on_one_section(self):
+        """
+        GIVEN a survey area and an own area set on the second section
+        WHEN both sections are resolved
+        THEN the first uses the survey's area, the second its own, starting from the survey's rules
+        """
+        svc_area.set_area(self.actor, self.survey, SQUARE, refuse_outside=True, message='Inside only.')
+        own = svc_area.set_section_area(self.actor, self.second, EAST, source='place', place_name='Elm St')
+        self.assertEqual(svc_area.effective(self.section)[0], 'survey')
+        kind, area = svc_area.effective(self.second)
+        self.assertEqual((kind, area.pk), ('own', own.pk))
+        self.assertEqual((area.refuse_outside, area.message, area.place_name), (True, {'en': 'Inside only.'}, 'Elm St'))
+        self.assertEqual(own.section_ref, 'S2')
+
+    def test_no_area_and_restore(self):
+        """
+        GIVEN a section with an own area
+        WHEN it switches to No area, then Survey's area, then Own area again
+        THEN it resolves to none, the survey's area, and its own outline again
+        """
+        svc_area.set_area(self.actor, self.survey, SQUARE)
+        svc_area.set_section_area(self.actor, self.second, EAST)
+        svc_area.set_section_mode(self.actor, self.second, 'none')
+        self.assertEqual(svc_area.effective(self.second), ('none', None))
+        svc_area.set_section_mode(self.actor, self.second, 'survey')
+        self.assertEqual(svc_area.effective(self.second)[0], 'survey')
+        svc_area.set_section_mode(self.actor, self.second, 'own')
+        kind, area = svc_area.effective(self.second)
+        self.assertEqual(kind, 'own')
+        self.assertAlmostEqual(area.geometry.extent[0], -84.29)
+
+    def test_own_without_outline_and_mapless_are_refused(self):
+        """
+        GIVEN a section that never had an own area and a form section
+        WHEN Own area is chosen for the first and No area for the second
+        THEN both are refused and nothing is stored
+        """
+        from survey.models import SectionStudyArea
+        with self.assertRaises(ValidationFailed):
+            svc_area.set_section_mode(self.actor, self.second, 'own')
+        form = SurveySection.objects.create(survey_header=self.survey, name='f', code='F', layout='form')
+        with self.assertRaises(ValidationFailed):
+            svc_area.set_section_mode(self.actor, form, 'none')
+        with self.assertRaises(ValidationFailed):
+            svc_area.set_section_mode(self.actor, self.second, 'nowhere')
+        self.assertFalse(SectionStudyArea.objects.exists())
+
+    def test_draft_copy_writes_the_canonical_choice(self):
+        """
+        GIVEN a published survey with unpublished changes
+        WHEN the draft's second section chooses No area
+        THEN the choice is stored on the canonical survey and the live section uses no area
+        """
+        from survey.models import SectionStudyArea
+        from survey.versioning import clone_survey_for_draft
+        svc_area.set_area(self.actor, self.survey, SQUARE)
+        self.survey.status = 'published'
+        self.survey.save()
+        draft = clone_survey_for_draft(self.survey)
+        draft_second = SurveySection.objects.get(survey_header=draft, code='S2')
+        svc_area.set_section_mode(self.actor, draft_second, 'none')
+        self.assertTrue(SectionStudyArea.objects.filter(survey=self.survey, section_ref='S2').exists())
+        self.assertEqual(svc_area.effective(self.second), ('none', None))
+        self.assertEqual(svc_area.effective(draft_second), ('none', None))
+
+    def test_duplicate_section_codes_are_told_apart(self):
+        """
+        GIVEN two sections with code S2 (a duplicated section)
+        WHEN the second of them chooses No area
+        THEN the first still uses the survey's area
+        """
+        svc_area.set_area(self.actor, self.survey, SQUARE)
+        twin = SurveySection.objects.create(survey_header=self.survey, name='s2b', code='S2', layout='map')
+        svc_area.set_section_mode(self.actor, twin, 'none')
+        self.assertEqual(svc_area.effective(twin), ('none', None))
+        self.assertEqual(svc_area.effective(self.second)[0], 'survey')
+
+
+class SectionRespondentTest(_Fixture):
+    """Spec survey-study-area / Requirement: Respondent surfaces use the section's effective area."""
+
+    def setUp(self):
+        super().setUp()
+        from survey.models import Question
+        self.survey.status = 'published'
+        self.survey.available_languages = ['en']
+        self.survey.save()
+        self.second = SurveySection.objects.create(survey_header=self.survey, name='s2', title='Corridor',
+                                                   code='S2', layout='map', prev_section=self.section)
+        self.section.next_section = self.second
+        self.section.save()
+        self.point_q = Question.objects.create(survey_section=self.second, name='Where?', input_type='point',
+                                               order_number=1)
+        self.url = f'/surveys/{self.survey.name}/{self.second.name}/'
+        svc_area.set_area(self.actor, self.survey, SQUARE, refuse_outside=True, message='Inside the city.')
+
+    def _post_point(self, coordinates):
+        from survey.models import Answer
+        self.client.get(f'/surveys/{self.survey.name}/{self.section.name}/')
+        session_id = self.client.session['survey_session_id']
+        self.client.post(self.url, {self.point_q.code: _feature(
+            self.point_q.code, {'type': 'Point', 'coordinates': coordinates}) + '|'})
+        return Answer.objects.filter(survey_session_id=session_id, question=self.point_q)
+
+    def test_each_section_carries_its_own_area(self):
+        """
+        GIVEN a survey area and an own area on the second section
+        WHEN each section's metadata is built and the own outline is fetched
+        THEN the first points at the survey's outline, the second at its own (by section), with its
+             own message, and the endpoint serves the own polygon
+        """
+        from survey.views import study_area_meta
+        svc_area.set_section_area(self.actor, self.second, EAST, message='Inside the street.')
+        first, second = study_area_meta(self.section), study_area_meta(self.second)
+        self.assertNotIn('section=', first['url'])
+        self.assertIn(f'section={self.second.pk}', second['url'])
+        self.assertEqual(second['message'], 'Inside the street.')
+        self.assertAlmostEqual(second['bounds'][0], -84.29)
+        geo = self.client.get(second['url'])
+        self.assertEqual(geo.status_code, 200)
+        self.assertAlmostEqual(geo.json()['features'][0]['geometry']['coordinates'][0][0][0][0], -84.29)
+        html = self.client.get(self.url).content.decode()
+        self.assertIn(f'section={self.second.pk}', html)
+
+    def test_no_area_section_has_no_metadata_and_stores_marks_outside(self):
+        """
+        GIVEN the survey refuses answers outside and the second section chose No area
+        WHEN a point far outside the survey's area is posted there
+        THEN the section's metadata is null, the point is stored and nothing is counted
+        """
+        from survey.views import study_area_meta
+        svc_area.set_section_mode(self.actor, self.second, 'none')
+        self.assertIsNone(study_area_meta(self.second))
+        self.assertEqual(self._post_point([-84.0, 33.5]).count(), 1)
+        self.assertEqual(svc_area.get(self.survey).refused_marks, 0)
+
+    def test_own_area_refuses_and_counts_on_itself(self):
+        """
+        GIVEN the second section's own area refuses answers outside
+        WHEN a point inside the survey's area but outside the own area is posted
+        THEN it is not stored and the own area's counter grows, not the survey's
+        """
+        own = svc_area.set_section_area(self.actor, self.second, EAST, refuse_outside=True)
+        self.assertEqual(self._post_point([-84.385, 33.785]).count(), 0)
+        own.refresh_from_db()
+        self.assertEqual((own.refused_marks, svc_area.get(self.survey).refused_marks), (1, 0))
+
+    def test_endpoint_refuses_a_section_of_another_survey_or_without_own_area(self):
+        """
+        GIVEN a section using the survey's area and a section of another survey
+        WHEN the outline endpoint is asked for them by section
+        THEN both answers are 404
+        """
+        other = SurveyHeader.objects.create(name='other_area', organization=self.org, redirect_url='#',
+                                            status='published')
+        foreign = SurveySection.objects.create(survey_header=other, name='x', code='X', layout='map')
+        svc_area.set_section_area(self.actor, foreign, EAST)
+        base = f'/surveys/{self.survey.uuid}/study-area.geojson'
+        self.assertEqual(self.client.get(f'{base}?section={self.second.pk}').status_code, 404)
+        self.assertEqual(self.client.get(f'{base}?section={foreign.pk}').status_code, 404)
+
+    def test_preview_carries_the_section_area(self):
+        """
+        GIVEN an own area on the second section and its owner signed in
+        WHEN the Live preview of that section renders
+        THEN it carries the own outline URL
+        """
+        from survey.models import Membership
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.client.force_login(self.owner)
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        svc_area.set_section_area(self.actor, self.second, EAST)
+        html = self.client.get(f'/editor/surveys/{self.survey.uuid}/preview/{self.second.name}/').content.decode()
+        self.assertIn(f'section={self.second.pk}', html)
+
+
+class _EditorFixture(_Fixture):
+    def setUp(self):
+        super().setUp()
+        from survey.models import Membership
+        Membership.objects.create(user=self.owner, organization=self.org, role='owner')
+        self.client.force_login(self.owner)
+        session = self.client.session
+        session['active_org_id'] = self.org.id
+        session.save()
+        self.base = f'/editor/surveys/{self.survey.uuid}/study-area/'
+
+
+class SectionEditorTest(_EditorFixture):
+    """Spec survey-editor / Requirements: The Map card chooses the section's area; The survey's study
+    area is set in Survey settings."""
+
+    def test_map_card_offers_three_choices(self):
+        """
+        GIVEN a survey with a study area
+        WHEN the section editor renders
+        THEN the Map card offers Survey's area (checked), Own area and No area
+        """
+        svc_area.set_area(self.actor, self.survey, SQUARE)
+        html = self.client.get(f'/editor/surveys/{self.survey.uuid}/sections/{self.section.pk}/').content.decode()
+        for value in ('survey', 'own', 'none'):
+            self.assertIn(f'name="map_card_area_{self.section.pk}" value="{value}"', html)
+        self.assertIn('value="survey" checked', html)
+
+    def test_choice_saves_and_own_without_outline_points_at_the_editor(self):
+        """
+        GIVEN a section with no own area
+        WHEN the Map card picks Own area, then No area
+        THEN Own area answers the editor URL for the section and stores nothing; No area is stored
+        """
+        url = self.base + 'section-mode/'
+        data = self.client.post(url, {'section': self.section.pk, 'mode': 'own'}).json()
+        self.assertEqual(data['editor_url'], f'{self.base}?section={self.section.pk}')
+        self.assertEqual(svc_area.section_mode(self.section), 'survey')
+        data = self.client.post(url, {'section': self.section.pk, 'mode': 'none'}).json()
+        self.assertEqual(data['mode'], 'none')
+
+    def test_section_editor_starts_from_the_survey_outline_and_saves_for_the_section(self):
+        """
+        GIVEN a survey area
+        WHEN the editor opens for the section and an outline is saved with the section named
+        THEN the page names the section and starts from the survey's outline; the save stores the
+             section's own area and leaves the survey's area unchanged
+        """
+        svc_area.set_area(self.actor, self.survey, SQUARE)
+        html = self.client.get(self.base, {'section': self.section.pk}).content.decode()
+        self.assertIn(f'data-section="{self.section.pk}"', html)
+        self.assertIn('id="sae-start-area">{"geometry"', html)
+        response = self.client.post(self.base + 'save/', {'section': self.section.pk, 'geometry': json.dumps(EAST),
+                                                          'source': 'draw'})
+        self.assertEqual(response.json()['mode'], 'own')
+        self.assertAlmostEqual(svc_area.get(self.survey).geometry.extent[0], -84.39)
+        self.assertEqual(svc_area.effective(self.section)[0], 'own')
+        self.client.post(self.base + 'settings/', {'section': self.section.pk, 'fog': '0'})
+        self.assertFalse(svc_area.section_row(self.section).fog)
+        self.assertTrue(svc_area.get(self.survey).fog)
+        self.assertEqual(self.client.post(self.base + 'clear/', {'section': self.section.pk}).status_code, 204)
+        self.assertEqual(svc_area.effective(self.section)[0], 'survey')
+        self.assertIsNotNone(svc_area.get(self.survey))
+
+    def test_survey_settings_show_the_area_controls(self):
+        """
+        GIVEN a survey with a study area, refusal on
+        WHEN Survey settings render
+        THEN the Respondent map card shows the area with Edit, Remove and the fog and refusal switches
+        """
+        svc_area.set_area(self.actor, self.survey, SQUARE, refuse_outside=True)
+        from django.urls import reverse
+        html = self.client.get(reverse('editor_survey_settings_panel', args=[self.survey.uuid])).content.decode()
+        self.assertIn('id="survey-area-block"', html)
+        self.assertIn('data-survey-area-fog checked', html)
+        self.assertIn('data-no-autosave data-survey-area-fog', html)
+        self.assertIn('data-survey-area-refuse checked', html)
+        self.assertIn('data-survey-area-remove', html)
+
+
+class SectionTranslationArchiveTest(_Fixture):
+    """Spec survey-study-area / Requirement: An own area's message is translatable creator text; spec
+    survey-serialization / Requirement: Section study areas ride the archive and copies."""
+
+    def setUp(self):
+        super().setUp()
+        self.second = SurveySection.objects.create(survey_header=self.survey, name='s2', title='Corridor',
+                                                   code='S2', layout='map')
+        self.third = SurveySection.objects.create(survey_header=self.survey, name='s3', title='Home',
+                                                  code='S3', layout='map')
+
+    def test_own_message_in_the_translation_table(self):
+        """
+        GIVEN an own area with refusal on and an English message, German offered
+        WHEN the translation table is listed and the German row written
+        THEN `section:S2:study_area_message` is listed and the own area keeps both messages
+        """
+        from survey import translation_table as tt
+        svc_area.set_section_area(self.actor, self.second, EAST, refuse_outside=True, message='On the street.')
+        keys = [o.key for o in tt.occurrences(self.survey, 'de')]
+        self.assertIn('section:S2:study_area_message', keys)
+        tt.apply(self.actor, self.survey, 'de', {'section:S2:study_area_message': 'Auf der Straße.'})
+        self.assertEqual(svc_area.section_row(self.second).message, {'en': 'On the street.', 'de': 'Auf der Straße.'})
+        from django.utils import translation
+        from survey.views import study_area_meta
+        with translation.override('de'):
+            self.assertEqual(study_area_meta(self.second)['message'], 'Auf der Straße.')
+
+    def test_round_trip_and_copy(self):
+        """
+        GIVEN a survey whose second section has an own area and third chose No area
+        WHEN it is exported and imported, and separately duplicated
+        THEN both results resolve the second section to the same own outline and the third to none
+        """
+        from survey.cloning import clone_survey
+        from survey.serialization import export_survey_to_zip, import_survey_from_zip
+        svc_area.set_area(self.actor, self.survey, SQUARE)
+        svc_area.set_section_area(self.actor, self.second, EAST, refuse_outside=True, message='On the street.')
+        svc_area.set_section_mode(self.actor, self.third, 'none')
+        buf = BytesIO()
+        export_survey_to_zip(self.survey, buf, 'structure')
+        buf.seek(0)
+        self.survey.name = 'area_survey_old'
+        self.survey.save()
+        imported, warnings = import_survey_from_zip(buf)
+        self.assertEqual(warnings, [])
+        copy = clone_survey(self.survey, created_by=self.owner)
+        for target in (imported, copy):
+            second = SurveySection.objects.get(survey_header=target, code='S2')
+            third = SurveySection.objects.get(survey_header=target, code='S3')
+            kind, area = svc_area.effective(second)
+            self.assertEqual((kind, area.refuse_outside, area.message['en']), ('own', True, 'On the street.'))
+            self.assertAlmostEqual(area.geometry.extent[0], -84.29)
+            self.assertEqual(svc_area.effective(third), ('none', None))
+
+    def test_unknown_section_in_the_archive_is_a_report_line(self):
+        """
+        GIVEN an archive whose section_study_areas name a section the archive does not have
+        WHEN it is imported
+        THEN the import succeeds and the report names the skipped entry
+        """
+        from survey.serialization import export_survey_to_zip, import_survey_from_zip
+        svc_area.set_section_mode(self.actor, self.third, 'none')
+        buf = BytesIO()
+        export_survey_to_zip(self.survey, buf, 'structure')
+        buf.seek(0)
+        out = BytesIO()
+        with zipfile.ZipFile(buf) as src, zipfile.ZipFile(out, 'w') as dst:
+            for item in src.namelist():
+                if item == 'survey.json':
+                    data = json.loads(src.read(item))
+                    data['survey']['section_study_areas'][0]['section'] = 'NOPE'
+                    data['survey']['name'] = 'area_unknown_section'
+                    dst.writestr(item, json.dumps(data))
+                else:
+                    dst.writestr(item, src.read(item))
+        out.seek(0)
+        imported, warnings = import_survey_from_zip(out)
+        self.assertTrue(any("'NOPE'" in w for w in warnings))
+        third = SurveySection.objects.get(survey_header=imported, code='S3')
+        self.assertEqual(svc_area.section_mode(third), 'survey')

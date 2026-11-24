@@ -166,10 +166,10 @@ def resolve_frame(section, survey):
     basemap = _basemap_key(section, survey)
     static = basemap_style(basemap, survey)
     code = section.code or ''
-    # The study area frames every printed map (change map-layers-study-area, spec printable-form
-    # "A printed map is framed on the study area"); a section's own start wins only inside it.
-    from survey.services.study_area import get as study_area_of
-    area = study_area_of(survey)
+    # The section's effective study area frames its printed map (changes map-layers-study-area,
+    # section-study-area): its own, the survey's, or none; a section's own start wins only inside it.
+    from survey.services.study_area import effective_area
+    area = effective_area(section)
     if area is not None and not (section.start_map_postion and area.geometry.covers(section.start_map_postion)):
         bbox = list(area.geometry.extent)
         return FrameSpec((bbox[1] + bbox[3]) / 2, (bbox[0] + bbox[2]) / 2, _zoom_for_bounds(bbox), basemap, code,
@@ -298,10 +298,11 @@ def _font(size):
         return ImageFont.load_default()
 
 
-def draw_study_area(image, survey, spec):
-    """The study area on a printed frame: grey outside when its fog is on, then its outline."""
-    from survey.services.study_area import get as study_area_of
-    area = study_area_of(survey)
+def draw_study_area(image, section, spec):
+    """A section's effective study area on its printed frame: grey outside when its fog is on, then
+    its outline (change section-study-area: the section's own, the survey's, or none)."""
+    from survey.services.study_area import effective_area
+    area = effective_area(section)
     if area is None:
         return False
     width, height = image.size
@@ -462,7 +463,7 @@ def render_frame(section, survey, unavailable_text='Map unavailable — attach a
     drawn, truncated = (0, [])
     if spec.note != 'world':
         try:
-            draw_study_area(base, survey, spec)
+            draw_study_area(base, section, spec)
         except Exception:  # noqa: BLE001 — a bad outline must not cost the form
             log.exception('print: drawing the study area failed for survey %s', survey.pk)
         try:

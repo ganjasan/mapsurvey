@@ -1389,3 +1389,7 @@ msgstr "{left} kvar efteråt"
 #. change map-layers-study-area
 msgid "On this map"
 msgstr "På den här kartan"
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "Fler resultat"

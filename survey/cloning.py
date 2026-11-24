@@ -546,4 +546,9 @@ def clone_survey(source, *, created_by, created_files=None):
     area = StudyArea.objects.filter(survey=layer_owner(source)).first()
     if area is not None:
         StudyArea.objects.create(survey=survey, **plain_field_values(area, exclude=('refused_marks', 'updated_at')))
+    # Each map section's choice of area (change section-study-area), by the same section references.
+    from .models import SectionStudyArea
+    SectionStudyArea.objects.bulk_create([
+        SectionStudyArea(survey=survey, **plain_field_values(row, exclude=('refused_marks', 'updated_at')))
+        for row in SectionStudyArea.objects.filter(survey=layer_owner(source))])
     return survey

@@ -756,7 +756,12 @@ def _structure(survey, language, paper, keep=False):
     from survey.layers import placements_for
     from survey.services.study_area import get as study_area_of
     area = study_area_of(survey)
+    from survey.layers import layer_owner
+    from survey.models import SectionStudyArea
     map_state = {'area': area.updated_at.isoformat() if area else None,
+                 # Each section's choice and own outline (change section-study-area).
+                 'sections': [[r.section_ref, r.mode, r.updated_at.isoformat()] for r in
+                              SectionStudyArea.objects.filter(survey=layer_owner(survey)).order_by('section_ref')],
                  'placed': [[p.layer_id, p.scope, list(p.sections or [])] for p in placements_for(survey)]}
     payload = json.dumps({'lang': language, 'paper': paper, 'items': digest, 'layout': LAYOUT_VERSION,
                           'keep': bool(keep), 'map': map_state},

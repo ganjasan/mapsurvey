@@ -136,6 +136,7 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/study-area/save/', study_area_views.editor_study_area_save, name='editor_study_area_save'),
     path('editor/surveys/<uuid:survey_uuid>/study-area/settings/', study_area_views.editor_study_area_settings, name='editor_study_area_settings'),
     path('editor/surveys/<uuid:survey_uuid>/study-area/clear/', study_area_views.editor_study_area_clear, name='editor_study_area_clear'),
+    path('editor/surveys/<uuid:survey_uuid>/study-area/section-mode/', study_area_views.editor_study_area_section_mode, name='editor_study_area_section_mode'),
     path('editor/surveys/<uuid:survey_uuid>/study-area/upload/', study_area_views.editor_study_area_upload, name='editor_study_area_upload'),
     path('editor/surveys/<uuid:survey_uuid>/study-area/from-layer/', study_area_views.editor_study_area_from_layer, name='editor_study_area_from_layer'),
     # Object editor (overlay-features): one page per layer + its JSON endpoints.

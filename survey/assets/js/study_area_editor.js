@@ -5,7 +5,9 @@
  * corners and Save. Upload, a layer of the survey and drawing are the other ways in. Nothing is
  * stored until Save; the rules (fog, answers outside, message) save at once once an area exists.
  * Expects `map` (Leaflet) from the page and Leaflet.draw. Text from the server is set with
- * textContent only.
+ * textContent only. With `data-section` the page edits that map section's own area (change
+ * section-study-area): every POST names the section, the outline may start from the survey's
+ * (unsaved), and "Use the survey's area" returns the section to it.
  */
 (function () {
     var root = document.getElementById('sae');
@@ -18,6 +20,9 @@
     var saveBtn = document.getElementById('sae-save');
     var hint = document.getElementById('sae-hint');
     var area = JSON.parse(document.getElementById('sae-area').textContent || 'null');
+    var startEl = document.getElementById('sae-start-area');
+    var startArea = startEl ? JSON.parse(startEl.textContent || 'null') : null;
+    var sectionId = root.dataset.section || '';
 
     var group = new L.FeatureGroup().addTo(map);
     var editor = null;
@@ -33,7 +38,10 @@
         if (r.status === 204) return null;
         return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Request failed'); return d; });
     }
-    function post(url, body) { return fetch(url, {method: 'POST', headers: {'X-CSRFToken': csrf}, body: body}).then(asJson); }
+    function post(url, body) {
+        if (sectionId && body && body.append) body.append('section', sectionId);
+        return fetch(url, {method: 'POST', headers: {'X-CSRFToken': csrf}, body: body}).then(asJson);
+    }
     function get(url) { return fetch(url, {headers: {'X-CSRFToken': csrf}}).then(asJson); }
     function dirty() { saveBtn.disabled = !group.getLayers().length; setStatus(group.getLayers().length ? S.unsaved : ''); }
 
@@ -75,6 +83,11 @@
     map.on('draw:editvertex draw:editmove draw:editresize', dirty);
 
     if (area && area.geometry) { setGeometry(area.geometry); setStatus(''); saveBtn.disabled = true; }
+    else if (startArea && startArea.geometry) {
+        // A section's own area starts from the survey's outline; nothing is stored until Save.
+        source = startArea.source; placeName = startArea.place_name || ''; osmRef = startArea.osm_ref || '';
+        setGeometry(startArea.geometry);
+    }
 
     // ── Find the place ────────────────────────────────────────────────────
     var cands = document.getElementById('sae-cands');
@@ -190,6 +203,12 @@
             saveBtn.disabled = true;
             setStatus(S.saved);
             document.getElementById('sae-rules').hidden = false;
+            // A new area (a section's starts with the survey's rules): show the rules it saved with.
+            document.getElementById('sae-fog').checked = !!area.fog;
+            document.querySelectorAll('input[name="sae_refuse"]').forEach(function (r) {
+                r.checked = r.value === (area.refuse_outside ? '1' : '0');
+            });
+            document.getElementById('sae-msg-box').hidden = !area.refuse_outside;
             document.getElementById('sae-summary').textContent =
                 (area.place_name ? area.place_name + ' · ' : '') + area.area_km2 + ' km²';
         }).catch(function (e) { setStatus(''); setError(e.message); });
@@ -212,7 +231,11 @@
     });
     var removeBtn = document.getElementById('sae-remove');
     if (removeBtn) removeBtn.addEventListener('click', function () {
-        var go = function () { post(urls.clear, new FormData()).then(function () { window.location.reload(); }).catch(function (e) { setError(e.message); }); };
+        var go = function () {
+            post(urls.clear, new FormData()).then(function () {
+                if (sectionId) window.location = urls.back; else window.location.reload();
+            }).catch(function (e) { setError(e.message); });
+        };
         if (window.Dialog) Dialog.confirm(S.removeAsk, {okLabel: S.remove, danger: true}).then(function (ok) { if (ok) go(); });
         else go();
     });

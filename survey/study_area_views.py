@@ -27,8 +27,26 @@ def _enabled_or_404():
         raise Http404
 
 
-def _area_payload(survey):
+def _area_payload(survey, section=None):
+    if section is not None:
+        return {'area': svc_area.describe(svc_area.section_row(section)), 'mode': svc_area.section_mode(section)}
     return {'area': svc_area.describe(svc_area.get(survey))}
+
+
+def _section_param(request, survey):
+    """The map section a request names (`section`, GET or POST) for its own area (change
+    section-study-area), or None for the survey's area. 404 for a section of another survey."""
+    from .models import SurveySection
+    raw = request.POST.get('section') if request.method == 'POST' else None
+    raw = raw or request.GET.get('section')
+    if not raw:
+        return None
+    return get_object_or_404(SurveySection, pk=raw if str(raw).isdigit() else 0, survey_header=survey)
+
+
+def _back_url(survey, section):
+    url = reverse('editor_survey_detail', args=[survey.uuid])
+    return f'{url}?section={section.pk}' if section is not None else f'{url}?panel=settings'
 
 
 def _bool(value):
@@ -38,22 +56,37 @@ def _bool(value):
 @survey_permission_required('editor')
 @require_GET
 def editor_study_area(request, survey_uuid):
-    """The study area editor: place search, candidates, vertex editing, other sources, rules."""
+    """The study area editor: place search, candidates, vertex editing, other sources, rules. With
+    `?section=<id>` it edits that map section's own area (change section-study-area), starting from
+    the survey's outline (unsaved) when the section has none yet."""
     _enabled_or_404()
     survey = request.survey
+    section = _section_param(request, survey)
+    if section is not None and not section.has_map:
+        raise Http404
     from .layers import has_polygons
     polygon_layers = [layer for layer in layers_for(survey).filter(source='upload').order_by('position', 'id')
                       if has_polygons(layer)]
-    area = svc_area.get(survey)
+    survey_area = svc_area.get(survey)
+    if section is None:
+        area = survey_area
+        start_area = None
+    else:
+        row = svc_area.section_row(section)
+        area = row if row is not None and row.geometry is not None else None
+        start_area = survey_area if area is None else None
     primary = (survey.available_languages or ['en'])[0]
     return render(request, 'editor/study_area.html', {
         'survey': survey,
+        'section': section,
         'area': area,
         'area_json': json.dumps(svc_area.describe(area)) if area else 'null',
+        'start_area_json': json.dumps(svc_area.describe(start_area)) if start_area else 'null',
         'message': (area.message or {}).get(primary, '') if area else '',
         'polygon_layers': polygon_layers,
         'widths': (50, 100, 200),
         'start': _start_position(survey),
+        'back_url': _back_url(survey, section),
     })
 
 
@@ -117,49 +150,92 @@ def editor_study_area_candidate(request, survey_uuid):
 @survey_permission_required('editor')
 @require_POST
 def editor_study_area_save(request, survey_uuid):
-    """Save the confirmed outline (`geometry` GeoJSON) with where it came from."""
+    """Save the confirmed outline (`geometry` GeoJSON) with where it came from — the survey's area,
+    or with `section` that section's own area."""
     _enabled_or_404()
+    survey = request.survey
+    section = _section_param(request, survey)
     try:
         geometry = json.loads(request.POST.get('geometry') or 'null')
     except ValueError:
         return JsonResponse({'error': svc_area.GEOMETRY_MESSAGE}, status=400)
+    kwargs = dict(source=request.POST.get('source') or 'draw',
+                  place_name=request.POST.get('place_name', ''), osm_ref=request.POST.get('osm_ref', ''))
     try:
-        svc_area.set_area(Actor.from_request(request), request.survey, geometry,
-                          source=request.POST.get('source') or 'draw',
-                          place_name=request.POST.get('place_name', ''), osm_ref=request.POST.get('osm_ref', ''))
+        if section is not None:
+            svc_area.set_section_area(Actor.from_request(request), section, geometry, **kwargs)
+        else:
+            svc_area.set_area(Actor.from_request(request), survey, geometry, **kwargs)
     except ValidationFailed as exc:
         return JsonResponse({'error': exc.message}, status=400)
-    return JsonResponse(_area_payload(request.survey))
+    return JsonResponse(_area_payload(survey, section))
 
 
 @survey_permission_required('editor')
 @require_POST
 def editor_study_area_settings(request, survey_uuid):
-    """Fog, the refusal rule and the message (primary language; others are in Translations)."""
+    """Fog, the refusal rule and the message (primary language; others are in Translations) of the
+    survey's area, or with `section` of that section's own area."""
     _enabled_or_404()
     survey = request.survey
-    area = svc_area.get(survey)
+    section = _section_param(request, survey)
+    area = svc_area.section_row(section) if section is not None else svc_area.get(survey)
     message = None
     if 'message' in request.POST:
         primary = (survey.available_languages or ['en'])[0]
         message = {**(area.message if area else {}), primary: request.POST.get('message', '')}
+    kwargs = dict(fog=_bool(request.POST['fog']) if 'fog' in request.POST else None,
+                  refuse_outside=(_bool(request.POST['refuse_outside'])
+                                  if 'refuse_outside' in request.POST else None),
+                  message=message)
     try:
-        svc_area.update_settings(Actor.from_request(request), survey,
-                                 fog=_bool(request.POST['fog']) if 'fog' in request.POST else None,
-                                 refuse_outside=(_bool(request.POST['refuse_outside'])
-                                                 if 'refuse_outside' in request.POST else None),
-                                 message=message)
+        if section is not None:
+            svc_area.update_section_settings(Actor.from_request(request), section, **kwargs)
+        else:
+            svc_area.update_settings(Actor.from_request(request), survey, **kwargs)
     except ValidationFailed as exc:
         return JsonResponse({'error': exc.message}, status=400)
-    return JsonResponse(_area_payload(survey))
+    return JsonResponse(_area_payload(survey, section))
 
 
 @survey_permission_required('editor')
 @require_POST
 def editor_study_area_clear(request, survey_uuid):
+    """Remove the survey's area, or with `section` return that section to the survey's area (its
+    own outline is kept for a later Own area)."""
     _enabled_or_404()
-    svc_area.clear(Actor.from_request(request), request.survey)
+    section = _section_param(request, request.survey)
+    if section is not None:
+        try:
+            svc_area.set_section_mode(Actor.from_request(request), section, svc_area.KIND_SURVEY)
+        except ValidationFailed as exc:
+            return JsonResponse({'error': exc.message}, status=400)
+    else:
+        svc_area.clear(Actor.from_request(request), request.survey)
     return HttpResponse(status=204)
+
+
+@survey_permission_required('editor')
+@require_POST
+def editor_study_area_section_mode(request, survey_uuid):
+    """The Map card's choice for a section (change section-study-area): `survey`, `own` or `none`.
+    Own area without a stored outline answers the editor's URL to draw one; nothing is saved."""
+    _enabled_or_404()
+    survey = request.survey
+    section = _section_param(request, survey)
+    if section is None:
+        return JsonResponse({'error': _('Pick a section.')}, status=400)
+    mode = request.POST.get('mode', '')
+    if mode == svc_area.KIND_OWN:
+        row = svc_area.section_row(section)
+        if row is None or row.geometry is None:
+            return JsonResponse({'editor_url': reverse('editor_study_area', args=[survey.uuid])
+                                 + f'?section={section.pk}'})
+    try:
+        svc_area.set_section_mode(Actor.from_request(request), section, mode)
+    except ValidationFailed as exc:
+        return JsonResponse({'error': exc.message}, status=400)
+    return JsonResponse(svc_area.describe_section(section))
 
 
 def _union_of_polygons(features):
@@ -228,11 +304,15 @@ def editor_study_area_from_layer(request, survey_uuid):
     if geometry is None:
         return JsonResponse({'error': _('This layer has no area in it. A study area is a polygon.')}, status=400)
     actor = Actor.from_request(request)
+    section = _section_param(request, survey)
     try:
-        svc_area.set_area(actor, survey, geometry, source='layer', place_name=layer.name)
+        if section is not None:
+            svc_area.set_section_area(actor, section, geometry, source='layer', place_name=layer.name)
+        else:
+            svc_area.set_area(actor, survey, geometry, source='layer', place_name=layer.name)
     except ValidationFailed as exc:
         return JsonResponse({'error': exc.message}, status=400)
-    if _bool(request.POST.get('remove_layer', '1')):
+    if section is None and _bool(request.POST.get('remove_layer', '1')):
         try:
             svc_layers.delete(actor, layer, survey)
         except svc_layers.LayerError:
@@ -244,7 +324,8 @@ def editor_study_area_from_layer(request, survey_uuid):
 @require_GET
 def survey_study_area_geojson(request, survey_slug):
     """The study area outline for the respondent map, under the survey's own access rules (a
-    collaborator reads it in every status, like a reference layer). 404 when there is none."""
+    collaborator reads it in every status, like a reference layer): the survey's, or with
+    `?section=<id>` that section's own area. 404 when there is none."""
     _enabled_or_404()
     from .access_control import check_survey_access
     from .views import resolve_survey
@@ -254,6 +335,17 @@ def survey_study_area_geojson(request, survey_slug):
     if not is_collaborator and check_survey_access(request, survey) is not None:
         raise Http404
     area = svc_area.get(survey)
+    section_id = request.GET.get('section')
+    if section_id:
+        # A section's own area (change section-study-area); the section must be one of this survey's.
+        from .models import SurveySection
+        section = SurveySection.objects.filter(pk=section_id if str(section_id).isdigit() else 0,
+                                               survey_header=survey).first()
+        if section is None:
+            raise Http404
+        kind, area = svc_area.effective(section)
+        if kind != svc_area.KIND_OWN:
+            raise Http404
     if area is None:
         raise Http404
     # A FeatureCollection, so the Responses map draws it with the reference layer factory too.

@@ -254,7 +254,7 @@
         MapPlaceSearch.attach(map, {
             accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
             container: document.getElementById('survey-map-search'),
-            labels: { placeholder: '{{ lbl_search|escapejs }}' }
+            labels: { placeholder: '{{ lbl_search|escapejs }}', moreResults: '{% filter escapejs %}{% trans "More results" %}{% endfilter %}' }
         });
 
         setTimeout(function() { map.invalidateSize(); }, 200);

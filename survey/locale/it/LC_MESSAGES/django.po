@@ -15478,3 +15478,72 @@ msgstr "Usa il confine di %%(place)s"
 #. change map-layers-study-area
 msgid "Drag a corner to move it"
 msgstr "Trascina un angolo per spostarlo"
+
+# change section-study-area (#781)
+msgid "Survey's area"
+msgstr "Area del sondaggio"
+
+msgid "The survey has none yet."
+msgstr "Il sondaggio non ne ha ancora una."
+
+msgid "Set it in Survey settings"
+msgstr "Impostala nelle impostazioni del sondaggio"
+
+msgid "Own area"
+msgstr "Area propria"
+
+msgid "Only this section: e.g. one street of the city."
+msgstr "Solo questa sezione: p. es. una via della città."
+
+msgid "No area"
+msgstr "Nessuna area"
+
+msgid "No fog, answers anywhere on this section."
+msgstr "Niente ombreggiatura, risposte ovunque in questa sezione."
+
+msgid "Use the survey's area on this section again? Its own outline is kept for later."
+msgstr "Usare di nuovo l’area del sondaggio in questa sezione? Il suo contorno resta salvato per dopo."
+
+msgid "Use the survey's area"
+msgstr "Usa l’area del sondaggio"
+
+msgid "Own study area"
+msgstr "Area di studio propria"
+
+msgid "Back to the section"
+msgstr "Torna alla sezione"
+
+msgid "This section's own area. It starts from the survey's outline: adjust it, then Save. The survey's area stays as it is."
+msgstr "L’area propria di questa sezione. Parte dal contorno del sondaggio: regolalo, poi Salva. L’area del sondaggio resta com’è."
+
+msgid "This section's own area: only this section's map uses it. The survey's area stays as it is."
+msgstr "L’area propria di questa sezione: la usa solo la mappa di questa sezione. L’area del sondaggio resta com’è."
+
+msgid "Drawn area"
+msgstr "Area disegnata"
+
+msgid "Not set. The map opens on it, can grey out the rest and refuse answers outside."
+msgstr "Non impostata. La mappa si apre su di essa, può ombreggiare il resto e rifiutare le risposte fuori."
+
+msgid "Refuse map answers outside"
+msgstr "Rifiuta le risposte sulla mappa fuori dall’area"
+
+msgid "the mark is not placed; the message is in the editor"
+msgstr "il segno non viene posizionato; il messaggio è nell’editor"
+
+#, python-format
+msgid "Sections with their own choice: %(names)s."
+msgstr "Sezioni con una scelta propria: %(names)s."
+
+msgid "Each map section can use this area, its own or none — on its Map card."
+msgstr "Ogni sezione con mappa può usare quest’area, una propria o nessuna — nella sua scheda Mappa."
+
+msgid "The base map, starting position, zoom and study area respondents open on. Sections can override the position and the area individually."
+msgstr "La mappa di base, la posizione iniziale, lo zoom e l’area di studio con cui si apre la mappa. Le sezioni possono cambiare posizione e area singolarmente."
+
+msgid "Pick a section."
+msgstr "Scegli una sezione."
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "Altri risultati"

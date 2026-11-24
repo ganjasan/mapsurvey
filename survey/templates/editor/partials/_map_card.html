@@ -1,7 +1,7 @@
 {% load i18n %}{% comment %}
 The section's Map card (change map-layers-study-area, spec map-layer-placement "The Map card places
-layers from Build"): what this section's map shows — the survey's study area and every layer the
-survey uses, each ticked when this section's map shows it. Ticks save at once through
+layers from Build"): what this section's map shows — its study area (the survey's, its own or none,
+change section-study-area) and every layer the survey uses, each ticked when this section's map shows it. Ticks save at once through
 `editor_layer_place_section` (a safe edit, also on a published survey). "+ Layer" uploads, links a
 dataset "From Data" or starts an empty layer to draw on; a new layer goes on every map section,
 switched on, unless the dialog narrows it to this section.
@@ -28,21 +28,41 @@ Context: `map_card` from editor_views._map_card, `survey`, `section`.
     {% endif %}
   </div>
 
-  <div class="map-card-row map-card-area">
-    <span class="map-card-icon"><i class="fas fa-vector-square"></i></span>
-    {% if map_card.area %}
-    <div class="map-card-main">
-      <b>{% trans "Study area" %}</b>{% if map_card.area.place_name %} · {{ map_card.area.place_name }}{% endif %}
-      <div class="pr-help">{{ map_card.area_km2 }} km²{% if map_card.area.fog %} · {% trans "fog outside" %}{% endif %}{% if map_card.area.refuse_outside %} · {% trans "no answers outside" %}{% endif %}</div>
-    </div>
-    {% if map_card.can_place %}<a class="btn btn-sm btn-link" href="{% url 'editor_study_area' survey.uuid %}">{% trans "Edit" %}</a>{% endif %}
-    {% else %}
-    <div class="map-card-main">
-      <b>{% trans "Study area" %}</b>
-      <div class="pr-help">{% trans "Not set. The map opens on it and can grey out the rest." %}</div>
-    </div>
-    {% if map_card.can_place %}<a class="btn btn-sm btn-outline-primary" href="{% url 'editor_study_area' survey.uuid %}">{% trans "Set" %}</a>{% endif %}
-    {% endif %}
+  {% comment %}The section's area (change section-study-area, spec survey-editor "The Map card chooses
+  the section's area"): the survey's (set in Survey settings), its own, or none. A choice saves at
+  once through `editor_study_area_section_mode`; Own area without an outline opens the editor.{% endcomment %}
+  <div class="map-card-area" id="map-card-area" data-mode-url="{% url 'editor_study_area_section_mode' survey.uuid %}">
+    <div class="map-card-label mt-0"><i class="fas fa-vector-square"></i> {% trans "Study area" %}</div>
+    <label class="map-card-row map-card-choice">
+      <input type="radio" name="map_card_area_{{ section.id }}" value="survey" {% if map_card.area_mode == 'survey' %}checked{% endif %}{% if not map_card.can_place %} disabled{% endif %}>
+      <span class="map-card-main">
+        <b>{% trans "Survey's area" %}</b>
+        {% if map_card.area %}
+        <span class="pr-help">{% if map_card.area.place_name %}{{ map_card.area.place_name }} · {% endif %}{{ map_card.area_km2 }} km²{% if map_card.area.fog %} · {% trans "fog outside" %}{% endif %}{% if map_card.area.refuse_outside %} · {% trans "no answers outside" %}{% endif %}</span>
+        {% else %}
+        <span class="pr-help">{% trans "The survey has none yet." %} <a href="{% url 'editor_survey_detail' survey.uuid %}?panel=settings">{% trans "Set it in Survey settings" %}</a></span>
+        {% endif %}
+      </span>
+    </label>
+    <label class="map-card-row map-card-choice">
+      <input type="radio" name="map_card_area_{{ section.id }}" value="own" {% if map_card.area_mode == 'own' %}checked{% endif %}{% if not map_card.can_place %} disabled{% endif %}>
+      <span class="map-card-main">
+        <b>{% trans "Own area" %}</b>
+        {% if map_card.own %}
+        <span class="pr-help">{% if map_card.own.place_name %}{{ map_card.own.place_name }} · {% endif %}{{ map_card.own_km2 }} km²{% if map_card.own.fog %} · {% trans "fog outside" %}{% endif %}{% if map_card.own.refuse_outside %} · {% trans "no answers outside" %}{% endif %}</span>
+        {% else %}
+        <span class="pr-help">{% trans "Only this section: e.g. one street of the city." %}</span>
+        {% endif %}
+      </span>
+      {% if map_card.can_place and map_card.own %}<a class="btn btn-sm btn-link" href="{% url 'editor_study_area' survey.uuid %}?section={{ section.id }}">{% trans "Edit" %}</a>{% endif %}
+    </label>
+    <label class="map-card-row map-card-choice">
+      <input type="radio" name="map_card_area_{{ section.id }}" value="none" {% if map_card.area_mode == 'none' %}checked{% endif %}{% if not map_card.can_place %} disabled{% endif %}>
+      <span class="map-card-main">
+        <b>{% trans "No area" %}</b>
+        <span class="pr-help">{% trans "No fog, answers anywhere on this section." %}</span>
+      </span>
+    </label>
   </div>
 
   <div class="map-card-layers">
@@ -120,7 +140,8 @@ Context: `map_card` from editor_views._map_card, `survey`, `section`.
   .map-card-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:.35rem; }
   .map-card-head h6 { margin:0; font-weight:600; }
   .map-card-row { display:flex; align-items:center; gap:.55rem; padding:.35rem 0; margin:0; font-weight:400; }
-  .map-card-area { border-bottom:1px solid var(--border-color, var(--color-border)); margin-bottom:.25rem; }
+  .map-card-area { border-bottom:1px solid var(--border-color, var(--color-border)); margin-bottom:.25rem; padding-bottom:.25rem; }
+  .map-card-choice { cursor:pointer; padding:.2rem 0; }
   .map-card-icon { width:16px; text-align:center; color:var(--color-text-muted); }
   .map-card-main { flex:1; min-width:0; font-size:.85rem; }
   .map-card-main .pr-help { display:block; margin:0; font-size:.74rem; }
@@ -147,6 +168,31 @@ Context: `map_card` from editor_views._map_card, `survey`, `section`.
     }
     function forLayer(url, id) { return url.replace(/\/0\//, '/' + id + '/'); }
     function refreshPreview() { if (window.refreshBuildPreview) window.refreshBuildPreview(); }
+
+    // The section's area choice (change section-study-area): saved at once; Own area without an
+    // outline opens the study area editor for this section instead.
+    var areaBox = document.getElementById('map-card-area');
+    if (areaBox) {
+        var lastMode = (areaBox.querySelector('input[type=radio]:checked') || {}).value;
+        areaBox.querySelectorAll('input[type=radio]').forEach(function(radio) {
+            radio.addEventListener('change', function() {
+                if (!radio.checked) return;
+                var fd = new FormData();
+                fd.append('section', card.dataset.section);
+                fd.append('mode', radio.value);
+                errorBox.textContent = '';
+                post(areaBox.dataset.modeUrl, fd).then(function(data) {
+                    if (data && data.editor_url) { window.location = data.editor_url; return; }
+                    lastMode = radio.value;
+                    refreshPreview();
+                }).catch(function(e) {
+                    var back = areaBox.querySelector('input[value="' + lastMode + '"]');
+                    if (back) back.checked = true;
+                    errorBox.textContent = e.message;
+                });
+            });
+        });
+    }
 
     card.querySelectorAll('.map-card-layer').forEach(function(row) {
         var tick = row.querySelector('.map-card-tick');

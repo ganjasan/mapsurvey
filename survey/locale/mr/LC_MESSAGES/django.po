@@ -1389,3 +1389,7 @@ msgstr "यानंतर {left} शिल्लक"
 #. change map-layers-study-area
 msgid "On this map"
 msgstr "या नकाशावर"
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "अधिक परिणाम"

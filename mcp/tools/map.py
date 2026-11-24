@@ -13,9 +13,10 @@ from survey.services import placements as svc_placements
 from survey.services import study_area as svc_area
 
 from api import scopes
-from api.v1.map import PlacementIn, StudyAreaIn, StudyAreaPatchIn
+from api.v1.map import (PlacementIn, SectionStudyAreaIn, StudyAreaIn, StudyAreaPatchIn, apply_section_study_area,
+                        section_study_area_payload, study_area_payload)
 
-from .common import actor, survey
+from .common import actor, section, survey
 from .registry import args_model, tool
 
 SURVEY = (UUID, Field(description='The survey uuid (from list_surveys).'))
@@ -86,14 +87,14 @@ def reorder_placements(request, args):
     description=(
         'The area the survey is about: its outline (GeoJSON), where it came from, whether the map is '
         'greyed outside, whether map answers outside are refused, the message respondents then see, '
-        'its size in km² — or null.'
+        'its size in km² — or null; and `sections`: each map section\'s choice (`survey`, `own`, `none`).'
     ),
     scope=scopes.SURVEYS_READ, role='viewer', read_only=True, idempotent=True,
     args=args_model('GetStudyAreaArgs', survey=SURVEY),
 )
 def get_study_area(request, args):
     obj = survey(request, args.survey)
-    return {'study_area': svc_area.describe(svc_area.get(obj))}
+    return study_area_payload(obj)
 
 
 @tool(
@@ -140,3 +141,41 @@ def update_study_area(request, args):
 def clear_study_area(request, args):
     obj = survey(request, args.survey, role='editor')
     return {'removed': svc_area.clear(actor(request), obj)}
+
+
+SECTION = (int, Field(description='A section id from get_survey.'))
+
+
+@tool(
+    'get_section_study_area',
+    title="Get a section's study area",
+    description=(
+        "A map section's choice of study area: `survey` (the survey's area, the default), `own` (its own "
+        "outline, also returned while not in use) or `none`; `effective` says what its map shows."
+    ),
+    scope=scopes.SURVEYS_READ, role='viewer', read_only=True, idempotent=True,
+    args=args_model('GetSectionStudyAreaArgs', survey=SURVEY, section_id=SECTION),
+)
+def get_section_study_area(request, args):
+    obj = survey(request, args.survey)
+    return section_study_area_payload(section(request, obj, args.section_id))
+
+
+@tool(
+    'set_section_study_area',
+    title="Choose a section's study area",
+    description=(
+        "Choose a map section's study area: `mode` \"survey\" (the survey's area), \"own\" (this section's "
+        "own area — pass `geometry` to set or replace the outline, with `fog`, `refuse_outside`, `message` like "
+        "set_study_area; without `geometry` the stored own outline is used) or \"none\" (no fog, nothing "
+        "refused on this section). E.g. a street corridor on one section of a city-wide survey. Applies to a "
+        "published survey at once. Needs the editor role."
+    ),
+    scope=scopes.SURVEYS_WRITE, role='editor', idempotent=True,
+    args=args_model('SetSectionStudyAreaArgs', SectionStudyAreaIn, survey=SURVEY, section_id=SECTION),
+)
+def set_section_study_area(request, args):
+    obj = survey(request, args.survey, role='editor')
+    sec = section(request, obj, args.section_id)
+    apply_section_study_area(actor(request), sec, args.model_dump(exclude_unset=True, exclude={'survey', 'section_id'}))
+    return section_study_area_payload(sec)

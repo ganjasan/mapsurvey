@@ -1090,6 +1090,42 @@ class StudyArea(models.Model):
         return f'Study area of {self.survey_id}'
 
 
+class SectionStudyArea(models.Model):
+    """One map section's choice of study area (change section-study-area, #781): the survey's area
+    (the default, also meant by no row), its own area, or none. Keyed like `LayerPlacement` — the
+    CANONICAL survey plus a section reference (`<code>` / `<code>#<n>`, see `survey.section_refs`) —
+    so draft copies, versions and restores resolve it to their own section and nothing copies it.
+    A row switched back to `survey` or `none` keeps its outline, so Own area restores it. Written
+    only by `survey/services/study_area.py`; the fields mirror `StudyArea` so both answer the same
+    reads (guard, message, describe, print)."""
+    MODE_SURVEY = 'survey'
+    MODE_OWN = 'own'
+    MODE_NONE = 'none'
+    MODE_CHOICES = [(MODE_SURVEY, _("Survey's area")), (MODE_OWN, _('Own area')), (MODE_NONE, _('No area'))]
+
+    survey = models.ForeignKey('SurveyHeader', on_delete=models.CASCADE, related_name='section_study_areas')
+    section_ref = models.CharField(max_length=20)
+    mode = models.CharField(max_length=8, choices=MODE_CHOICES, default=MODE_SURVEY)
+    geometry = geomodels.MultiPolygonField(srid=4326, null=True, blank=True)
+    source = models.CharField(max_length=8, choices=STUDY_AREA_SOURCE_CHOICES, default='draw')
+    place_name = models.CharField(max_length=255, blank=True, default='')
+    osm_ref = models.CharField(max_length=40, blank=True, default='')
+    fog = models.BooleanField(default=True)
+    refuse_outside = models.BooleanField(default=False)
+    message = models.JSONField(default=dict, blank=True)
+    refused_marks = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'survey'
+        constraints = [
+            models.UniqueConstraint(fields=['survey', 'section_ref'], name='section_study_area_one_per_ref'),
+        ]
+
+    def __str__(self):
+        return f'Study area of {self.survey_id} / {self.section_ref} ({self.mode})'
+
+
 #survey sections
 class SurveySection(models.Model):
     is_head = models.BooleanField(default=False)

@@ -1389,3 +1389,7 @@ msgstr "андан кийин {left} калат"
 #. change map-layers-study-area
 msgid "On this map"
 msgstr "Бул картада"
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "Дагы натыйжалар"

@@ -1389,3 +1389,7 @@ msgstr "ഇതിനു ശേഷം {left} ബാക്കി"
 #. change map-layers-study-area
 msgid "On this map"
 msgstr "ഈ മാപ്പിൽ"
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "കൂടുതൽ ഫലങ്ങൾ"

@@ -1389,3 +1389,7 @@ msgstr "ondoren {left} geratzen da"
 #. change map-layers-study-area
 msgid "On this map"
 msgstr "Mapa honetan"
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "Emaitza gehiago"

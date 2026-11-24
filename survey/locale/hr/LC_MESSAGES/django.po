@@ -1390,3 +1390,7 @@ msgstr "nakon toga ostaje {left}"
 #. change map-layers-study-area
 msgid "On this map"
 msgstr "Na ovoj karti"
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "Više rezultata"
