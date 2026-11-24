@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Inline map position pickers open locked
-The survey default map position picker on the settings page and in the in-editor settings panel SHALL open locked: dragging, scroll-wheel, pinch, double-click, box and keyboard movement SHALL be off and the map's own controls SHALL not be reachable. A "Change position" button on the map, or a click or tap anywhere on the locked map, SHALL unlock it. While unlocked the map SHALL show a "Done" button and SHALL lock again when it is pressed, when the creator presses anywhere outside the map, and when the map leaves the viewport. Dragging and zooming set the position only while the map is unlocked.
+The survey default map position picker on the settings page and in the in-editor settings panel SHALL open locked, with every pointer, touch and keyboard way of moving the map switched off. A "Change position" button on the map, or a click anywhere on the locked map, SHALL unlock it. An unlocked map SHALL show a "Done" button and SHALL lock again on that button, on a press outside the map, and when the map leaves the viewport.
 
 #### Scenario: Scrolling over the map changes nothing
 - **WHEN** a creator opens the settings page of a survey positioned at (59.437, 24.7536) zoom 12 and scrolls the page with the mouse wheel while the pointer is over the map
