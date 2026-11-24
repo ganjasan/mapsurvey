@@ -1385,3 +1385,7 @@ msgstr "%(amount)s kila moja"
 #: budget-question
 msgid "{left} left after it"
 msgstr "{left} zitasalia baada yake"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "Kwenye ramani hii"

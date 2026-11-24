@@ -52,6 +52,22 @@
                 {{ section_subheading | safe }}
             {% endif %}
         </div>
+        {% if on_this_map %}
+        {% comment %}"On this map" (change map-layers-study-area): the section's placed layers, each
+        switched on when the section opens; the toggles mirror the map's layers control
+        (reference_layers.html wires them).{% endcomment %}
+        <div class="on-this-map" data-on-this-map>
+            <div class="on-this-map__title">{% trans "On this map" %}</div>
+            {% for meta in on_this_map %}
+            <label class="layer-objects__legend on-this-map__row">
+                <input type="checkbox" checked data-otm-toggle="{{ meta.id }}">
+                <span class="layer-objects__swatch" style="background:{{ meta.color }}"></span>
+                <span class="layer-objects__title">{{ meta.name }}</span>
+            </label>
+            {% if meta.legend %}<ul class="on-this-map__classes">{% for row in meta.legend %}<li><span class="layer-objects__swatch" style="background:{{ row.color }}"></span> {{ row.label }}</li>{% endfor %}</ul>{% endif %}
+            {% endfor %}
+        </div>
+        {% endif %}
         <div class='questions'>
             <div id="required-summary" class="required-summary" style="display:none;" role="status">
                 <i class="fas fa-info-circle"></i>

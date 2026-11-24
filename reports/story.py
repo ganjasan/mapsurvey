@@ -106,7 +106,7 @@ def clean_config(block_type, raw):
         frame = clean_frame(raw.get('frame'))
         if frame:
             out['frame'] = frame
-        for key in ('legend', 'scale'):        # on unless switched off
+        for key in ('legend', 'scale', 'study_area'):   # on unless switched off (study_area: map-layers-study-area)
             if raw.get(key) is False:
                 out[key] = False
         if raw.get('toggle'):                   # readers may switch layers on and off

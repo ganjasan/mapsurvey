@@ -1,0 +1,77 @@
+{% load i18n %}{% comment %}
+The publish dialogs' map block (change map-layers-study-area, spec map-layer-placement "The publish
+check lists what the map shows"): the study area, the layers with where they show, the layers on
+no map with inline fixes, and the scheduled-survey note. Never blocks publishing.
+Context: `check` from editor_views.publish_map_check, `survey`, `first_section`, `can_edit`.
+{% endcomment %}
+{% if check.has_map or check.opens_at %}
+<div class="publish-map-check" id="publish-map-check-body"
+     data-place-url="{% url 'editor_layer_place' survey.uuid 0 %}"
+     data-delete-url="{% url 'editor_survey_layer_delete' survey.uuid 0 %}">
+  {% if check.has_map %}
+  <div class="pmc-title">{% trans "On the map" %}</div>
+  <ul class="pmc-list">
+    <li>
+      <i class="fas fa-vector-square" aria-hidden="true"></i>
+      {% if check.area %}
+      <b>{% trans "Study area" %}</b>{% if check.area.place_name %} · {{ check.area.place_name }}{% endif %} · {{ check.area_km2 }} km²{% if check.area.fog %} · {% trans "fog outside" %}{% endif %}{% if check.area.refuse_outside %} · {% trans "no answers outside" %}{% endif %}
+      {% else %}
+      <span class="text-muted">{% trans "No study area" %}</span>
+      {% endif %}
+    </li>
+    {% for row in check.layers %}
+    <li data-pmc-layer="{{ row.layer.pk }}">
+      <span class="pmc-swatch" style="background:{{ row.layer.color }}"></span>
+      <b>{{ row.layer.name }}</b> ·
+      {% if row.scope == 'all' %}{% trans "every section" %}{% elif row.scope == 'sections' %}{{ row.summary }}{% else %}<span class="pmc-warn">{% trans "on no map" %}</span>
+        {% if can_edit %}
+        <button type="button" class="btn btn-link btn-sm p-0 ml-1" data-pmc-all>{% trans "Show on every section" %}</button>
+        <button type="button" class="btn btn-link btn-sm p-0 ml-1 text-danger" data-pmc-remove>{% trans "Remove" %}</button>
+        {% endif %}
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% if check.opens_at %}
+  <div class="pmc-note">
+    <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+    {% blocktrans with date=check.opens_at|date:"j F Y" %}The survey opens on {{ date }}: until then the public link shows the “opens on” page.{% endblocktrans %}
+    {% if first_section %}<a href="{% url 'editor_section_preview' survey.uuid first_section.name %}" target="_blank" rel="noopener">{% trans "Preview as a respondent" %}</a>{% endif %}
+  </div>
+  {% endif %}
+</div>
+<style>
+  .publish-map-check { border-top:1px solid var(--border-color, var(--color-border)); margin-top:.75rem; padding-top:.6rem; font-size:.85rem; }
+  .pmc-title { font-weight:600; margin-bottom:.3rem; }
+  .pmc-list { list-style:none; padding:0; margin:0; }
+  .pmc-list li { display:flex; align-items:center; flex-wrap:wrap; gap:.3rem; padding:.15rem 0; }
+  .pmc-swatch { width:10px; height:10px; border-radius:2px; display:inline-block; }
+  .pmc-warn { color:var(--color-warning); font-weight:600; }
+  .pmc-note { margin-top:.5rem; padding:.4rem .55rem; border-radius:6px; background:var(--color-warning-soft); border:1px solid var(--color-warning-line); }
+</style>
+<script>
+(function() {
+    var box = document.getElementById('publish-map-check-body');
+    if (!box) return;
+    var csrfEl = document.querySelector('[name=csrfmiddlewaretoken]');
+    function post(url, body) {
+        return fetch(url, {method: 'POST', headers: {'X-CSRFToken': csrfEl ? csrfEl.value : ''}, body: body});
+    }
+    box.querySelectorAll('[data-pmc-layer]').forEach(function(li) {
+        var id = li.getAttribute('data-pmc-layer');
+        var all = li.querySelector('[data-pmc-all]');
+        var remove = li.querySelector('[data-pmc-remove]');
+        if (all) all.addEventListener('click', function() {
+            var fd = new FormData(); fd.append('scope', 'all');
+            post(box.dataset.placeUrl.replace(/\/0\//, '/' + id + '/'), fd).then(function(r) {
+                if (r.ok) { all.parentNode.querySelector('.pmc-warn').textContent = '{% filter escapejs %}{% trans "every section" %}{% endfilter %}'; all.remove(); if (remove) remove.remove(); }
+            });
+        });
+        if (remove) remove.addEventListener('click', function() {
+            post(box.dataset.deleteUrl.replace(/\/0\//, '/' + id + '/'), new FormData()).then(function(r) { if (r.ok) li.remove(); });
+        });
+    });
+})();
+</script>
+{% endif %}

@@ -56,6 +56,13 @@ REPORT_PAYWALL_SHOWN = 'report_paywall_shown'     # surface: editor | start | im
 REPORT_PDF_DOWNLOADED = 'report_pdf_downloaded'   # report_id, surface: editor | page
 DATA_EXPORTED = 'data_exported'
 
+# Map layers and the study area (change map-layers-study-area): ids and choices only, never a
+# layer name, a place name or a geometry. Never sent from a respondent page.
+LAYER_ADDED = 'layer_added'                  # survey_id, source: upload | data | draw, surface
+LAYER_PLACED = 'layer_placed'                # survey_id, layer_id, scope: all | sections, automatic
+STUDY_AREA_SET = 'study_area_set'            # survey_id, source, fog, refuse_outside, surface
+PUBLISH_CHECK_SHOWN = 'publish_check_shown'  # survey_id, layers, unplaced, study_area (bool)
+
 # Team collaboration (spec survey-comment-threads). Creator events: who
 # discussed what, never what was said -- no body, mentions or file names.
 COMMENT_THREAD_OPENED = 'comment_thread_opened'

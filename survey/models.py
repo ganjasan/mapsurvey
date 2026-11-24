@@ -1016,6 +1016,80 @@ CONTENT_VALIGN_CHOICES = (
 )
 
 
+def legend_only_q():
+    """Q matching the legacy legend-only Objects questions (`panel_mode='legend'`, no sub-question):
+    since change map-layers-study-area their layer shows through a placement, so the editor and the
+    respondent page list them nowhere; release PR 2 deletes the rows. A new Objects question without
+    sub-questions yet is NOT one of them — it is a question being written."""
+    from django.db.models import Exists, OuterRef
+    subs = Question.objects.filter(parent_question_id=OuterRef('pk'))
+    return Q(input_type='layer_objects', panel_mode='legend') & ~Exists(subs)
+
+
+class LayerPlacement(models.Model):
+    """A reference layer on the maps of a survey (change map-layers-study-area, spec
+    map-layer-placement): the one thing that puts a layer on a section's map.
+
+    Keyed like the translation table — the CANONICAL survey plus section references
+    (`<code>` or `<code>#<n>`, see `survey.section_refs`), never section FKs — so draft
+    copies, publish and restore read the canonical rows and nothing copies them."""
+    SCOPE_ALL = 'all'
+    SCOPE_SECTIONS = 'sections'
+    SCOPE_CHOICES = [(SCOPE_ALL, _('Every section with a map')), (SCOPE_SECTIONS, _('Picked sections'))]
+
+    survey = models.ForeignKey('SurveyHeader', on_delete=models.CASCADE, related_name='layer_placements')
+    layer = models.ForeignKey('SurveyMapLayer', on_delete=models.CASCADE, related_name='placements')
+    scope = models.CharField(max_length=8, choices=SCOPE_CHOICES, default=SCOPE_ALL)
+    sections = models.JSONField(default=list, blank=True,
+                                help_text=_('`sections` scope only: section references `<code>` or `<code>#<n>`.'))
+    position = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        app_label = 'survey'
+        ordering = ['position', 'id']
+        constraints = [
+            models.UniqueConstraint(fields=['survey', 'layer'], name='layer_placement_one_per_survey'),
+        ]
+
+    def __str__(self):
+        return f'{self.survey_id} / layer {self.layer_id} ({self.scope})'
+
+
+STUDY_AREA_SOURCE_CHOICES = [
+    ('place', _('Place name')),
+    ('upload', _('Uploaded file')),
+    ('layer', _('Survey layer')),
+    ('draw', _('Drawn')),
+]
+
+
+class StudyArea(models.Model):
+    """The area a survey is about (change map-layers-study-area, spec survey-study-area, #303).
+    Not a layer: one per CANONICAL survey, read by draft copies and versions through
+    `layer_owner`. The respondent map opens on it, `fog` greys the outside, and
+    `refuse_outside` makes the browser and the section POST refuse map answers outside it."""
+    survey = models.OneToOneField('SurveyHeader', on_delete=models.CASCADE, related_name='study_area')
+    geometry = geomodels.MultiPolygonField(srid=4326)
+    source = models.CharField(max_length=8, choices=STUDY_AREA_SOURCE_CHOICES, default='draw')
+    place_name = models.CharField(max_length=255, blank=True, default='')
+    osm_ref = models.CharField(max_length=40, blank=True, default='',
+                               help_text=_('OpenStreetMap object the boundary came from, e.g. `R123456`.'))
+    fog = models.BooleanField(default=True)
+    refuse_outside = models.BooleanField(default=False)
+    # Creator text shown when a mark is refused; keyed by language like `thanks_html`,
+    # written by the study area service and the Translations tab (`survey:study_area_message`).
+    message = models.JSONField(default=dict, blank=True)
+    refused_marks = models.PositiveIntegerField(default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        app_label = 'survey'
+
+    def __str__(self):
+        return f'Study area of {self.survey_id}'
+
+
 #survey sections
 class SurveySection(models.Model):
     is_head = models.BooleanField(default=False)
@@ -1096,7 +1170,8 @@ class SurveySection(models.Model):
 
     def questions(self):
         if not hasattr(self, "__qcache"):
-            self.__qcache = Question.objects.filter(survey_section=self).filter(parent_question_id__isnull=True).order_by('order_number')
+            self.__qcache = (Question.objects.filter(survey_section=self).filter(parent_question_id__isnull=True)
+                             .exclude(legend_only_q()).order_by('order_number'))
         return self.__qcache
 
     def answer_count(self):

@@ -1387,3 +1387,7 @@ msgstr "%(amount)s už vienetą"
 #: budget-question
 msgid "{left} left after it"
 msgstr "po to lieka {left}"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "Šiame žemėlapyje"

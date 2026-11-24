@@ -20,7 +20,8 @@ BLOCK = (int, Field(description='A block id from get_report.'))
 MAP_SETTINGS = (
     'A map is drawn as `view` heat, hotspots (point questions only), squares or marks (needs `show_marks`), '
     'with the view\'s `opts` (send the whole set), `color`, `name`, a kept `frame` [west, south, east, north] '
-    '(null clears it), `legend`, `scale`, `toggle`, `basemap` and `popup_fields`; `layers` are up to 3 other '
+    '(null clears it), `legend`, `scale`, `toggle`, `study_area` (the survey\'s study area outline, on by default), '
+    '`basemap` and `popup_fields`; `layers` are up to 3 other '
     'map questions drawn on the same map — always the whole list: read it from get_report, change it, send it '
     'back (ids are kept). A layer\'s `show_marks` is off unless the person asks. A crosstab\'s look is '
     '`display` {view: bars | stacked | ranking | table, values: percent | count, sort}.'

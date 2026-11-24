@@ -96,6 +96,59 @@ class FrameResolutionTest(_MapFixture):
         spec = static_map.resolve_frame(self.section, self.survey)
         self.assertEqual((spec.zoom, spec.note), (static_map.WORLD_ZOOM, 'world'))
 
+    def test_study_area_frames_the_map(self):
+        """
+        GIVEN a survey whose study area covers part of Midtown, Atlanta, with fog on, and a section
+              start 20 km away
+        WHEN the frame is resolved and rendered on an empty basemap
+        THEN the frame is centred on the area (the outside start loses) and the outside is greyed
+             while the inside stays white (spec printable-form "Paper map on the study area")
+        """
+        from survey.services import study_area as svc_area
+        svc_area.set_area(None, self.survey, {'type': 'Polygon', 'coordinates': [[
+            [-84.39, 33.78], [-84.38, 33.78], [-84.38, 33.79], [-84.39, 33.79], [-84.39, 33.78]]]})
+        self.section.start_map_postion = Point(-84.2, 33.9)
+        self.section.save()
+        spec = static_map.resolve_frame(self.section, self.survey)
+        self.assertAlmostEqual(spec.lat, 33.785, places=3)
+        self.assertAlmostEqual(spec.lng, -84.385, places=3)
+        image = static_map.Image.new('RGB', (spec.width * SCALE, spec.height * SCALE), (255, 255, 255))
+        self.assertTrue(static_map.draw_study_area(image, self.survey, spec))
+        centre = image.getpixel((image.width // 2, image.height // 2))
+        corner = image.getpixel((5, 5))
+        self.assertEqual(centre, (255, 255, 255))
+        self.assertLess(corner[0], 200)
+
+    def test_section_start_inside_the_area_wins(self):
+        """
+        GIVEN a study area and a section start inside it
+        THEN the frame keeps the section's own centre and zoom
+        """
+        from survey.services import study_area as svc_area
+        svc_area.set_area(None, self.survey, {'type': 'Polygon', 'coordinates': [[
+            [-84.39, 33.78], [-84.38, 33.78], [-84.38, 33.79], [-84.39, 33.79], [-84.39, 33.78]]]})
+        self.section.start_map_postion = Point(-84.386, 33.784)
+        self.section.start_map_zoom = 16
+        self.section.save()
+        spec = static_map.resolve_frame(self.section, self.survey)
+        self.assertEqual((spec.lat, spec.lng, spec.zoom), (33.784, -84.386, 16))
+
+    def test_only_placed_layers_are_drawn(self):
+        """
+        GIVEN a layer placed on section 2 only
+        WHEN section 1's frame is drawn
+        THEN no feature of that layer is drawn there, and section 2's frame draws it
+        """
+        from survey.models import LayerPlacement
+        layer = SurveyMapLayer.objects.create(survey=self.survey, name='Parks', geojson=_fc(
+            _feature({'type': 'Point', 'coordinates': [13.4, 52.5]})))
+        second = SurveySection.objects.create(survey_header=self.survey, name='map2', title='Map 2', code='S2')
+        LayerPlacement.objects.create(survey=self.survey, layer=layer, scope='sections', sections=['S2'])
+        spec = static_map.FrameSpec(52.5, 13.4, 14, 'streets', 'S1')
+        blank = lambda: static_map.Image.new('RGB', (spec.width * SCALE, spec.height * SCALE), (255, 255, 255))
+        self.assertEqual(static_map.draw_layers(blank(), self.survey, spec, section=self.section)[0], 0)
+        self.assertEqual(static_map.draw_layers(blank(), self.survey, spec, section=second)[0], 1)
+
     def test_section_basemap_override_names_the_outdoors_style(self):
         """
         GIVEN a section with override_basemap 'topo' and a token
@@ -209,6 +262,12 @@ class FrameRenderTest(_MapFixture):
         self.section.start_map_zoom = 13
         self.section.save()
 
+    def _place_all(self):
+        """Every layer on every map section: only placed layers are printed."""
+        from survey.models import LayerPlacement
+        for layer in SurveyMapLayer.objects.filter(survey=self.survey):
+            LayerPlacement.objects.get_or_create(survey=self.survey, layer=layer)
+
     def test_unavailable_basemap_prints_a_grid_with_layers(self):
         """
         GIVEN no token and a point layer east of the frame's centre
@@ -219,6 +278,7 @@ class FrameRenderTest(_MapFixture):
         SurveyMapLayer.objects.create(
             survey=self.survey, name='Spot', color='#ff0000',
             geojson=_fc(_feature({'type': 'Point', 'coordinates': [east[0], east[1]]})))
+        self._place_all()
         with override_settings(MAPBOX_ACCESS_TOKEN='', MAPBOX_SERVER_TOKEN=''):
             frame = static_map.render_frame(self.section, self.survey)
         self.assertFalse(frame.basemap_ok)
@@ -246,6 +306,7 @@ class FrameRenderTest(_MapFixture):
             survey=self.survey, name='Spot', color='#ff0000',
             geojson=_fc(_feature({'type': 'Point', 'coordinates': [east[0], east[1]]})))
         png = _png(FRAME_W * SCALE, FRAME_H * SCALE, (255, 255, 255))
+        self._place_all()
         with override_settings(MAPBOX_ACCESS_TOKEN='tok'), \
                 mock.patch('survey.print.static_map.requests.get', return_value=_response(200, png)):
             frame = static_map.render_frame(self.section, self.survey)

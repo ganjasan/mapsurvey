@@ -51,8 +51,11 @@ def layers_for(survey):
     geometry text deferred (see GEOMETRY_TEXT_FIELDS): the canonical survey's own
     layers plus the layers of the PUBLIC datasets linked to it "From Data" (change
     data-links) — linked, never copied, so a dataset edit shows on every survey. A
-    subquery on ids, so an owned layer is never repeated by the join. Write paths
-    resolve owned layers only (`owner.map_layers` / `survey=layer_owner(...)`)."""
+    subquery on ids, so an owned layer is never repeated by the join.
+
+    Since change map-layers-study-area uploaded and drawn layers live in Data: a survey owns only
+    its shared-map (`question`) layers and reaches every other layer through a link, so this is
+    also how the survey's own layer card, object editor, REST and MCP find a layer to edit."""
     from django.db.models import Q
     from data.models import DatasetLink
     from survey.models import SurveyMapLayer
@@ -60,6 +63,39 @@ def layers_for(survey):
     linked = (DatasetLink.objects.filter(survey=owner, dataset__privacy_class='public')
               .values('dataset__layer_id'))
     return SurveyMapLayer.objects.filter(Q(survey=owner) | Q(pk__in=linked)).defer(*GEOMETRY_TEXT_FIELDS)
+
+
+BOUNDARY_MAX_OBJECTS = 3
+
+
+def looks_like_boundary(layer):
+    """A layer that is probably the survey's study area: one to three polygons and nothing else
+    (prod 2026-11: 39 of 87 uploaded layers held ≤3 objects, most of them a hand-made boundary).
+    The Add layer dialog offers to make it the study area instead."""
+    kinds = list(_object_kinds(layer).values_list('kind', flat=True)[:BOUNDARY_MAX_OBJECTS + 1])
+    return 0 < len(kinds) <= BOUNDARY_MAX_OBJECTS and all(k in ('POLYGON', 'MULTIPOLYGON') for k in kinds)
+
+
+def _object_kinds(layer):
+    """The layer's objects annotated with `kind`, PostGIS GeometryType (POINT, POLYGON…)."""
+    from django.db.models import CharField, Func
+    from survey.models import LayerObject
+    return LayerObject.objects.filter(layer=layer).annotate(
+        kind=Func('geometry', function='GeometryType', output_field=CharField()))
+
+
+def has_polygons(layer):
+    """Whether the layer holds at least one polygon (a study area can be made from it)."""
+    return _object_kinds(layer).filter(kind__in=('POLYGON', 'MULTIPOLYGON')).exists()
+
+
+def layer_is_live(layer):
+    """Whether respondents of a published survey see this layer now: its own survey, or any
+    survey that links its dataset."""
+    from data.models import DatasetLink
+    if layer.survey_id is not None and layer.survey.status == 'published':
+        return True
+    return DatasetLink.objects.filter(dataset__layer_id=layer.pk, survey__status='published').exists()
 
 
 def layer_lite(question):
@@ -83,26 +119,34 @@ def layer_lite(question):
     return layer
 
 
+def placements_for(survey):
+    """The placements of a survey's maps, in stacking order: the CANONICAL survey's rows (draft
+    copies and versions read them, nothing copies them — spec map-layer-placement), limited to
+    layers the survey still reaches (`layers_for`), so a stale row never draws an unlinked layer."""
+    from survey.models import LayerPlacement
+    owner = layer_owner(survey)
+    reachable = layers_for(owner).values('pk')
+    return LayerPlacement.objects.filter(survey=owner, layer_id__in=reachable).order_by('position', 'id')
+
+
+def placement_covers(placement, ref):
+    """Whether a placement puts its layer on the section whose reference is `ref`."""
+    from survey.section_refs import matches
+    if placement.scope == 'all':
+        return True
+    return any(matches(r, ref) for r in (placement.sections or []))
+
+
 def section_layer_ids(section):
-    """The layers on a section's map: those bound by its top-level Objects-on-
-    the-map questions, in question order (spec reference-overlay-layers "Layer
-    visibility is controllable per section": visibility IS binding — there is
-    no second list). Form-layout sections have no map and no layers.
-    A budget whose items are a layer's objects binds its layer the same way
-    (change budget-question); the form keeps `layer` only for that source."""
-    from survey.models import Question
+    """The layers on a section's map, in stacking order: those whose placement covers the
+    section (spec map-layer-placement "A layer is shown by its placement on the map"). A question
+    never puts a layer on a map by itself — the Objects question and the budget place their layer
+    when they are saved. Sections without a map (form, image) have no layers."""
+    from survey.section_refs import section_ref
     if not section.has_map:
         return []
-    seen = []
-    rows = (Question.objects
-            .filter(survey_section=section, parent_question_id__isnull=True,
-                    input_type__in=('layer_objects', 'budget'), layer__isnull=False)
-            .order_by('order_number', 'id')
-            .values_list('layer_id', flat=True))
-    for layer_id in rows:
-        if layer_id not in seen:
-            seen.append(layer_id)
-    return seen
+    ref = section_ref(section)
+    return [p.layer_id for p in placements_for(section.survey_header) if placement_covers(p, ref)]
 
 
 def default_question_name(layer):
@@ -113,36 +157,6 @@ def default_question_name(layer):
         return "Other respondents' marks"
     name = re.sub(r'[-_]+', ' ', (layer.name or '').strip()).strip()
     return (name[:1].upper() + name[1:]) if name else 'Layer'
-
-
-def ensure_layer_questions(section, hidden_ids=()):
-    """Give `section` a display-only Objects question for every owner layer it
-    is not already showing, except the ids in `hidden_ids`.
-
-    Migration 0074 does the same over historical models for the rows that
-    existed at deploy time; this is the live copy for archives that still
-    carry a section `hidden_layers` list (spec survey-serialization "Section
-    layer visibility rides as questions"). Returns the questions created."""
-    from django.db.models import Max
-    from survey.models import Question
-    if not section.has_map:
-        return []
-    hidden = {i for i in hidden_ids if isinstance(i, int)}
-    bound = set(section_layer_ids(section))
-    max_order = Question.objects.filter(
-        survey_section=section, parent_question_id__isnull=True,
-    ).aggregate(m=Max('order_number'))['m'] or 0
-    created = []
-    for layer in layers_for(section.survey_header).defer(*GEOMETRY_TEXT_FIELDS).order_by('position', 'id'):
-        if layer.pk in hidden or layer.pk in bound:
-            continue
-        max_order += 1
-        created.append(Question.objects.create(
-            survey_section=section, name=default_question_name(layer)[:250], input_type='layer_objects',
-            layer=layer, required=False, min_objects=0, objects_search='auto',
-            panel_mode='legend', order_number=max_order, choices=None,
-        ))
-    return created
 
 
 class LayerValidationError(Exception):
@@ -326,7 +340,14 @@ def build_map_layers_metadata(survey):
     # defer('geojson'): the 100s-of-KB geometry column loaded on every map
     # surface render fragments the worker heap into an RSS ratchet (the
     # 2026-09 "exceeded memory limits" incident); only config fields render.
-    for layer in layers_for(survey).defer(*GEOMETRY_TEXT_FIELDS):
+    # Stacking order = placement order (change map-layers-study-area); layers on no map follow.
+    stacking = {pk: i for i, pk in enumerate(placements_for(survey).values_list('layer_id', flat=True))}
+    layers = sorted(layers_for(survey).defer(*GEOMETRY_TEXT_FIELDS),
+                    key=lambda l: (stacking.get(l.pk, len(stacking)), l.position, l.pk))
+    from survey.models import Question, legend_only_q
+    asked = set(Question.objects.filter(layer_id__in=[l.pk for l in layers], input_type='layer_objects')
+                .exclude(legend_only_q()).values_list('layer_id', flat=True))
+    for layer in layers:
         hidden = hidden_names(layer)
         color = view_colors.get(layer.pk) or layer.color
         style = normalize_style(layer.style, color)
@@ -356,7 +377,7 @@ def build_map_layers_metadata(survey):
             # Bound to an Objects-on-the-map question: features are clickable
             # and open the object popup (card + sub-questions) instead of the
             # read-only name/description popup — spec reference-overlay-layers.
-            'bound': layer.questions.filter(input_type='layer_objects').exists(),
+            'bound': layer.pk in asked,
             'url': reverse('survey_layer_geojson', kwargs={
                 'survey_slug': str(survey.uuid), 'layer_id': layer.pk,
             }),

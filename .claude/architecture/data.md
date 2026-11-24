@@ -38,8 +38,10 @@ dictionary fields by label (`object_card_payload['fields']`).
 (canonical `survey` OR `site_block`, plus the card `fields` a survey shows). `survey.layers.layers_for`
 returns owned layers ∪ the layers of PUBLIC datasets linked to the canonical survey (subquery on ids),
 so every read surface follows (respondent metadata, question layer picker, Responses, print, ZIP,
-the gated endpoint `_gated_layer`); WRITE paths keep `owner.map_layers` / `survey=layer_owner(...)`, so
-a survey never edits or deletes a layer it borrows — do not switch a write path to `layers_for`.
+the gated endpoint `_gated_layer`). Since change `map-layers-study-area` every uploaded or drawn layer
+lives in Data and the survey reaches it through a link, so the survey's layer card, object editor,
+REST and MCP edit a layer through `layers_for` too; removing it from a survey unlinks and unplaces it
+(`services.layers.delete(…, survey)`), only Data's delete page deletes the dataset.
 Guards are `data.links.link_refusal` (public only, survey caps 5,000/10 MB, 10 layers incl. links);
 a linked dataset cannot go private; unlink/delete refuse while a question is bound. A Site map block
 stores `data['dataset']` and the page fetches `/p/<slug>/blocks/<id>/dataset.geojson` (never inlined);

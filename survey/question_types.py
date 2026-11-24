@@ -58,7 +58,7 @@ PICKER_TYPES = {
                     "hint": "Respondent sprays a fuzzy area with a brush — density shows confidence"},
     "layer_objects": {"group": "geo", "icon": "fa-map-marked-alt",
                     "label": "Objects on the map",
-                    "hint": "Puts a reference layer on this section's map; add sub-questions to ask about each object"},
+                    "hint": "Asks respondents about each object of a layer; the sub-questions are what they answer"},
     "photo":       {"group": "files", "icon": "fa-camera",
                     "hint": "Respondent takes or uploads a photo"},
     "audio":       {"group": "files", "icon": "fa-microphone",

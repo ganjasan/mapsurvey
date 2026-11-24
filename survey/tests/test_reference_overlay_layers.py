@@ -11,7 +11,8 @@ from unittest import mock
 import json
 import re
 import zipfile
-from survey.models import Organization, SurveyHeader, SurveySection, Question, SurveySession, Answer, Membership, SurveyCollaborator
+from survey.models import Organization, SurveyHeader, SurveySection, Question, SurveySession, Answer, Membership, SurveyCollaborator, LayerPlacement
+from survey.layers import layers_for
 from survey.serialization import export_survey_to_zip, import_survey_from_zip
 import os
 from survey.tests.helpers import _objects_layer, _validated_geojson_text, _zones_geojson
@@ -307,12 +308,13 @@ class LayerRespondentRenderingTest(TestCase):
         self.assertIn('layers/%d.geojson' % self.layer.pk, html)
         self.assertNotIn('"Area 1"', html)
 
-    def test_section_layers_are_the_ones_its_questions_bind(self):
+    def test_section_layers_are_its_placements(self):
         """
-        GIVEN a survey with a layer, and a section with no Objects question for it
-        WHEN a respondent opens the section, then again after an Objects question binds the layer
-        THEN the section element first lists no visible layer, then that layer's id
-             (spec reference-overlay-layers: visibility is binding)
+        GIVEN a survey with a layer that no placement puts on a map
+        WHEN a respondent opens the section, after an Objects question row binds the layer, then
+             after the layer is placed on every section
+        THEN the section lists no visible layer twice — a question alone never shows a layer —
+             and then that layer's id (spec reference-overlay-layers "Layer shown through a placement")
         """
         html = self.client.get(self.url).content.decode()
         self.assertIn('data-visible-layers="[]"', html)
@@ -321,8 +323,10 @@ class LayerRespondentRenderingTest(TestCase):
             layer=self.layer, order_number=2,
         )
         html = self.client.get(self.url).content.decode()
+        self.assertIn('data-visible-layers="[]"', html)
+        LayerPlacement.objects.create(survey=self.survey, layer=self.layer, scope='all')
+        html = self.client.get(self.url).content.decode()
         self.assertIn('data-visible-layers="[%d]"' % self.layer.pk, html)
-        self.assertIn('data-panel-mode="list"', html)
 
     @override_settings(MAP_REFERENCE_LAYERS=False)
     def test_kill_switch_removes_layer_metadata(self):
@@ -382,20 +386,18 @@ class LayerPreviewTest(TestCase):
 
     def test_preview_honours_per_section_visibility(self):
         """
-        GIVEN a section whose Objects question binds the layer in legend mode
+        GIVEN a layer placed on the previewed section only
         WHEN its preview is rendered
-        THEN the preview lists that layer as visible and renders the legend line, as the respondent page would
+        THEN the preview lists that layer as visible, as the respondent page would
+             (spec reference-overlay-layers "The editor preview renders reference layers")
         """
-        Question.objects.create(
-            survey_section=self.section, code="LP002", name="Zones", input_type="layer_objects",
-            layer=self.layer, panel_mode='legend', order_number=2,
-        )
+        from survey.section_refs import section_ref
+        LayerPlacement.objects.create(survey=self.survey, layer=self.layer, scope='sections',
+                                      sections=[section_ref(self.section)])
 
         html = self.client.get(self.url).content.decode()
 
         self.assertIn('data-visible-layers="[%d]"' % self.layer.pk, html)
-        self.assertIn('data-panel-mode="legend"', html)
-        self.assertIn('data-lo-toggle', html)
 
     @override_settings(MAP_REFERENCE_LAYERS=False)
     def test_kill_switch_empties_the_preview_too(self):
@@ -436,6 +438,36 @@ class LayerEditorTest(TestCase):
             name, (content or _zones_geojson()).encode(), content_type='application/geo+json')
         return self.client.post(
             reverse('editor_survey_layer_create', args=[self.survey.uuid]), {'layer': payload})
+
+    def test_projected_geojson_is_reprojected(self):
+        """
+        GIVEN a GeoJSON that declares NAD83 / Georgia West (US feet) — the file Aaron's study area came in
+        WHEN it is uploaded
+        THEN the layer is created with its object at the matching WGS 84 position around Atlanta, and
+             the response names the coordinate system it was converted from
+        """
+        from survey.models import LayerObject
+        gj = {'type': 'FeatureCollection', 'crs': {'type': 'name', 'properties': {'name': 'urn:ogc:def:crs:EPSG::2240'}},
+              'features': [{'type': 'Feature', 'properties': {'name': 'Corridor'}, 'geometry': {
+                  'type': 'Polygon', 'coordinates': [[[2228000, 1376000], [2231000, 1376000], [2231000, 1379000],
+                                                      [2228000, 1379000], [2228000, 1376000]]]}}]}
+        response = self._upload(json.dumps(gj), name='corridor.geojson')
+        self.assertEqual(response.status_code, 201, response.content)
+        self.assertIn('2240', response.json()['converted_from'])
+        self.assertTrue(response.json()['looks_like_boundary'])
+        geom = LayerObject.objects.get(layer_id=response.json()['id']).geometry
+        self.assertAlmostEqual(geom.centroid.y, 33.78, delta=0.1)
+        self.assertAlmostEqual(geom.centroid.x, -84.39, delta=0.1)
+
+    def test_csv_with_coordinates_is_accepted(self):
+        """
+        GIVEN a CSV with lat/lon columns
+        WHEN it is uploaded
+        THEN a point layer with one object per row is created
+        """
+        response = self._upload('name,lat,lon\nA,38.72,-88.10\nB,38.73,-88.09\n', name='sites.csv')
+        self.assertEqual(response.status_code, 201, response.content)
+        self.assertEqual(response.json()['feature_count'], 2)
 
     def test_three_dimensional_upload_creates_a_layer(self):
         """
@@ -501,15 +533,20 @@ class LayerEditorTest(TestCase):
         """
         GIVEN an owner uploading a valid GeoJSON
         WHEN the create endpoint receives it
-        THEN a layer is stored and the response lists its property names
+        THEN a public workspace layer dataset is created, linked and placed on every map section,
+             and the response lists its property names (spec reference-overlay-layers "Successful upload")
         """
-        from survey.models import SurveyMapLayer
+        from data.models import Dataset, DatasetLink
         response = self._upload()
         self.assertEqual(response.status_code, 201)
         data = response.json()
         self.assertEqual(data['feature_count'], 3)
         self.assertEqual(data['properties'], ['name', 'zone_id'])
-        self.assertEqual(SurveyMapLayer.objects.filter(survey=self.survey).count(), 2)
+        self.assertEqual(layers_for(self.survey).count(), 2)
+        dataset = Dataset.objects.get(layer_id=data['id'])
+        self.assertEqual((dataset.privacy_class, dataset.layer.survey_id), ('public', None))
+        self.assertTrue(DatasetLink.objects.filter(dataset=dataset, survey=self.survey).exists())
+        self.assertEqual(LayerPlacement.objects.get(survey=self.survey, layer_id=data['id']).scope, 'all')
 
     def test_eleventh_layer_is_refused(self):
         """
@@ -618,15 +655,16 @@ class LayerEditorTest(TestCase):
         """
         GIVEN a survey with a layer
         WHEN the section form renders
-        THEN there is no "Reference layers" checklist, only the hint to add an Objects question
-             (spec survey-editor "Layers are put on a map by adding a question")
+        THEN there is no "Reference layers" checklist and the help text names the Map card
+             (spec survey-editor "The section form points at the Map card")
         """
         html = self.client.get(
             reverse('editor_section_detail', args=[self.survey.uuid, self.section.id]),
         ).content.decode()
         self.assertNotIn('name="visible_layers"', html)
         self.assertNotIn('reference_layers_submitted', html)
-        self.assertIn('add an “Objects on the map” question', html)
+        self.assertIn('in its Map card above', html)
+        self.assertNotIn('add an “Objects on the map” question', html)
 
     def test_same_layer_twice_in_a_section_is_refused(self):
         """
@@ -762,12 +800,8 @@ class LayerSerializationTest(TestCase):
             key_field="zone_id", show_popups=True, geojson=geojson, feature_count=count,
             size_bytes=len(geojson), position=0,
         )
-        # The layer is on the section's map through an Objects question in
-        # legend mode (change layers-by-question).
-        self.bins = Question.objects.create(
-            survey_section=self.first, code="LS002", name="Zones", input_type="layer_objects",
-            layer=self.layer, panel_mode='legend', order_number=2,
-        )
+        # The layer is on every map section through its placement (change map-layers-study-area).
+        LayerPlacement.objects.create(survey=self.survey, layer=self.layer, scope='all')
 
     def _export(self):
         buf = BytesIO()
@@ -777,28 +811,48 @@ class LayerSerializationTest(TestCase):
 
     def test_layers_round_trip_with_section_visibility(self):
         """
-        GIVEN a survey whose section shows its layer through a legend-mode Objects question
+        GIVEN a survey whose layer is placed on every map section
         WHEN it is exported and re-imported
-        THEN the layer arrives with its config, the question binds the new layer in legend
-             mode, and no hidden_layers key is written
+        THEN the layer arrives as a linked dataset with its config and the same placement, and no
+             hidden_layers key is written (spec survey-serialization "Layers and placements round-trip")
         """
         buf = self._export()
         with zipfile.ZipFile(buf) as zf:
             data = json.loads(zf.read('survey.json'))
             self.assertNotIn('hidden_layers', data['survey']['sections'][0])
+            self.assertEqual(data['survey']['placements'], [{'layer': 0, 'scope': 'all', 'sections': []}])
         buf.seek(0)
         self.survey.name = 'layer_ser_survey_old'
         self.survey.save()
         imported, warnings = import_survey_from_zip(buf)
-        layer = imported.map_layers.get()
+        layer = layers_for(imported).get()
         self.assertEqual(
             (layer.name, layer.color, layer.label_field, layer.key_field, layer.show_popups, layer.feature_count),
             ('Counting zones', '#e8971e', 'name', 'zone_id', True, 3),
         )
-        section = SurveySection.objects.get(survey_header=imported, name='s1')
-        q = Question.objects.get(survey_section=section, input_type='layer_objects')
-        self.assertEqual((q.layer_id, q.panel_mode), (layer.pk, 'legend'))
+        self.assertIsNone(layer.survey_id)
+        placement = LayerPlacement.objects.get(survey=imported)
+        self.assertEqual((placement.layer_id, placement.scope), (layer.pk, 'all'))
         self.assertEqual(warnings, [])
+
+    def test_two_placements_round_trip(self):
+        """
+        GIVEN a survey with two layers, the first on every section and the second on section 2 only
+        WHEN it is exported and re-imported
+        THEN the imported survey has the same two placements
+        """
+        from survey.models import SurveyMapLayer
+        SurveySection.objects.create(survey_header=self.survey, name="s2", title="S2", code="S2")
+        geojson, count, _ = _validated_geojson_text(_zones_geojson().encode())
+        second = SurveyMapLayer.objects.create(survey=self.survey, name="Crossings", geojson=geojson,
+                                               feature_count=count, size_bytes=len(geojson), position=1)
+        LayerPlacement.objects.create(survey=self.survey, layer=second, scope='sections', sections=['S2'], position=2)
+        buf = self._export()
+        self.survey.name = 'layer_ser_two_old'
+        self.survey.save()
+        imported, _ = import_survey_from_zip(buf)
+        by_name = {p.layer.name: (p.scope, p.sections) for p in LayerPlacement.objects.filter(survey=imported)}
+        self.assertEqual(by_name, {'Counting zones': ('all', []), 'Crossings': ('sections', ['S2'])})
 
     def _legacy_archive(self, hidden):
         """The archive as exported before layers-by-question: a `hidden_layers`
@@ -813,23 +867,53 @@ class LayerSerializationTest(TestCase):
                     sec['hidden_layers'] = hidden
                     sec['questions'] = [q for q in sec['questions'] if q['input_type'] != 'layer_objects']
                     data['survey']['name'] = 'legacy_hidden_%d' % len(hidden)
+                    data['survey'].pop('placements', None)   # archives from before placements
                     dst.writestr(item, json.dumps(data))
                 else:
                     dst.writestr(item, src.read(item))
         out.seek(0)
         return out
 
-    def test_legacy_archive_with_visible_layer_gets_a_legend_question(self):
+    def test_legacy_archive_with_visible_layer_gets_a_placement(self):
         """
-        GIVEN an archive from before this change whose section left the layer visible
+        GIVEN an archive from before placements whose section left the layer visible (`hidden_layers`)
         WHEN it is imported
-        THEN the section gets one display-only Objects question bound to the layer in legend mode
+        THEN the layer is placed on every map section and no Objects question is created
+             (spec survey-serialization "Archive with hidden_layers")
         """
         imported, _ = import_survey_from_zip(self._legacy_archive([]))
         section = SurveySection.objects.get(survey_header=imported, name='s1')
-        q = Question.objects.get(survey_section=section, input_type='layer_objects')
-        self.assertEqual((q.layer_id, q.panel_mode, q.min_objects, q.name), (imported.map_layers.get().pk, 'legend', 0, 'Counting zones'))
-        self.assertFalse(q.collects_objects)
+        self.assertFalse(Question.objects.filter(survey_section=section, input_type='layer_objects').exists())
+        placement = LayerPlacement.objects.get(survey=imported)
+        self.assertEqual((placement.layer_id, placement.scope), (layers_for(imported).get().pk, 'all'))
+
+    def test_legacy_archive_legend_question_becomes_a_placement(self):
+        """
+        GIVEN an archive from layers-by-question whose section shows the layer through a legend-only
+              Objects question
+        WHEN it is imported
+        THEN the survey places the layer on that section and has no such question
+             (spec survey-serialization "Archive with legend-only questions")
+        """
+        buf = self._export()
+        out = BytesIO()
+        with zipfile.ZipFile(buf) as src, zipfile.ZipFile(out, 'w') as dst:
+            for item in src.namelist():
+                if item == 'survey.json':
+                    data = json.loads(src.read(item))
+                    data['survey'].pop('placements', None)
+                    data['survey']['name'] = 'legacy_legend_q'
+                    data['survey']['sections'][0]['questions'].append({
+                        "code": "LS002", "order_number": 2, "name": "Zones", "input_type": "layer_objects",
+                        "layer": 0, "panel_mode": "legend", "min_objects": 0, "sub_questions": []})
+                    dst.writestr(item, json.dumps(data))
+                else:
+                    dst.writestr(item, src.read(item))
+        out.seek(0)
+        imported, _ = import_survey_from_zip(out)
+        self.assertFalse(Question.objects.filter(survey_section__survey_header=imported,
+                                                 input_type='layer_objects').exists())
+        self.assertEqual(LayerPlacement.objects.get(survey=imported).scope, 'all')
 
     def test_legacy_archive_with_hidden_layer_gets_no_question(self):
         """

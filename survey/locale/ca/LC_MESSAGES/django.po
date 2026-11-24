@@ -1385,3 +1385,7 @@ msgstr "%(amount)s cadascuna"
 #: budget-question
 msgid "{left} left after it"
 msgstr "en queden {left} després"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "En aquest mapa"

@@ -22,41 +22,10 @@ in.
 - **WHEN** the creator opens a map-layout section's settings
 - **THEN** there is no "Reference layers" block; the layout field's help text says layers are added as Objects-on-the-map questions
 
-## MODIFIED Requirements
-
-### Requirement: Source geo questions are protected
-The system SHALL refuse to delete a point, line or polygon question whose code is the
-`source_question_code` of a `question` layer **that an Objects-on-the-map question of the
-same survey header still shows**, with a message naming that question and its section.
-Readers in other headers (the published version while a draft is edited) SHALL NOT block
-the draft. A `question` layer no Objects question in any header shows is derived data with
-no reader: deleting its source question SHALL delete the layer with it, and deleting the
-last Objects question that shows a `question` layer SHALL delete the layer; while any
-header still shows it the layer stays. Question codes are not editable in the editor; where an import remaps codes, the
-layer's `source_question_code` SHALL follow the remap. The question form SHALL show a note
-naming the layer(s) that read its answers. Deleting any question SHALL refresh the editor
-preview.
-
-#### Scenario: Source question cannot be deleted while shown
-- **WHEN** the creator deletes `Q1` while an Objects question shows the layer sourced from `Q1`
-- **THEN** the deletion is refused with a message naming that Objects question
-
-#### Scenario: Last Objects question deleted
-- **WHEN** the creator deletes the only Objects question showing the marks layer of `Q1`
-- **THEN** the layer is deleted, the preview refreshes, and `Q1` can now be deleted
-
-#### Scenario: Remapped code follows on import
-- **WHEN** an archive whose `Q1` collides with an existing code is imported and `Q1` is remapped
-- **THEN** the layer's `source_question_code` is the remapped code
-
-#### Scenario: Published version still shows the layer
-- **WHEN** the creator deletes `Q1` in a draft copy whose own Objects question is gone, while the published version's Objects question still shows the marks layer
-- **THEN** the draft's `Q1` is deleted and the layer stays
-
 ### Requirement: Editor dialogs queue behind a closing dialog
-When a dialog is requested while the editor dialog is still visible or fading out (a
-409 answer to a request issued from a confirm's OK), the new dialog SHALL open after the
-previous one has hidden, so no dialog is lost and no backdrop is left over the page.
+A dialog requested while the editor dialog is still visible or fading out SHALL open after the
+previous one has hidden (e.g. a 409 answer to a request issued from a confirm's OK), so no dialog is
+lost and no backdrop is left over the page.
 
 #### Scenario: Refusal after a confirm
 - **WHEN** the creator confirms a delete that the server refuses with 409
@@ -99,3 +68,34 @@ layer's name.
 #### Scenario: Configured but unnamed
 - **WHEN** the creator picks a layer, adds a 👍/👎 sub-question and closes the modal without typing a name
 - **THEN** the question stays in the section, named after the layer
+
+## MODIFIED Requirements
+
+### Requirement: Source geo questions are protected
+The system SHALL refuse to delete a point, line or polygon question whose code is the
+`source_question_code` of a `question` layer **that an Objects-on-the-map question of the
+same survey header still shows**, with a message naming that question and its section.
+Readers in other headers (the published version while a draft is edited) SHALL NOT block
+the draft. A `question` layer no Objects question in any header shows is derived data with
+no reader: deleting its source question SHALL delete the layer with it, and deleting the
+last Objects question that shows a `question` layer SHALL delete the layer; while any
+header still shows it the layer stays. Question codes are not editable in the editor; where an import remaps codes, the
+layer's `source_question_code` SHALL follow the remap. The question form SHALL show a note
+naming the layer(s) that read its answers. Deleting any question SHALL refresh the editor
+preview.
+
+#### Scenario: Source question cannot be deleted while shown
+- **WHEN** the creator deletes `Q1` while an Objects question shows the layer sourced from `Q1`
+- **THEN** the deletion is refused with a message naming that Objects question
+
+#### Scenario: Last Objects question deleted
+- **WHEN** the creator deletes the only Objects question showing the marks layer of `Q1`
+- **THEN** the layer is deleted, the preview refreshes, and `Q1` can now be deleted
+
+#### Scenario: Remapped code follows on import
+- **WHEN** an archive whose `Q1` collides with an existing code is imported and `Q1` is remapped
+- **THEN** the layer's `source_question_code` is the remapped code
+
+#### Scenario: Published version still shows the layer
+- **WHEN** the creator deletes `Q1` in a draft copy whose own Objects question is gone, while the published version's Objects question still shows the marks layer
+- **THEN** the draft's `Q1` is deleted and the layer stays

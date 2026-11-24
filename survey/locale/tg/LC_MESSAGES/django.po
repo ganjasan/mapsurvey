@@ -1385,3 +1385,7 @@ msgstr "%(amount)s барои як дона"
 #: budget-question
 msgid "{left} left after it"
 msgstr "пас аз он {left} мемонад"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "Дар ин харита"

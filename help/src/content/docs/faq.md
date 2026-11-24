@@ -97,7 +97,15 @@ Build a map question that asks for a point or an area, then attach sub-questions
 <!-- source: landing /public-consultation-software/ -->
 ### How do we show consultees the plans?
 
-Upload the proposal as a reference layer (GeoJSON, exported from any GIS). Respondents see the scheme beneath the map, and an **Objects on the map** question lets them answer about each feature in it, such as a proposed crossing or a new route. See [Add a reference layer](/how-to/add-a-reference-layer/).
+Upload the proposal as a reference layer (GeoJSON, GeoPackage, shapefile, KML or CSV, in any coordinate system). It goes on every section with a map, under the respondents' answers, and an **Objects on the map** question lets them answer about each feature in it, such as a proposed crossing or a new route. See [Add a reference layer](/how-to/add-a-reference-layer/).
+
+### Why is my layer not on the map?
+
+A layer shows on the sections its **Where it shows** setting names. Open the section's **Map** card in Build and tick the layer, or set it to **Every section with a map** in **Survey settings › Layers used here**. The publish dialog also lists every layer that is on no map. See [Add a reference layer](/how-to/add-a-reference-layer/).
+
+### Can respondents be kept inside our area?
+
+Yes. Set the survey's study area by its place name: the map opens on it and greys out the rest, and you can refuse map answers outside it. See [Set the study area](/how-to/set-the-study-area/).
 
 <!-- source: landing /participatory-budgeting/ -->
 ### Can residents react to each other's proposals?

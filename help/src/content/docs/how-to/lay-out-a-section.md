@@ -16,7 +16,7 @@ You end up with a page laid out the way you want: the questions on the left or t
 
 1. Select the section in the left column. The section form opens with a **Layout** block.
 2. Under **Layout**, choose what fills the screen beside the questions:
-   - **Map** — the questions next to the map, as before.
+   - **Map** — the questions next to the map, as before. What the map shows — its layers and the study area — is set in the section's **Map** card at the top of its panel; see [Add a reference layer](/how-to/add-a-reference-layer/).
    - **Picture** — the questions next to a picture.
    - **Form** — a classic full-width form with no map and nothing beside it.
 3. For **Picture**, upload a picture under **Picture**. Leave it empty to show the survey's cover image (Settings → Cover image); with neither, the space is a plain tinted area.

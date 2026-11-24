@@ -1,0 +1,144 @@
+{% extends "editor/editor_base.html" %}
+{% load i18n %}
+{% load l10n %}
+{% load static %}
+{% load survey_filters %}
+{% block page_title %}{% trans "Study area" %} — {{ survey.name }}{% endblock %}
+{% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js" crossorigin="anonymous"></script>
+<style>
+  .sae { display:flex; flex-direction:column; height:calc(100vh - 49px); }
+  .sae-body { flex:1; display:flex; min-height:0; }
+  .sae-panel { width:380px; flex:none; background:var(--surface, var(--color-surface)); border-right:1px solid var(--border-color); overflow:auto; padding:.9rem 1rem; }
+  .sae-panel h6 { font-size:.8rem; font-weight:600; margin:1rem 0 .4rem; }
+  .sae-panel > h6:first-child { margin-top:0; }
+  .sae-search { display:flex; gap:.4rem; }
+  .sae-cands { list-style:none; padding:0; margin:.5rem 0 0; }
+  .sae-cand { border:1px solid var(--border-color); border-radius:8px; padding:.45rem .6rem; margin-bottom:.4rem; cursor:pointer; font-size:.82rem; }
+  .sae-cand:hover, .sae-cand:focus { border-color:var(--accent); outline:none; }
+  .sae-cand.sel { border-color:var(--accent); background:var(--accent-light); }
+  .sae-cand small { display:block; color:var(--color-text-muted); }
+  .sae-widths { display:flex; gap:.3rem; margin-top:.35rem; }
+  .sae-widths button { font-size:.72rem; padding:.1rem .5rem; }
+  .sae-ways { display:flex; flex-direction:column; gap:.35rem; }
+  .sae-ways .btn { text-align:left; font-size:.8rem; }
+  .sae-map { flex:1; position:relative; min-width:0; }
+  #sae-map { position:absolute; inset:0; }
+  .sae-hint { position:absolute; left:50%; top:12px; transform:translateX(-50%); background:var(--surface, var(--color-surface)); border-radius:999px; box-shadow:var(--shadow-md); padding:.3rem .8rem; font-size:.76rem; color:var(--color-text-muted); z-index:500; }
+  .sae-hint[hidden] { display:none; }
+  .sae-status { font-size:.76rem; color:var(--color-text-muted); }
+  .sae-msg { width:100%; min-height:3.5rem; font-size:.82rem; }
+  .sae-error { font-size:.8rem; }
+  .sae-error:empty { display:none; }
+  .sae-credit { font-size:.7rem; color:var(--color-text-muted); margin-top:1rem; }
+  .sae-banner { background:var(--color-warning-soft); border-bottom:1px solid var(--color-warning-line); color:var(--color-warning); padding:.45rem 1.5rem; font-size:.8rem; }
+</style>
+{% endblock %}
+{% block navbar_content %}
+{% survey_title survey %}
+{% include "editor/partials/_survey_nav_tabs.html" with active_tab="build" %}
+{% endblock %}
+{% block content %}
+<div class="sae" id="sae"
+     data-urls='{
+       "lookup": "{% url 'editor_study_area_lookup' survey.uuid %}",
+       "candidate": "{% url 'editor_study_area_candidate' survey.uuid %}",
+       "save": "{% url 'editor_study_area_save' survey.uuid %}",
+       "settings": "{% url 'editor_study_area_settings' survey.uuid %}",
+       "clear": "{% url 'editor_study_area_clear' survey.uuid %}",
+       "upload": "{% url 'editor_study_area_upload' survey.uuid %}",
+       "fromLayer": "{% url 'editor_study_area_from_layer' survey.uuid %}",
+       "back": "{% url 'editor_survey_detail' survey.uuid %}"
+     }'
+     data-strings='{
+       "noBoundary": "{% filter escapejs %}{% trans "No boundary in OpenStreetMap — starts as a rectangle you can adjust" %}{% endfilter %}",
+       "corridor": "{% filter escapejs %}{% trans "A street or line — becomes a corridor" %}{% endfilter %}",
+       "segment": "{% filter escapejs %}{% trans "one segment of the street" %}{% endfilter %}",
+       "none": "{% filter escapejs %}{% trans "Nothing found. Try a wider name, upload a boundary or draw it." %}{% endfilter %}",
+       "saving": "{% filter escapejs %}{% trans "Saving…" %}{% endfilter %}",
+       "saved": "{% filter escapejs %}{% trans "Saved" %}{% endfilter %}",
+       "unsaved": "{% filter escapejs %}{% trans "Not saved yet — adjust the outline, then Save" %}{% endfilter %}",
+       "drawHint": "{% filter escapejs %}{% trans "Click to add corners; click the first corner to close the area" %}{% endfilter %}",
+       "editHint": "{% filter escapejs %}{% trans "Drag a corner to move it, a middle handle to add one; click a corner to remove it" %}{% endfilter %}",
+       "removeAsk": "{% filter escapejs %}{% trans "Remove the study area? The map then opens as before and nothing is refused." %}{% endfilter %}",
+       "remove": "{% filter escapejs %}{% trans "Remove" %}{% endfilter %}"
+     }'>
+  <div class="pr-ctxbar" style="flex-shrink:0;">
+    <span class="ico"><i class="fas fa-vector-square"></i></span>
+    <div>
+      <div class="t"><a href="{% url 'editor_survey_detail' survey.uuid %}" style="color:var(--color-text-muted);font-weight:400;">{{ survey.name }}</a> › {% trans "Study area" %}</div>
+      <div class="s" id="sae-summary">{% if area %}{{ area.place_name|default:"" }}{% else %}{% trans "Not set" %}{% endif %}</div>
+    </div>
+    <span style="flex:1;"></span>
+    <span class="sae-status" id="sae-status" aria-live="polite"></span>
+    {% if area %}<button type="button" class="btn btn-sm btn-outline-danger" id="sae-remove">{% trans "Remove" %}</button>{% endif %}
+    <button type="button" class="btn btn-sm btn-primary" id="sae-save" disabled>{% trans "Save" %}</button>
+    <a class="btn btn-sm btn-outline-secondary" href="{% url 'editor_survey_detail' survey.uuid %}"><i class="fas fa-arrow-left"></i> {% trans "Back to survey" %}</a>
+  </div>
+
+  {% if survey.status == 'published' %}
+  <div class="sae-banner"><i class="fas fa-globe"></i> {% trans "This survey is published: a saved study area applies to respondents at once. Answers already given are not re-checked." %}</div>
+  {% endif %}
+
+  <div class="sae-body">
+    <div class="sae-panel">
+      <h6><label for="sae-q" class="mb-0">{% trans "Find the place" %}</label></h6>
+      <form class="sae-search" id="sae-search" autocomplete="off">
+        <input type="search" id="sae-q" class="form-control form-control-sm" placeholder="{% trans 'e.g. Midtown, Atlanta' %}" value="{{ area.place_name|default:'' }}">
+        <button type="submit" class="btn btn-sm btn-outline-primary">{% trans "Find" %}</button>
+      </form>
+      <ul class="sae-cands" id="sae-cands" aria-live="polite"></ul>
+
+      <h6>{% trans "Or" %}</h6>
+      <div class="sae-ways">
+        <label class="btn btn-sm btn-outline-secondary mb-0"><i class="fas fa-upload"></i> {% trans "Upload a boundary file" %}
+          <input type="file" id="sae-file" hidden accept=".geojson,.json,.gpkg,.zip,.kml"></label>
+        {% if polygon_layers %}
+        <div style="display:flex;gap:.4rem;">
+          <select id="sae-layer" class="custom-select custom-select-sm" aria-label="{% trans 'Use a layer of this survey' %}">
+            <option value="">{% trans "Use a layer of this survey…" %}</option>
+            {% for layer in polygon_layers %}<option value="{{ layer.pk }}">{{ layer.name }}</option>{% endfor %}
+          </select>
+          <button type="button" class="btn btn-sm btn-outline-secondary" id="sae-layer-use">{% trans "Use" %}</button>
+        </div>
+        {% endif %}
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="sae-draw"><i class="fas fa-draw-polygon"></i> {% trans "Draw it on the map" %}</button>
+      </div>
+
+      <div id="sae-rules"{% if not area %} hidden{% endif %}>
+        <h6>{% trans "What respondents see" %}</h6>
+        <label class="pr-switch">
+          <span>{% trans "Grey out the map outside" %} <small class="pr-help">{% trans "respondents can still move the map" %}</small></span>
+          <input type="checkbox" id="sae-fog" {% if not area or area.fog %}checked{% endif %}>
+        </label>
+        <h6>{% trans "Map answers outside the area" %}</h6>
+        <label class="d-block mb-1" style="font-weight:400;"><input type="radio" name="sae_refuse" value="0" {% if not area.refuse_outside %}checked{% endif %}> {% trans "Allowed" %}</label>
+        <label class="d-block" style="font-weight:400;"><input type="radio" name="sae_refuse" value="1" {% if area.refuse_outside %}checked{% endif %}> {% trans "Not allowed — the mark is not placed" %}</label>
+        <div id="sae-msg-box"{% if not area.refuse_outside %} hidden{% endif %}>
+          <label for="sae-msg" class="mt-2 mb-1" style="font-size:.78rem;">{% trans "Message respondents see" %}</label>
+          <textarea id="sae-msg" class="form-control sae-msg" maxlength="300" placeholder="{% trans 'Please place your answer inside the study area.' %}">{{ message }}</textarea>
+          <div class="pr-help">{% trans "Other languages are in the Translations tab." %}</div>
+        </div>
+      </div>
+      <div class="sae-error text-danger mt-2" id="sae-error" aria-live="polite"></div>
+      <div class="sae-credit">{% blocktrans %}Place boundaries © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>.{% endblocktrans %}</div>
+    </div>
+    <div class="sae-map">
+      <div id="sae-map"></div>
+      <div class="sae-hint" id="sae-hint" hidden></div>
+    </div>
+  </div>
+</div>
+<script type="application/json" id="sae-area">{{ area_json|safe }}</script>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+  {% localize off %}
+  var saeStart = {lat: {{ start.lat }}, lng: {{ start.lng }}, zoom: {{ start.zoom }}};
+  {% endlocalize %}
+  var map = L.map('sae-map', { zoomControl: true }).setView([saeStart.lat, saeStart.lng], saeStart.zoom);
+  {% include "partials/basemap_layers.html" %}
+</script>
+<script src="{% static 'js/study_area_editor.js' %}"></script>
+{% endblock %}

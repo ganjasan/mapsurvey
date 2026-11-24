@@ -1386,3 +1386,7 @@ msgstr "%(amount)s ליחידה"
 #: budget-question
 msgid "{left} left after it"
 msgstr "יישארו {left} אחריו"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "במפה הזו"

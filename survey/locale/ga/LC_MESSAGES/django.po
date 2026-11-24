@@ -1388,3 +1388,7 @@ msgstr "%(amount)s an ceann"
 #: budget-question
 msgid "{left} left after it"
 msgstr "{left} fágtha ina dhiaidh"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "Ar an léarscáil seo"

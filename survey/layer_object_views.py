@@ -25,7 +25,7 @@ from .layer_assets import (
     MAX_ASSET_BYTES, MAX_ASSETS_PER_OBJECT, object_card_payload,
 )
 from .layers import (
-    layer_owner, layers_for, objects_from_features, rebuild_layer, check_object_caps, GEOMETRY_TEXT_FIELDS,
+    layer_is_live, layer_owner, layers_for, objects_from_features, rebuild_layer, check_object_caps, GEOMETRY_TEXT_FIELDS,
     validate_layer_upload, LayerValidationError, _clean_key, MAX_LAYER_BYTES, safe_link,
 )
 from .models import SurveyMapLayer, LayerObject, LayerObjectAsset, Answer
@@ -50,8 +50,9 @@ class _ReadOnlyLayer(Exception):
 
 def _layer(request, layer_id, writable=False):
     _enabled_or_404()
-    layer = get_object_or_404(SurveyMapLayer.objects.defer(*GEOMETRY_TEXT_FIELDS),
-                              pk=layer_id, survey=layer_owner(request.survey))
+    # Layers live in Data (change map-layers-study-area): the survey reaches its uploaded layers
+    # through its links, so the object editor opens any layer the survey uses.
+    layer = get_object_or_404(layers_for(request.survey), pk=layer_id)
     if writable and layer.source == 'question':
         # Shared map: materialised objects are never edited by hand.
         raise _ReadOnlyLayer()
@@ -147,7 +148,8 @@ def _layer_summary(layer):
                              .values_list('category', flat=True).distinct()),
         'without_photo': layer.items.exclude(assets__kind='image').distinct().count(),
         'without_text': layer.items.filter(description='').count(),
-        'published': layer.survey.status == 'published',
+        # Live for respondents of any published survey that uses it (the banner's warning).
+        'published': layer_is_live(layer),
     }
 
 

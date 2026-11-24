@@ -33,7 +33,28 @@ def _map_layers_with_object_stats(survey):
     for meta in metas:
         if meta.get('bound') and meta['id'] in layers:
             meta['object_stats'] = layer_object_stats(layers[meta['id']])
-    return metas
+    area = study_area_reference_meta(survey)
+    return ([area] if area else []) + metas
+
+
+def study_area_reference_meta(survey):
+    """The study area as one more reference layer of the Responses map (change
+    map-layers-study-area, spec survey-study-area "Outline on the Responses map"): an outline only —
+    no fog, not clickable, at the bottom of the stack — listed as "Study area" in the Layers panel.
+    The geometry comes from the same gated endpoint the respondent map reads."""
+    from django.conf import settings as django_settings
+    from django.urls import reverse
+    from django.utils.translation import gettext as _
+    from .services.study_area import get as study_area_of
+    if not django_settings.MAP_REFERENCE_LAYERS or study_area_of(survey) is None:
+        return None
+    return {
+        'id': 'study_area', 'name': _('Study area'), 'color': '#4f46e5', 'label_field': '', 'show_popups': False,
+        'source': 'study_area', 'show_tallies': False, 'bound': False, 'legend': [],
+        'style': {'opacity': 1, 'weight': 2, 'fill_opacity': 0, 'radius': 5, 'icon': '', 'by': None},
+        'url': reverse('survey_study_area_geojson', kwargs={'survey_slug': str(survey.uuid)}),
+        'object_url': '',
+    }
 from .versioning import family_ids_with_draft
 
 

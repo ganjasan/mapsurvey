@@ -1385,3 +1385,7 @@ msgstr "тус бүр %(amount)s"
 #: budget-question
 msgid "{left} left after it"
 msgstr "үүний дараа {left} үлдэнэ"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "Энэ газрын зураг дээр"

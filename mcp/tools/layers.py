@@ -127,7 +127,8 @@ def reorder_layers(request, args):
     'delete_layer',
     title='Delete a map layer',
     description=(
-        'Delete a layer and all its objects. Refused while a question uses it. Needs `confirm: true` after '
+        'Remove a layer from the survey: a shared-map layer is deleted, a dataset is unlinked and stays in Data. '
+        'Refused while a question uses it. Needs `confirm: true` after '
         'the user agreed, and the survey owner.'
     ),
     scope=scopes.SURVEYS_WRITE, role='owner', destructive=True, confirm=True,
@@ -138,7 +139,7 @@ def delete_layer(request, args):
     layer = _layer(obj, args.layer_id)
     if not args.confirm:
         raise confirmation_required('Deleting a map layer')
-    _run(svc_layers.delete, actor(request), layer)
+    _run(svc_layers.delete, actor(request), layer, obj)
     return {'deleted': args.layer_id}
 
 

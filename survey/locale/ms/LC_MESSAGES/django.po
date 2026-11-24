@@ -1384,3 +1384,7 @@ msgstr "%(amount)s setiap satu"
 #: budget-question
 msgid "{left} left after it"
 msgstr "baki {left} selepasnya"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "Pada peta ini"

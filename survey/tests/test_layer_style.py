@@ -9,6 +9,7 @@ from django.urls import reverse
 from io import BytesIO
 import json
 from survey.models import Organization, SurveyHeader, SurveySection, Question, Membership
+from survey.layers import layers_for
 from survey.serialization import export_survey_to_zip, import_survey_from_zip
 from survey.tests.helpers import _styled_layer
 
@@ -298,7 +299,7 @@ class LayerStyleSerializationTest(TestCase):
             for n in src.namelist():
                 dst.writestr(n, json.dumps(sj) if n == 'survey.json' else src.read(n))
         imported, warnings = import_survey_from_zip(BytesIO(out.getvalue()), organization=org, created_by=user)
-        layer = SurveyMapLayer.objects.get(survey=imported)
+        layer = layers_for(imported).defer(None).get()
         self.assertEqual((layer.style['opacity'], layer.style['by']['classes'][0]['weight'], layer.style['by']['classes'][0]['label']), (0.5, 12, 'Hi'))
         sj['survey']['layers'][0]['style']['by']['classes'] = [{'value': str(i)} for i in range(13)]
         out2 = BytesIO()
@@ -306,4 +307,4 @@ class LayerStyleSerializationTest(TestCase):
             for n in src.namelist():
                 dst.writestr(n, json.dumps(sj) if n == 'survey.json' else src.read(n))
         imported2, _w = import_survey_from_zip(BytesIO(out2.getvalue()), organization=org, created_by=user)
-        self.assertIsNone(SurveyMapLayer.objects.get(survey=imported2).style['by'])
+        self.assertIsNone(layers_for(imported2).get().style['by'])

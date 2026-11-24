@@ -166,6 +166,14 @@ def resolve_frame(section, survey):
     basemap = _basemap_key(section, survey)
     static = basemap_style(basemap, survey)
     code = section.code or ''
+    # The study area frames every printed map (change map-layers-study-area, spec printable-form
+    # "A printed map is framed on the study area"); a section's own start wins only inside it.
+    from survey.services.study_area import get as study_area_of
+    area = study_area_of(survey)
+    if area is not None and not (section.start_map_postion and area.geometry.covers(section.start_map_postion)):
+        bbox = list(area.geometry.extent)
+        return FrameSpec((bbox[1] + bbox[3]) / 2, (bbox[0] + bbox[2]) / 2, _zoom_for_bounds(bbox), basemap, code,
+                         static_style=static)
     if section.start_map_postion:
         zoom = section.start_map_zoom if section.start_map_zoom is not None else (
             survey.start_map_zoom if survey.start_map_zoom is not None else 12)
@@ -290,11 +298,44 @@ def _font(size):
         return ImageFont.load_default()
 
 
-def draw_layers(image, survey, spec):
-    """Draw the survey's reference layers onto `image` (an @2x frame). Returns
+def draw_study_area(image, survey, spec):
+    """The study area on a printed frame: grey outside when its fog is on, then its outline."""
+    from survey.services.study_area import get as study_area_of
+    area = study_area_of(survey)
+    if area is None:
+        return False
+    width, height = image.size
+    cx, cy = project(spec.lng, spec.lat, spec.zoom)
+    ox, oy = cx - spec.width / 2, cy - spec.height / 2
+
+    def to_px(lng, lat):
+        x, y = project(lng, lat, spec.zoom)
+        return ((x - ox) * SCALE, (y - oy) * SCALE)
+
+    rings = [[to_px(x, y) for x, y in poly[0].coords] for poly in area.geometry]
+    if area.fog:
+        mask = Image.new('L', image.size, 110)
+        mdraw = ImageDraw.Draw(mask)
+        for ring in rings:
+            if len(ring) >= 3:
+                mdraw.polygon(ring, fill=0)
+        grey = Image.new('RGBA', image.size, (110, 110, 110, 255))
+        base = image.convert('RGBA')
+        base.paste(grey, (0, 0), mask)
+        image.paste(base.convert('RGB'))
+    draw = ImageDraw.Draw(image)
+    for ring in rings:
+        if len(ring) >= 2:
+            draw.line(ring + [ring[0]], fill=(79, 70, 229), width=3 * SCALE, joint='curve')
+    return True
+
+
+def draw_layers(image, survey, spec, section=None):
+    """Draw the survey's reference layers onto `image` (an @2x frame) — with `section`, only the
+    layers placed on that section's map (change map-layers-study-area). Returns
     (features drawn, [layer names cut at MAX_FEATURES]). Reads the geometry
     text once per layer and keeps nothing on the instance (layer memory rules)."""
-    from survey.layers import layers_for
+    from survey.layers import layers_for, section_layer_ids
     width, height = image.size
     cx, cy = project(spec.lng, spec.lat, spec.zoom)
     ox = cx - spec.width / 2
@@ -311,7 +352,14 @@ def draw_layers(image, survey, spec):
     def visible(points):
         return any(-50 <= x <= width + 50 and -50 <= y <= height + 50 for x, y in points)
 
-    for layer in layers_for(survey).defer(None).order_by('position', 'id'):
+    layers = layers_for(survey).defer(None)
+    if section is not None:
+        placed = section_layer_ids(section)
+        by_id = {layer.pk: layer for layer in layers.filter(pk__in=placed)}
+        layers = [by_id[pk] for pk in placed if pk in by_id]
+    else:
+        layers = layers.order_by('position', 'id')
+    for layer in layers:
         try:
             collection = json.loads(layer.geojson or '{}')
         except (TypeError, ValueError):
@@ -414,7 +462,11 @@ def render_frame(section, survey, unavailable_text='Map unavailable — attach a
     drawn, truncated = (0, [])
     if spec.note != 'world':
         try:
-            drawn, truncated = draw_layers(base, survey, spec)
+            draw_study_area(base, survey, spec)
+        except Exception:  # noqa: BLE001 — a bad outline must not cost the form
+            log.exception('print: drawing the study area failed for survey %s', survey.pk)
+        try:
+            drawn, truncated = draw_layers(base, survey, spec, section=section)
         except Exception:  # noqa: BLE001 — a bad layer must not cost the form
             log.exception('print: drawing layers failed for survey %s', survey.pk)
     if not ok:

@@ -536,4 +536,14 @@ def clone_survey(source, *, created_by, created_files=None):
     DatasetLink.objects.bulk_create([
         DatasetLink(dataset_id=link.dataset_id, survey=survey, fields=link.fields)
         for link in DatasetLink.objects.filter(survey=layer_owner(source))])
+    # Where the layers show (change map-layers-study-area): the copy's sections keep their codes
+    # and order, so the section references of every placement name the same sections.
+    from .models import LayerPlacement, StudyArea
+    LayerPlacement.objects.bulk_create([
+        LayerPlacement(survey=survey, layer_id=(layer_map[p.layer_id].pk if p.layer_id in layer_map else p.layer_id),
+                       scope=p.scope, sections=list(p.sections or []), position=p.position)
+        for p in LayerPlacement.objects.filter(survey=layer_owner(source))])
+    area = StudyArea.objects.filter(survey=layer_owner(source)).first()
+    if area is not None:
+        StudyArea.objects.create(survey=survey, **plain_field_values(area, exclude=('refused_marks', 'updated_at')))
     return survey

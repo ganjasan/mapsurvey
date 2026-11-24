@@ -141,4 +141,15 @@ def survey_translation_gaps(survey):
     missing = _with_outdated(thanks_missing_languages(survey), stale.get(('survey', survey.id), ()))
     if missing:
         gaps.append({'label': 'Thank-you page', 'missing': missing})
+    # The study area's refusal message (change map-layers-study-area), when respondents can see it.
+    from .services.study_area import get as study_area_of
+    area = study_area_of(survey)
+    if area is not None and area.refuse_outside:
+        message = area.message or {}
+        primary = (survey.available_languages or ['en'])[0]
+        if (message.get(primary) or '').strip():
+            missing = [lang for lang in translation_languages(survey) if not (message.get(lang) or '').strip()]
+            missing = _with_outdated(missing, stale.get(('study_area', area.id), ()))
+            if missing:
+                gaps.append({'label': 'Study area message', 'missing': missing})
     return gaps

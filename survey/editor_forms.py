@@ -451,7 +451,7 @@ class SurveySectionForm(AudienceFieldMixin, forms.ModelForm):
             'next_label': _('Button label'),
         }
         help_texts = {
-            'layout': _('Map: questions beside the map. Picture: questions beside a picture, e.g. a welcome page. Form: a classic full-width form. Picture and Form have no map, so geo questions are unavailable.'),
+            'layout': _('Map: questions beside the map — its layers and the study area are set in the section’s Map card. Picture: questions beside a picture, e.g. a welcome page. Form: a classic full-width form. Picture and Form have no map, so geo questions and layers are unavailable.'),
             'panel_side': _('Where the questions sit on a computer screen. On a phone they always cover the map.'),
             'panel_width': _('How much of a computer screen the questions take.'),
             'content_width': _('Centred column: the text and questions keep a comfortable reading width in the middle of a wide panel.'),

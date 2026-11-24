@@ -9,14 +9,13 @@ from django.urls import reverse
 from io import BytesIO
 from survey.models import Organization, SurveyHeader, SurveySection, Question, SurveySession, Answer, Membership
 from survey.serialization import export_survey_to_zip, import_survey_from_zip
-from survey.versioning import clone_survey_for_draft
+from survey.layers import layers_for
 from survey.cloning import clone_question
 from survey.tests.helpers import _objects_layer, _shared_map_survey, _validated_geojson_text, _zones_geojson
 
 
 class LayersByQuestionMigrationTest(TestCase):
-    """The hidden_layers → Objects-question conversion (migration 0074 and the
-    live `ensure_layer_questions` copy the ZIP import uses)."""
+    """Follow-ups of the layers-by-question conversion (migration 0077: names and marks)."""
 
     def setUp(self):
         from survey.models import SurveyMapLayer
@@ -52,7 +51,7 @@ class LayersByQuestionMigrationTest(TestCase):
              conversion names new questions the same way
         """
         import importlib
-        from survey.layers import default_question_name, ensure_layer_questions
+        from survey.layers import default_question_name
         from survey.models import SurveyMapLayer
         self.assertEqual(default_question_name(self.a), 'A')
         self.a.name = 'existing-dog-bins'
@@ -73,54 +72,6 @@ class LayersByQuestionMigrationTest(TestCase):
             q.refresh_from_db()
         self.assertEqual((raw_a.name, raw_m.name, renamed.name), ('Existing dog bins', "Other respondents' marks", 'Bins nearby'))
         self.assertEqual(marks.items.count(), 1)
-        created = ensure_layer_questions(self.form_section, [])
-        self.assertEqual(created, [])
-        section3 = SurveySection.objects.create(survey_header=self.survey, name="s3", title="Map 2", code="S3", layout='map')
-        names = sorted(q.name for q in ensure_layer_questions(section3, []))
-        self.assertEqual(names, ['B', 'Existing dog bins', "Other respondents' marks"])
-
-    def test_conversion_creates_legend_questions_for_visible_unbound_layers(self):
-        """
-        GIVEN a map section that hid layer B and already binds nothing, and a form section
-        WHEN the conversion runs
-        THEN the map section gets one legend-mode Objects question for A only, the form section
-             gets none, and a second run creates nothing more (idempotent)
-        """
-        from survey.layers import ensure_layer_questions, section_layer_ids
-        created = ensure_layer_questions(self.map_section, [self.b.pk])
-        self.assertEqual([(q.layer_id, q.panel_mode, q.min_objects, q.name) for q in created],
-                         [(self.a.pk, 'legend', 0, 'A')])
-        self.assertEqual(ensure_layer_questions(self.form_section, []), [])
-        self.assertEqual(ensure_layer_questions(self.map_section, [self.b.pk]), [])
-        self.assertEqual(section_layer_ids(self.map_section), [self.a.pk])
-
-    def test_conversion_skips_layers_a_question_already_binds(self):
-        """
-        GIVEN a map section whose Objects question already binds layer A
-        WHEN the conversion runs with nothing hidden
-        THEN only B gets a new question, appended after the existing one
-        """
-        from survey.layers import ensure_layer_questions, section_layer_ids
-        existing = Question.objects.create(
-            survey_section=self.map_section, code="LBQ1", name="Ask about A", input_type="layer_objects",
-            layer=self.a, order_number=3,
-        )
-        created = ensure_layer_questions(self.map_section, [])
-        self.assertEqual([(q.layer_id, q.order_number) for q in created], [(self.b.pk, 4)])
-        self.assertEqual(section_layer_ids(self.map_section), [self.a.pk, self.b.pk])
-        self.assertEqual(Question.objects.get(pk=existing.pk).panel_mode, 'list')
-
-    def test_draft_copy_sections_convert_against_the_canonical_layers(self):
-        """
-        GIVEN a draft copy of the survey (which borrows the canonical's layers)
-        WHEN its map section is converted
-        THEN it gets Objects questions bound to the canonical's layers
-        """
-        from survey.layers import ensure_layer_questions
-        draft = clone_survey_for_draft(self.survey)
-        section = SurveySection.objects.get(survey_header=draft, name='s1')
-        created = ensure_layer_questions(section, [])
-        self.assertEqual(sorted(q.layer_id for q in created), sorted([self.a.pk, self.b.pk]))
 
 
 class ShareFlagSeedingTest(TestCase):
@@ -381,5 +332,5 @@ class LayerObjectsQuestionEditorTest(TestCase):
         self.survey.save()
         imported, warnings = import_survey_from_zip(buf)
         q = Question.objects.get(survey_section__survey_header=imported, name='Objects')
-        self.assertEqual(q.layer, imported.map_layers.get())
+        self.assertEqual(q.layer, layers_for(imported).get())
         self.assertEqual((q.min_objects, q.objects_search), (2, 'off'))

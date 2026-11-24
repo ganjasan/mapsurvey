@@ -94,6 +94,7 @@ class _MapFields(_In):
     legend: Optional[bool] = Field(None, description='map: the legend (on by default).')
     scale: Optional[bool] = Field(None, description='map: the scale bar (on by default).')
     toggle: Optional[bool] = Field(None, description='map: readers may switch layers on and off.')
+    study_area: Optional[bool] = Field(None, description="map: the outline of the survey's study area (on by default).")
     basemap: Optional[str] = Field(None, max_length=80, description='map: a basemap key the workspace offers.')
     popup_fields: Optional[List[str]] = Field(None, max_length=20, description='map: codes of sub-questions a popup shows (never free text).')
     layers: Optional[List[MapLayerIn]] = Field(None, max_length=3, description='map: the other map questions on the same map — the whole list, at most 3; [] removes them.')

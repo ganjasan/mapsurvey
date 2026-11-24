@@ -59,6 +59,17 @@ def canonical_survey(survey):
     return canonical_of(survey)
 
 
+def study_area_outline(question):
+    """The study area of `question`'s survey as GeoJSON (≤2,000 vertices, the study area service's
+    limit), or None. Reports computes nothing here: the outline is the survey's own polygon."""
+    import json as _json
+    from survey.services.study_area import get as study_area_of
+    if question is None:
+        return None
+    area = study_area_of(question.survey_section.survey_header)
+    return _json.loads(area.geometry.geojson) if area is not None else None
+
+
 def _localize(value, lang):
     """Resolve a multilingual JSON value (or plain string) for a language."""
     if isinstance(value, dict):
@@ -474,6 +485,12 @@ class ReportService:
         payload['legend'] = config.get('legend') is not False
         payload['scale'] = config.get('scale') is not False
         payload['toggle'] = bool(config.get('toggle'))
+        # The outline of the study area of the block's own question's survey (change
+        # map-layers-study-area): drawn under every layer, never part of the frame, counts or checks.
+        if config.get('study_area') is not False:
+            area = study_area_outline(question)
+            if area is not None:
+                payload['study_area'] = area
         layers = []
         for index, layer in enumerate(config.get('layers') or []):
             other = self._layer_question(block, layer)

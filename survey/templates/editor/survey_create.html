@@ -12,7 +12,29 @@
 
 {% block extra_head %}
 <script src="{% static 'js/components/map_place_search.js' %}"></script>
+{% if study_area_enabled %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js" crossorigin="anonymous"></script>
+<script src="{% static 'js/wizard_study_area.js' %}"></script>
+{% endif %}
 <style>
+  /* The Wizard's study area strip (change map-layers-study-area, D8b). */
+  .wsa { border: 1px solid var(--color-border); border-radius: 8px; padding: .45rem .6rem; margin: .3rem 0 .5rem;
+         font-size: .8rem; color: var(--color-text); background: var(--color-action-soft); }
+  .wsa-head { display: flex; align-items: center; gap: .55rem; flex-wrap: wrap; }
+  .wsa-icon { color: var(--color-action); }
+  .wsa-text { flex: 1 1 14rem; min-width: 0; }
+  .wsa-sub { color: var(--color-text-muted); font-size: .74rem; }
+  .wsa-actions { display: flex; gap: .35rem; }
+  .wsa-row { display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; margin-top: .35rem; padding-left: 1.6rem; }
+  .wsa-row .btn.active { background: var(--color-action); color: var(--color-on-action); border-color: var(--color-action); }
+  .wsa-radio { display: inline-flex; align-items: center; gap: .25rem; margin: 0; font-weight: 400; }
+  .wsa.off { background: transparent; }
+  /* The page fits one desktop screen: the map gives the strip its room. */
+  @media (min-width: 1024px) {
+    .create-right.has-wsa .create-map { height: clamp(260px, calc(100vh - 340px), 900px); }
+    .create-right.has-wsa-msg .create-map { height: clamp(260px, calc(100vh - 300px), 900px); }
+  }
   /* The whole page is meant to fit one desktop screen: the creator should see
      the brief, the map they are framing and both buttons without scrolling.
      Everything below is sized against the viewport rather than content. */
@@ -423,6 +445,56 @@
           <div class="pr-help" style="margin-top:0;">
             <span id="create-map-coords"></span>
           </div>
+          {% if study_area_enabled %}
+          {% comment %}The Wizard's study area (change map-layers-study-area, D8b): the boundary of
+          the place the map is aimed at, with the creator's handles. wizard_study_area.js fills it;
+          the hidden fields carry what the creator kept.{% endcomment %}
+          <div class="wsa" id="wsa" hidden>
+            <div class="wsa-head">
+              <i class="fas fa-vector-square wsa-icon" aria-hidden="true"></i>
+              <div class="wsa-text">
+                <div><strong>{% trans "Study area" %}</strong> <span id="wsa-name"></span></div>
+                <div class="wsa-sub" id="wsa-sub"></div>
+              </div>
+              <div class="wsa-actions" id="wsa-actions">
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="wsa-edit">{% trans "Edit outline" %}</button>
+                <button type="button" class="btn btn-sm btn-outline-secondary" id="wsa-remove">{% trans "Remove" %}</button>
+              </div>
+              <button type="button" class="btn btn-sm btn-outline-secondary" id="wsa-use" hidden></button>
+            </div>
+            <div class="wsa-row" id="wsa-widths" hidden>
+              <span>{% trans "Corridor width" %}</span>
+              <span class="btn-group btn-group-sm" role="group" aria-label="{% trans 'Corridor width' %}">
+                <button type="button" class="btn btn-outline-secondary" data-width="50">50 m</button>
+                <button type="button" class="btn btn-outline-secondary" data-width="100">100 m</button>
+                <button type="button" class="btn btn-outline-secondary" data-width="200">200 m</button>
+              </span>
+            </div>
+            <div class="wsa-row" id="wsa-rule">
+              <span>{% trans "Map answers outside" %}</span>
+              <label class="wsa-radio"><input type="radio" name="wsa_refuse_choice" value="0" checked> {% trans "Allowed" %}</label>
+              <label class="wsa-radio"><input type="radio" name="wsa_refuse_choice" value="1"> {% trans "Not allowed" %}</label>
+            </div>
+          </div>
+          <input type="hidden" name="study_area_mode" id="wsa-mode" value="auto">
+          <input type="hidden" name="study_area_geometry" id="wsa-geometry" value="">
+          <input type="hidden" name="study_area_place" id="wsa-place" value="">
+          <input type="hidden" name="study_area_osm_ref" id="wsa-osm-ref" value="">
+          <input type="hidden" name="study_area_refuse" id="wsa-refuse" value="">
+          <script type="application/json" id="wsa-strings">{
+            "looking": "{% filter escapejs %}{% trans "Looking up the boundary of %(place)s…" %}{% endfilter %}",
+            "sub": "{% filter escapejs %}{% trans "Grey outside on the respondent’s map. %(km2)s km² · from OpenStreetMap" %}{% endfilter %}",
+            "edited": "{% filter escapejs %}{% trans "Grey outside on the respondent’s map. %(km2)s km² · edited by you" %}{% endfilter %}",
+            "editing": "{% filter escapejs %}{% trans "Drag the corners on the map. Click a middle handle to add one; click a corner to remove it." %}{% endfilter %}",
+            "done": "{% filter escapejs %}{% trans "Done" %}{% endfilter %}",
+            "edit": "{% filter escapejs %}{% trans "Edit outline" %}{% endfilter %}",
+            "none": "{% filter escapejs %}{% trans "No boundary found for %(place)s. The survey starts without a study area; set one later in its Map card." %}{% endfilter %}",
+            "down": "{% filter escapejs %}{% trans "OpenStreetMap did not answer. The survey starts without a study area; set one later in its Map card." %}{% endfilter %}",
+            "removed": "{% filter escapejs %}{% trans "Removed. The survey starts without a study area." %}{% endfilter %}",
+            "use": "{% filter escapejs %}{% trans "Use the boundary of %(place)s" %}{% endfilter %}",
+            "editHint": "{% filter escapejs %}{% trans "Drag a corner to move it" %}{% endfilter %}"
+          }</script>
+          {% endif %}
           {% if initial_start.source == 'country' or initial_start.source == 'world' %}
           {% comment %}The server could only guess a country or nothing (openspec:
           first-survey-onboarding, D5). This link is where geolocation permission
@@ -671,8 +743,20 @@
             accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
             container: document.getElementById('create-map-search'),
             labels: { placeholder: '{% trans "Search for a place — city, address, landmark…" %}' },
-            onSelect: function() { markTouched(); }
+            onSelect: function(result) {
+                markTouched();
+                // A place picked by hand gets its boundary proposed too (D8b).
+                if (window.WizardStudyArea && result && result.name) window.WizardStudyArea.propose(result.name);
+            }
         });
+        {% if study_area_enabled %}
+        if (window.WizardStudyArea) {
+            window.WizardStudyArea.init(map, {
+                url: '{% url "editor_place_boundary" %}',
+                isTouched: function() { return userInteracted; }
+            });
+        }
+        {% endif %}
 
         setTimeout(function() { map.invalidateSize(); }, 200);
     })();
@@ -1040,34 +1124,55 @@
             });
             return out;
         }
+        // Every candidate is looked up and the most place-like hit wins, not the
+        // first that resolves (change map-layers-study-area): "уборки Снега в
+        // Санкт-Петербурге" resolved "Снега" to a hotel near Arkhyz before the
+        // city was ever tried. Lower rank = better; POIs and houses come last.
+        var PLACE_RANK = { city: 0, town: 1, state: 2, suburb: 2, borough: 2, district: 2, quarter: 2,
+                           city_district: 2, village: 3, county: 4, region: 4, province: 4, country: 5,
+                           neighbourhood: 5, hamlet: 6, locality: 6 };
+        function placeRank(props) {
+            props = props || {};
+            if (props.osm_key === 'place' && props.osm_value in PLACE_RANK) return PLACE_RANK[props.osm_value];
+            if (props.osm_key === 'boundary') return 4;
+            if (props.type === 'street') return 8;
+            if (props.type === 'house') return 10;
+            return 7;
+        }
         function prefillPlaceFromBrief() {
             if (_userMovedMap() || !window._createMap) return;
             var text = briefText();
             if (!text) return;
             if (_prefillFor === text) return;  // same brief, already aimed
             _prefillFor = text;
-            var candidates = extractPlaceCandidates(text);
-            (function tryNext(i) {
-                if (i >= candidates.length || _userMovedMap()) return;
-                fetch('https://photon.komoot.io/api/?limit=1&q=' + encodeURIComponent(candidates[i]))
+            var candidates = extractPlaceCandidates(text).slice(0, 8);
+            Promise.all(candidates.map(function(cand, i) {
+                return fetch('https://photon.komoot.io/api/?limit=1&q=' + encodeURIComponent(cand))
                     .then(function(r){ return r.json(); })
                     .then(function(data) {
                         var f = data && data.features && data.features[0];
-                        if (f && f.geometry && !_userMovedMap()) {
-                            var t = (f.properties && f.properties.type) || '';
-                            var zoom = t === 'country' ? 6 : (t === 'state' || t === 'county' ? 9 : 12);
-                            window._createMap.setView([f.geometry.coordinates[1], f.geometry.coordinates[0]], zoom);
-                            // Say WHY the map jumped: the resolved name lands in
-                            // the search box, visible and correctable (H1).
-                            var searchInput = document.querySelector('.create-map-search input');
-                            var placeName = (f.properties && f.properties.name) || candidates[i];
-                            if (searchInput && placeName) searchInput.value = placeName;
-                        } else {
-                            tryNext(i + 1);
-                        }
+                        return f && f.geometry ? { f: f, cand: cand, rank: placeRank(f.properties), i: i } : null;
                     })
-                    .catch(function(){ tryNext(i + 1); });
-            })(0);
+                    .catch(function(){ return null; });
+            })).then(function(hits) {
+                if (_userMovedMap() || _prefillFor !== text) return;
+                hits = hits.filter(Boolean).sort(function(a, b) { return a.rank - b.rank || a.i - b.i; });
+                if (!hits.length) return;
+                var f = hits[0].f, props = f.properties || {};
+                var t = props.type || '';
+                var zoom = t === 'country' ? 6 : (t === 'state' || t === 'county' ? 9 : 12);
+                window._createMap.setView([f.geometry.coordinates[1], f.geometry.coordinates[0]], zoom);
+                // Say WHY the map jumped: the resolved name lands in
+                // the search box, visible and correctable (H1).
+                var searchInput = document.querySelector('.create-map-search input');
+                var placeName = props.name || hits[0].cand;
+                if (searchInput && placeName) searchInput.value = placeName;
+                // The Wizard proposes the place's boundary as the study area (D8b).
+                if (window.WizardStudyArea) {
+                    window.WizardStudyArea.propose([props.name || hits[0].cand, props.city, props.state, props.country]
+                        .filter(function(v, k, all) { return v && all.indexOf(v) === k; }).join(', '));
+                }
+            });
         }
 
         // Desktop has no map step, so the prefill runs as the brief is

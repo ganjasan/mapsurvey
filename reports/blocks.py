@@ -9,7 +9,7 @@ A spec: {"type": heading | text | numbers | quotes | chart | map | objects | bud
 engagement, "title", "width": full | half, "hidden", and what the type holds — "text" (heading),
 "html" (text), "items" + "note" (numbers, quotes), "question" (a question code) + "viz" (chart),
 "question" + "show_marks" + "description" (map) and how it is drawn — "view", "opts", "color",
-"name", "frame" (None clears it), "legend", "scale", "toggle", "basemap", "popup_fields" and
+"name", "frame" (None clears it), "legend", "scale", "toggle", "study_area", "basemap", "popup_fields" and
 "layers" ([{"id"?, "survey"?, "question", "view", "show_marks", "color", "name", "opts",
 "popup_fields"}], the names `describe` returns — "code", "marks", "fields" — accepted too; change
 report-api-map-layers) —, "rows" + "columns" + "display" ({view, values, sort}) (crosstab), "question" +
@@ -50,7 +50,7 @@ def _survey(report, spec):
     return canonical_of(report.survey)
 
 
-MAP_KEYS = ('view', 'opts', 'color', 'name', 'frame', 'legend', 'scale', 'toggle', 'layers')
+MAP_KEYS = ('view', 'opts', 'color', 'name', 'frame', 'legend', 'scale', 'toggle', 'study_area', 'layers')
 LAYER_IDS = ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
 
 
@@ -126,7 +126,7 @@ def _map_settings(block, spec):
             raise BlockRefused(_('A frame is [west, south, east, north] in degrees, west of east and south of '
                                  'north.'), 'frame')
         display['frame'] = frame or ''
-    for key in ('legend', 'scale', 'toggle'):
+    for key in ('legend', 'scale', 'toggle', 'study_area'):
         if key in spec and spec[key] is not None:
             display[key] = bool(spec[key])
     if 'layers' in spec:

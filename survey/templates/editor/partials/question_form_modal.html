@@ -360,15 +360,20 @@
                     <select name="layer" id="id_layer" class="form-control" data-layer-picker>
                         <option value="">— {% trans "pick a layer" %} —</option>
                         {% if layer_options %}<optgroup label="{% trans 'Layers' %}">
-                        {% for l in layer_options %}<option value="{{ l.id }}" data-source="{{ l.source }}" data-labels='{{ l.labels|json_attr }}' data-label-field="{{ l.label_field }}" data-approve-first="{{ l.approve_first|yesno:'1,0' }}" data-default-name="{{ l.default_name }}" {% if form.layer.value|stringformat:'s' == l.id|stringformat:'s' %}selected{% endif %}>{{ l.name }}{% if l.source == 'question' %} · {% trans "respondents' marks on" %} {{ l.code }}{% else %} · {{ l.feature_count }} {% trans "objects" %}{% endif %}</option>{% endfor %}
+                        {% for l in layer_options %}<option value="{{ l.id }}" data-source="{{ l.source }}" data-labels='{{ l.labels|json_attr }}' data-label-field="{{ l.label_field }}" data-approve-first="{{ l.approve_first|yesno:'1,0' }}" data-default-name="{{ l.default_name }}" {% if form.layer.value|stringformat:'s' == l.id|stringformat:'s' %}selected{% endif %}>{{ l.name }}{% if l.source == 'question' %} · {% trans "respondents' marks on" %} {{ l.code }}{% else %} · {{ l.feature_count }} {% trans "objects" %}{% endif %}{% if not l.on_section %} · {% trans "not on this map yet" %}{% endif %}</option>{% endfor %}
                         </optgroup>{% endif %}
                         {% if answer_sources %}<optgroup label="{% trans 'Respondents’ marks on…' %}">
                         {% for q in answer_sources %}<option value="answers:{{ q.code }}" data-source="question" data-labels='{{ q.labels|json_attr }}' data-approve-first="0" data-default-name="Other respondents' marks">{{ q.name }}</option>{% endfor %}
                         </optgroup>{% endif %}
                     </select>
-                    <a class="lo-link" href="{% url 'editor_survey_detail' survey.uuid %}?panel=settings" target="_blank" rel="noopener">{% trans "Upload new…" %}</a>
+                    {% if request.effective_survey_role == 'owner' %}
+                    <label class="lo-link mb-0" style="cursor:pointer;">{% trans "Upload a new layer" %}
+                        <input type="file" hidden data-lo-upload accept=".geojson,.json,.gpkg,.zip,.kml,.csv,application/geo+json,application/json"
+                               data-url="{% url 'editor_survey_layer_create' survey.uuid %}" data-section="{{ section.id }}"></label>
+                    {% endif %}
                 </div>
-                <small class="lo-help">{% trans "This question puts the layer on this section’s map. Or pick “Respondents’ marks on…” a geo question to show what others have already placed." %}</small>
+                <small class="lo-help">{% trans "Respondents answer about each object of this layer; picking it also puts the layer on this section’s map. Or pick “Respondents’ marks on…” a geo question to ask about what others have already placed." %}</small>
+                <small class="lo-help text-danger" data-lo-upload-error></small>
                 {% for error in form.layer.errors %}<div class="text-danger" style="font-size:0.8rem;">{{ error }}</div>{% endfor %}
             </div>
             {% comment %}Source settings of a marks layer (spec shared-map-layer): the
@@ -392,14 +397,11 @@
                 </div>
             </div>
 
-            <div class="lo-field">
-                <div class="lo-label">{{ form.panel_mode.label }}</div>
-                <div class="lo-seg" id="lo-panel-mode">
-                    {% for radio in form.panel_mode %}<label class="lo-seg__opt">{{ radio.tag }}<span><i class="fas {% if radio.data.value == 'list' %}fa-list-ul{% else %}fa-minus-square{% endif %}"></i> {{ radio.choice_label }}</span></label>{% endfor %}
-                </div>
-                <small class="lo-help" data-lo-mode-help="list">{% trans "Respondents browse and search the objects in the panel; each row opens its object on the map." %}</small>
-                <small class="lo-help" data-lo-mode-help="legend">{% trans "One line naming the layer with a toggle — right for a backdrop such as existing bins or district boundaries." %}</small>
-            </div>
+            {% comment %}No List/Legend switch any more (change map-layers-study-area): showing a layer
+            is its placement on the map (the section's Map card); this question only asks.{% endcomment %}
+            {% if not question.collects_objects %}
+            <small class="lo-help lo-help--hint" id="lo-no-subs-hint">{% trans "Add sub-questions below — they are what respondents answer about each object. To only show a layer, use the section’s Map card." %}</small>
+            {% endif %}
 
             <div class="lo-field" id="fg-objects-search">
                 <label class="lo-label" for="{{ form.objects_search.id_for_label }}">{{ form.objects_search.label }}</label>
@@ -834,9 +836,9 @@
                     <li>{% trans "Respondents must place" %} <i>{% trans "every" %}</i> {% trans "item and no two can share a rank — use Rating instead when independent scores are enough." %}</li>
                 </ul>
                 <ul class="qtp-tips-list" data-tip-for="layer_objects">
-                    <li><b>{% trans "This is how a layer gets onto this section’s map." %}</b> {% trans "Pick an uploaded layer (Survey settings → Reference layers) or “Respondents’ marks on…” a geo question to show what others have already placed." %}</li>
-                    <li><b>{% trans "Without sub-questions it only shows." %}</b> {% trans "Add a sub-question (👍/👎, a rating, a comment) and respondents can open any object on the map and answer about it — each answer becomes a row per object in your results." %}</li>
-                    <li><b>{% trans "List or legend line." %}</b> {% trans "A list lets respondents browse and search the objects in the panel; a legend line just names the layer with a toggle — right for a backdrop like existing bins or district boundaries." %}</li>
+                    <li><b>{% trans "This question asks about the objects of a layer." %}</b> {% trans "Pick a layer of the survey or “Respondents’ marks on…” a geo question; if this section’s map does not show the layer yet, picking it puts it there." %}</li>
+                    <li><b>{% trans "Sub-questions are what respondents answer." %}</b> {% trans "Add a sub-question (👍/👎, a rating, a comment) and respondents can open any object on the map and answer about it — each answer becomes a row per object in your results." %}</li>
+                    <li><b>{% trans "Only showing a layer?" %}</b> {% trans "You need no question for that: tick the layer in the section’s Map card, or add it in Survey settings to show it on every map." %}</li>
                 </ul>
                 <ul class="qtp-tips-list" data-tip-for="choice multichoice">
                     <li>{% trans "Codes end up in your data export; names are what respondents see. Keep codes stable once responses start arriving." %}</li>
@@ -1587,18 +1589,41 @@
         box.hidden = !any;
     }
 
-    // Panel mode (list / legend): the matching help line, and search chips
-    // only make sense for the list.
-    function syncPanelMode() {
-        var checked = document.querySelector('#lo-panel-mode input[name="panel_mode"]:checked');
-        var mode = checked ? checked.value : 'list';
-        document.querySelectorAll('[data-lo-mode-help]').forEach(function(el) {
-            el.style.display = el.getAttribute('data-lo-mode-help') === mode ? '' : 'none';
-        });
-        show('fg-objects-search', mode === 'list');
-    }
-    document.querySelectorAll('#lo-panel-mode input[name="panel_mode"]').forEach(function(r) {
-        r.addEventListener('change', syncPanelMode);
+    // The List/Legend switch is gone (change map-layers-study-area): every Objects question lists
+    // its objects, so the search setting always applies.
+    function syncPanelMode() { show('fg-objects-search', true); }
+
+    // "Upload a new layer" without leaving the modal: the Map card's upload, placed on this
+    // section, then picked (spec survey-editor "The section form points at the Map card").
+    var loUpload = document.querySelector('[data-lo-upload]');
+    if (loUpload) loUpload.addEventListener('change', function() {
+        var file = loUpload.files[0];
+        var errBox = document.querySelector('[data-lo-upload-error]');
+        if (!file) return;
+        var fd = new FormData();
+        fd.append('layer', file);
+        fd.append('scope', 'section');
+        fd.append('section', loUpload.dataset.section);
+        var csrfEl = document.querySelector('[name=csrfmiddlewaretoken]');
+        if (errBox) errBox.textContent = '';
+        fetch(loUpload.dataset.url, {method: 'POST', headers: {'X-CSRFToken': csrfEl ? csrfEl.value : ''}, body: fd})
+            .then(function(r) { return r.json().then(function(d) { if (!r.ok) throw new Error(d.error || 'Upload failed'); return d; }); })
+            .then(function(layer) {
+                var picker = document.querySelector('[data-layer-picker]');
+                var group = picker.querySelector('optgroup');
+                if (!group) { group = document.createElement('optgroup'); group.label = '{% filter escapejs %}{% trans "Layers" %}{% endfilter %}'; picker.insertBefore(group, picker.options[1] || null); }
+                var opt = document.createElement('option');
+                opt.value = layer.id;
+                opt.textContent = layer.name + ' · ' + layer.feature_count + ' {% filter escapejs %}{% trans "objects" %}{% endfilter %}';
+                opt.setAttribute('data-source', 'upload');
+                opt.setAttribute('data-labels', '[]');
+                opt.setAttribute('data-default-name', layer.name);
+                group.appendChild(opt);
+                picker.value = String(layer.id);
+                picker.dispatchEvent(new Event('change', {bubbles: true}));
+            })
+            .catch(function(e) { if (errBox) errBox.textContent = e.message; })
+            .then(function() { loUpload.value = ''; });
     });
 
     if (inputTypeSelect) {

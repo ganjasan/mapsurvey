@@ -1384,3 +1384,7 @@ msgstr "%(amount)s ต่อชิ้น"
 #: budget-question
 msgid "{left} left after it"
 msgstr "เหลือ {left} หลังจากนี้"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "บนแผนที่นี้"

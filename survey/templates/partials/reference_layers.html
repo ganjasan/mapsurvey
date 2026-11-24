@@ -6,8 +6,8 @@ basemap_layers.html. Config arrives via the "ref-layers-data" json_script emitte
 by base_survey_template.html; geometry is fetched per layer from the gated endpoint
 exactly once, because layers live across HTMX section swaps on the persistent map.
 Per-section visibility is applied by initSection() via applyRefLayerVisibility(visibleIds):
-a layer is on a section's map when an Objects-on-the-map question of that section binds
-it, and nowhere else (change layers-by-question).
+a layer is on a section's map when a placement covers the section, and nowhere else
+(change map-layers-study-area); it starts switched on every time a section opens.
 Layer construction (styling, markers, labels, popups) lives in ref_layer_factory.html,
 which must be included before this partial.
 {% endcomment %}
@@ -54,14 +54,21 @@ which must be included before this partial.
         }).catch(function(err) { console.warn('Reference layer failed:', err); });
     });
 
-    // A respondent who switches a layer off keeps it off across sections; only
+    // A respondent may switch a layer off on this section; every placed layer is switched on
+    // again when the next section opens (spec map-layer-placement, owner 2026-11-24). Only
     // their own toggles count, not the programmatic add/remove below.
+    function syncLegend(entry) {
+        document.querySelectorAll('[data-otm-toggle="' + entry.meta.id + '"]').forEach(function(box) {
+            box.checked = !!entry.added;
+        });
+    }
     map.on('overlayremove', function(e) {
         if (_suppressEvents) return;
         for (var id in window._refLayers) {
             if (window._refLayers[id].layer === e.layer) {
                 window._refLayers[id].userOff = true;
                 window._refLayers[id].added = false;
+                syncLegend(window._refLayers[id]);
             }
         }
     });
@@ -71,8 +78,18 @@ which must be included before this partial.
             if (window._refLayers[id].layer === e.layer) {
                 window._refLayers[id].userOff = false;
                 window._refLayers[id].added = true;
+                syncLegend(window._refLayers[id]);
             }
         }
+    });
+    // The panel's "On this map" toggles (survey_section_partial.html) drive the same layers.
+    document.addEventListener('change', function(e) {
+        var box = e.target && e.target.closest && e.target.closest('[data-otm-toggle]');
+        if (!box) return;
+        var entry = window._refLayers[box.getAttribute('data-otm-toggle')];
+        if (!entry || !entry.layer || !entry.allowed) return;
+        if (box.checked && !entry.added) { entry.layer.addTo(map); }
+        else if (!box.checked && entry.added) { map.removeLayer(entry.layer); }
     });
 
     window.applyRefLayerVisibility = function(visibleIds) {
@@ -82,16 +99,18 @@ which must be included before this partial.
             for (var id in window._refLayers) {
                 var entry = window._refLayers[id];
                 var allowed = visibleIds.indexOf(entry.meta.id) !== -1;
-                if (allowed === entry.allowed) continue;
+                entry.userOff = false;   // a new section starts with every placed layer on
+                var wasAllowed = entry.allowed;
                 entry.allowed = allowed;
                 if (!entry.layer) continue;
                 if (!allowed) {
                     if (entry.added) { map.removeLayer(entry.layer); entry.added = false; }
-                    window._layersControl.removeLayer(entry.layer);
+                    if (wasAllowed) window._layersControl.removeLayer(entry.layer);
                 } else {
-                    window._layersControl.addOverlay(entry.layer, window.RefLayerFactory.overlayLabel(entry.meta));
-                    if (!entry.userOff) { entry.layer.addTo(map); entry.added = true; }
+                    if (!wasAllowed) window._layersControl.addOverlay(entry.layer, window.RefLayerFactory.overlayLabel(entry.meta));
+                    if (!entry.added) { entry.layer.addTo(map); entry.added = true; }
                 }
+                syncLegend(entry);
             }
         } finally { _suppressEvents = false; }
     };

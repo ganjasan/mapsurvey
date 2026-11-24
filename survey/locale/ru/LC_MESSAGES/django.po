@@ -10726,3 +10726,7 @@ msgstr "Пока нечего заполнять"
 #: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
 msgid "This survey has nothing to fill in yet."
 msgstr "В этом опросе пока нечего заполнять."
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "На этой карте"

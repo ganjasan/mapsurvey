@@ -14949,3 +14949,467 @@ msgstr "Tautan publik tidak menampilkan apa pun untuk dijawab."
 #: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
 msgid "Every section is set to <em>Operators only</em> in <em>Who sees this</em>. Open a section's settings and choose Everyone or Respondents only."
 msgstr "Setiap bagian diatur ke <em>Hanya operator</em> di <em>Siapa yang melihat ini</em>. Buka pengaturan bagian dan pilih Semua orang atau Hanya responden."
+
+#. change map-layers-study-area
+msgid "Add a layer"
+msgstr "Tambah lapisan"
+
+#. change map-layers-study-area
+msgid "Add sub-questions below — they are what respondents answer about each object. To only show a layer, use the section’s Map card."
+msgstr "Tambahkan sub-pertanyaan di bawah — itulah yang dijawab responden tentang setiap objek. Untuk hanya menampilkan lapisan, gunakan kartu Peta pada bagian ini."
+
+#. change map-layers-study-area
+msgid "Allowed"
+msgstr "Diizinkan"
+
+#. change map-layers-study-area
+msgid "Asked about in"
+msgstr "Ditanyakan di"
+
+#. change map-layers-study-area
+msgid "asked in"
+msgstr "ditanyakan di"
+
+#. change map-layers-study-area
+msgid "A street or line — becomes a corridor"
+msgstr "Jalan atau garis — menjadi koridor"
+
+#. change map-layers-study-area
+msgid "Back to survey"
+msgstr "Kembali ke halaman survei"
+
+#. change map-layers-study-area
+msgid "Choose a file"
+msgstr "Pilih berkas"
+
+#. change map-layers-study-area
+msgid "Click to add corners; click the first corner to close the area"
+msgstr "Klik untuk menambah sudut; klik sudut pertama untuk menutup area"
+
+#. change map-layers-study-area
+msgid "Could not reach OpenStreetMap. Upload a boundary or draw it instead."
+msgstr "Tidak dapat menghubungi OpenStreetMap. Unggah batas atau gambar sendiri."
+
+#. change map-layers-study-area
+msgid "Dataset"
+msgstr "Dataset"
+
+#. change map-layers-study-area
+msgid "Delete this layer?"
+msgstr "Hapus lapisan ini?"
+
+#. change map-layers-study-area
+msgid "Drag a corner to move it, a middle handle to add one; click a corner to remove it"
+msgstr "Seret sudut untuk memindahkannya, pegangan tengah untuk menambah; klik sudut untuk menghapusnya"
+
+#. change map-layers-study-area
+msgid "Draw it on the map"
+msgstr "Gambar sendiri di peta"
+
+#. change map-layers-study-area
+msgid "Drawn"
+msgstr "Digambar"
+
+#. change map-layers-study-area
+msgid "Draw on the map"
+msgstr "Gambar di peta"
+
+#. change map-layers-study-area
+msgid "Drop a <b>file</b> here or <span class=\"ref-layers-choose\">choose a file</span>"
+msgstr "Letakkan <b>berkas</b> di sini atau <span class=\"ref-layers-choose\">pilih berkas</span>"
+
+#. change map-layers-study-area
+msgid "e.g. Midtown, Atlanta"
+msgstr "mis. Midtown, Atlanta"
+
+#. change map-layers-study-area
+msgid "every section"
+msgstr "setiap bagian"
+
+#. change map-layers-study-area
+msgid "Every section with a map"
+msgstr "Setiap bagian dengan peta"
+
+#. change map-layers-study-area
+msgid "Every section with a map, now and later"
+msgstr "Setiap bagian dengan peta, sekarang dan nanti"
+
+#. change map-layers-study-area
+msgid "Find"
+msgstr "Cari"
+
+#. change map-layers-study-area
+msgid "Find the place"
+msgstr "Cari tempat"
+
+#. change map-layers-study-area
+msgid "fog outside"
+msgstr "abu-abu di luar"
+
+#. change map-layers-study-area
+msgid "GeoJSON, GeoPackage, zipped shapefile, KML or CSV with coordinates — any coordinate system is converted. Up to 10 MB."
+msgstr "GeoJSON, GeoPackage, shapefile ter-zip, KML, atau CSV dengan koordinat — sistem koordinat apa pun dikonversi. Hingga 10 MB."
+
+#. change map-layers-study-area
+msgid "GeoJSON, GeoPackage, zipped shapefile, KML or CSV with coordinates — any coordinate system is converted. Up to 10 MB, max 10 layers per survey."
+msgstr "GeoJSON, GeoPackage, shapefile ter-zip, KML, atau CSV dengan koordinat — sistem koordinat apa pun dikonversi. Hingga 10 MB, maks. 10 lapisan per survei."
+
+#. change map-layers-study-area
+msgid "Grey out the map outside"
+msgstr "Buat peta di luar menjadi abu-abu"
+
+#. change map-layers-study-area
+msgid "Its map layers stay in Data."
+msgstr "Lapisan petanya tetap ada di Data."
+
+#. change map-layers-study-area
+msgid "Layers"
+msgstr "Lapisan"
+
+#. change map-layers-study-area
+msgid "Layers used here"
+msgstr "Lapisan yang dipakai di sini"
+
+#. change map-layers-study-area
+msgid "Make it the survey's study area"
+msgstr "Jadikan area studi survei"
+
+#. change map-layers-study-area
+msgid "Map answers outside the area"
+msgstr "Jawaban peta di luar area"
+
+#. change map-layers-study-area
+msgid "Map: questions beside the map — its layers and the study area are set in the section’s Map card. Picture: questions beside a picture, e.g. a welcome page. Form: a classic full-width form. Picture and Form have no map, so geo questions and layers are unavailable."
+msgstr "Peta: pertanyaan di samping peta — lapisan dan area studinya diatur di kartu Peta bagian ini. Gambar: pertanyaan di samping gambar, mis. halaman sambutan. Formulir: formulir klasik selebar layar. Gambar dan Formulir tidak punya peta, jadi pertanyaan geo dan lapisan tidak tersedia."
+
+#. change map-layers-study-area
+msgid "Message respondents see"
+msgstr "Pesan yang dilihat responden"
+
+#. change map-layers-study-area
+msgid "Name respondents see"
+msgstr "Nama yang dilihat responden"
+
+#. change map-layers-study-area
+msgid "no answers outside"
+msgstr "tanpa jawaban di luar"
+
+#. change map-layers-study-area
+msgid "No boundary in OpenStreetMap — starts as a rectangle you can adjust"
+msgstr "Tidak ada batas di OpenStreetMap — dimulai sebagai persegi panjang yang bisa disesuaikan"
+
+#. change map-layers-study-area
+msgid "No layers yet. Add boundaries, sites or routes respondents should see under the map."
+msgstr "Belum ada lapisan. Tambahkan batas, lokasi, atau rute yang perlu dilihat responden di bawah peta."
+
+#. change map-layers-study-area
+msgid "No map"
+msgstr "Tanpa peta"
+
+#. change map-layers-study-area
+msgid "No study area"
+msgstr "Tanpa area studi"
+
+#. change map-layers-study-area
+msgid "Not allowed — the mark is not placed"
+msgstr "Tidak diizinkan — tanda tidak dipasang"
+
+#. change map-layers-study-area
+msgid "Nothing found. Try a wider name, upload a boundary or draw it."
+msgstr "Tidak ditemukan. Coba nama yang lebih umum, unggah batas, atau gambar sendiri."
+
+#. change map-layers-study-area
+msgid "not on this map yet"
+msgstr "belum ada di peta ini"
+
+#. change map-layers-study-area
+msgid "Not saved yet — adjust the outline, then Save"
+msgstr "Belum disimpan — sesuaikan garis luar, lalu Simpan"
+
+#. change map-layers-study-area
+msgid "Not set"
+msgstr "Belum diatur"
+
+#. change map-layers-study-area
+msgid "Not set. The map opens on it and can grey out the rest."
+msgstr "Belum diatur. Peta terbuka di area ini dan bisa membuat sisanya abu-abu."
+
+#. change map-layers-study-area
+msgid "objects"
+msgstr "buah objek"
+
+#. change map-layers-study-area
+msgid "one segment of the street"
+msgstr "satu ruas jalan"
+
+#. change map-layers-study-area
+msgid "Only these sections"
+msgstr "Hanya bagian-bagian ini"
+
+#. change map-layers-study-area
+msgid "Only this section"
+msgstr "Hanya bagian ini"
+
+#. change map-layers-study-area
+msgid "on no map"
+msgstr "tidak di peta mana pun"
+
+#. change map-layers-study-area
+msgid "On no map: respondents do not see this layer."
+msgstr "Tidak di peta mana pun: responden tidak melihat lapisan ini."
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "Di peta ini"
+
+#. change map-layers-study-area
+msgid "OpenStreetMap object the boundary came from, e.g. `R123456`."
+msgstr "Objek OpenStreetMap asal batas, mis. `R123456`."
+
+#. change map-layers-study-area
+msgid "or keep it as a reference layer."
+msgstr "atau tetap jadikan lapisan referensi."
+
+#. change map-layers-study-area
+msgid "Other languages are in the Translations tab."
+msgstr "Bahasa lain ada di tab Terjemahan."
+
+#. change map-layers-study-area
+msgid "Picked sections"
+msgstr "Bagian terpilih"
+
+#. change map-layers-study-area
+msgid "Place boundaries © <a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\" rel=\"noopener\">OpenStreetMap contributors</a>."
+msgstr "Batas tempat © <a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\" rel=\"noopener\">kontributor OpenStreetMap</a>."
+
+#. change map-layers-study-area
+msgid "Place name"
+msgstr "Nama tempat"
+
+#. change map-layers-study-area
+msgid "Please place your answer inside the study area."
+msgstr "Silakan letakkan jawaban Anda di dalam area studi."
+
+#. change map-layers-study-area
+msgid "Preview as a respondent"
+msgstr "Pratinjau sebagai responden"
+
+#. change map-layers-study-area
+msgid "Read-only layers respondents see under the map: boundaries, sites, routes. A layer you add here is on every section with a map, switched on; pick sections to narrow it. Each layer is a dataset in Data."
+msgstr "Lapisan baca-saja yang dilihat responden di bawah peta: batas, lokasi, rute. Lapisan yang ditambahkan di sini aktif di setiap bagian dengan peta; pilih bagian untuk mempersempitnya. Setiap lapisan adalah dataset di Data."
+
+#. change map-layers-study-area
+msgid "Remove from this survey"
+msgstr "Hapus dari survei ini"
+
+#. change map-layers-study-area
+msgid "Remove the study area? The map then opens as before and nothing is refused."
+msgstr "Hapus area studi? Peta akan terbuka seperti sebelumnya dan tidak ada yang ditolak."
+
+#. change map-layers-study-area
+msgid "Remove this layer from the survey? It stays in Data."
+msgstr "Hapus lapisan ini dari survei? Lapisan tetap ada di Data."
+
+#. change map-layers-study-area
+msgid "Respondents answer about each object of this layer; picking it also puts the layer on this section’s map. Or pick “Respondents’ marks on…” a geo question to ask about what others have already placed."
+msgstr "Responden menjawab tentang setiap objek di lapisan ini; memilihnya juga menaruh lapisan di peta bagian ini. Atau pilih “Tanda responden pada…” sebuah pertanyaan geo untuk menanyakan apa yang sudah dipasang orang lain."
+
+#. change map-layers-study-area
+msgid "respondents can still move the map"
+msgstr "responden tetap bisa menggeser peta"
+
+#. change map-layers-study-area
+msgid "respondents’ marks"
+msgstr "tanda responden"
+
+#. change map-layers-study-area
+msgid "respondents' marks on"
+msgstr "tanda responden pada"
+
+#. change map-layers-study-area
+msgid "Saved"
+msgstr "Sudah disimpan"
+
+#. change map-layers-study-area
+msgid "Search again: this result is no longer at hand."
+msgstr "Cari lagi: hasil ini sudah tidak tersedia."
+
+#. change map-layers-study-area
+msgid "`sections` scope only: section references `<code>` or `<code>#<n>`."
+msgstr "Hanya cakupan `sections`: rujukan bagian `<code>` atau `<code>#<n>`."
+
+#. change map-layers-study-area
+msgid "Show %(name)s on this section"
+msgstr "Tampilkan %(name)s di bagian ini"
+
+#. change map-layers-study-area
+msgid "Show on every section"
+msgstr "Tampilkan di setiap bagian"
+
+#. change map-layers-study-area
+msgid "Shows on"
+msgstr "Tampil di"
+
+#. change map-layers-study-area
+msgid "Study area"
+msgstr "Area studi"
+
+#. change map-layers-study-area
+msgid "Study area message"
+msgstr "Pesan area studi"
+
+#. change map-layers-study-area
+msgid "Study area outline"
+msgstr "Garis luar area studi"
+
+#. change map-layers-study-area
+msgid "Survey layer"
+msgstr "Lapisan survei"
+
+#. change map-layers-study-area
+msgid "The coordinates were converted from"
+msgstr "Koordinat dikonversi dari"
+
+#. change map-layers-study-area
+msgid "The file has no area in it. A study area is a polygon."
+msgstr "Berkas tidak berisi area. Area studi berupa poligon."
+
+#. change map-layers-study-area
+msgid "The file is larger than 10 MB."
+msgstr "Berkas lebih dari 10 MB."
+
+#. change map-layers-study-area
+msgid "The survey has no section with a map yet."
+msgstr "Survei belum punya bagian dengan peta."
+
+#. change map-layers-study-area
+msgid "The survey opens on %(date)s: until then the public link shows the “opens on” page."
+msgstr "Survei dibuka pada %(date)s: sampai saat itu tautan publik menampilkan halaman “dibuka pada”."
+
+#. change map-layers-study-area
+msgid "This layer has no area in it. A study area is a polygon."
+msgstr "Lapisan ini tidak berisi area. Area studi berupa poligon."
+
+#. change map-layers-study-area
+msgid "This looks like a boundary"
+msgstr "Ini tampak seperti batas"
+
+#. change map-layers-study-area
+msgid "This survey is published: a saved study area applies to respondents at once. Answers already given are not re-checked."
+msgstr "Survei ini sudah diterbitkan: area studi yang disimpan langsung berlaku bagi responden. Jawaban yang sudah diberikan tidak diperiksa ulang."
+
+#. change map-layers-study-area
+msgid "Too many searches. Wait a minute and try again."
+msgstr "Terlalu banyak pencarian. Tunggu sebentar lalu coba lagi."
+
+#. change map-layers-study-area
+msgid "Upload a boundary file"
+msgstr "Unggah berkas batas"
+
+#. change map-layers-study-area
+msgid "Upload a file"
+msgstr "Unggah berkas"
+
+#. change map-layers-study-area
+msgid "Upload a new layer"
+msgstr "Unggah lapisan baru"
+
+#. change map-layers-study-area
+msgid "Uploaded file"
+msgstr "Berkas yang diunggah"
+
+#. change map-layers-study-area
+msgid "Use"
+msgstr "Pakai"
+
+#. change map-layers-study-area
+msgid "Use a layer of this survey"
+msgstr "Pakai lapisan survei ini"
+
+#. change map-layers-study-area
+msgid "Use a layer of this survey…"
+msgstr "Pakai lapisan survei ini…"
+
+#. change map-layers-study-area
+msgid "What respondents see"
+msgstr "Yang dilihat responden"
+
+#. change map-layers-study-area
+msgid "Where it shows"
+msgstr "Tempat ditampilkan"
+
+#. change map-layers-study-area
+msgid "Layers and the study area of this section’s map are in its Map card above."
+msgstr "Lapisan dan area studi peta bagian ini ada di kartu Petanya di atas."
+
+#. change map-layers-study-area
+msgid "This question asks about the objects of a layer."
+msgstr "Pertanyaan ini menanyakan objek-objek dari sebuah lapisan."
+
+#. change map-layers-study-area
+msgid "Pick a layer of the survey or “Respondents’ marks on…” a geo question; if this section’s map does not show the layer yet, picking it puts it there."
+msgstr "Pilih lapisan survei atau “Tanda responden pada…” sebuah pertanyaan geo; jika peta bagian ini belum menampilkan lapisan itu, memilihnya akan menaruhnya di sana."
+
+#. change map-layers-study-area
+msgid "Sub-questions are what respondents answer."
+msgstr "Responden menjawab sub-pertanyaan."
+
+#. change map-layers-study-area
+msgid "Only showing a layer?"
+msgstr "Hanya menampilkan lapisan?"
+
+#. change map-layers-study-area
+msgid "You need no question for that: tick the layer in the section’s Map card, or add it in Survey settings to show it on every map."
+msgstr "Tidak perlu pertanyaan: centang lapisan di kartu Peta bagian ini, atau tambahkan di pengaturan survei untuk menampilkannya di setiap peta."
+
+#. change map-layers-study-area
+msgid "Edit outline"
+msgstr "Ubah garis batas"
+
+#. change map-layers-study-area
+msgid "Corridor width"
+msgstr "Lebar koridor"
+
+#. change map-layers-study-area
+msgid "Map answers outside"
+msgstr "Jawaban peta di luar"
+
+#. change map-layers-study-area
+msgid "Not allowed"
+msgstr "Tidak diizinkan"
+
+#. change map-layers-study-area
+msgid "Looking up the boundary of %%(place)s…"
+msgstr "Mencari batas %%(place)s…"
+
+#. change map-layers-study-area
+msgid "Grey outside on the respondent’s map. %%(km2)s km² · from OpenStreetMap"
+msgstr "Abu-abu di luar pada peta responden. %%(km2)s km² · dari OpenStreetMap"
+
+#. change map-layers-study-area
+msgid "Grey outside on the respondent’s map. %%(km2)s km² · edited by you"
+msgstr "Abu-abu di luar pada peta responden. %%(km2)s km² · diubah oleh Anda"
+
+#. change map-layers-study-area
+msgid "Drag the corners on the map. Click a middle handle to add one; click a corner to remove it."
+msgstr "Seret sudut-sudut di peta. Klik titik tengah untuk menambah sudut; klik sudut untuk menghapusnya."
+
+#. change map-layers-study-area
+msgid "No boundary found for %%(place)s. The survey starts without a study area; set one later in its Map card."
+msgstr "Batas untuk %%(place)s tidak ditemukan. Survei dimulai tanpa area studi; atur nanti di kartu Petanya."
+
+#. change map-layers-study-area
+msgid "OpenStreetMap did not answer. The survey starts without a study area; set one later in its Map card."
+msgstr "OpenStreetMap tidak merespons. Survei dimulai tanpa area studi; atur nanti di kartu Petanya."
+
+#. change map-layers-study-area
+msgid "Removed. The survey starts without a study area."
+msgstr "Dihapus. Survei dimulai tanpa area studi."
+
+#. change map-layers-study-area
+msgid "Use the boundary of %%(place)s"
+msgstr "Gunakan batas %%(place)s"
+
+#. change map-layers-study-area
+msgid "Drag a corner to move it"
+msgstr "Seret sudut untuk memindahkannya"

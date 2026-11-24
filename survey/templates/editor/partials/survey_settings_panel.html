@@ -189,18 +189,20 @@
       <div class="pr-card" id="ref-layers-card"
            data-create-url="{% url 'editor_survey_layer_create' survey.uuid %}"
            data-update-url="{% url 'editor_survey_layer_update' survey.uuid 0 %}"
-           data-delete-url="{% url 'editor_survey_layer_delete' survey.uuid 0 %}">
-        <h6>{% trans "Reference layers" %}</h6>
+           data-delete-url="{% url 'editor_survey_layer_delete' survey.uuid 0 %}"
+           data-place-url="{% url 'editor_layer_place' survey.uuid 0 %}">
+        <h6>{% trans "Layers used here" %}</h6>
         <div class="pr-help" style="margin-top:0;margin-bottom:.75rem;">
-          {% trans "Non-editable layers respondents see under the map: counting zones, boundaries, routes. Sections can hide each layer individually." %}
+          {% trans "Read-only layers respondents see under the map: boundaries, sites, routes. A layer you add here is on every section with a map, switched on; pick sections to narrow it. Each layer is a dataset in Data." %}
           {% if HELP_URL %}<a href="{{ HELP_URL.reference_layers }}" target="_blank" rel="noopener" class="ms-learn-more">{% trans "Learn more" %} <i class="fas fa-external-link-alt" style="font-size:.7em;"></i></a>{% endif %}
         </div>
 
         <div id="ref-layers-list">
           {% for item in map_layers %}
-          {% if item.link %}
-          {% comment %}A dataset linked "From Data" (change data-links): read-only here — its look and
-          objects are the dataset's, shared by every place that links it.{% endcomment %}
+          {% if item.link and item.link.view %}
+          {% comment %}A VIEW of a dataset linked "From Data" (change data-views): read-only here — its
+          look and objects are the view's, shared by every place that links it. Every other layer
+          is a dataset too (layers live in Data) and is styled from here.{% endcomment %}
           <div class="ref-layer is-linked" data-layer-id="{{ item.layer.pk }}" data-link-id="{{ item.link.pk }}">
             <div class="ref-layer-head">
               <span class="ref-layer-swatch" style="background:{{ item.layer.color }}"></span>
@@ -218,9 +220,7 @@
               </div>
             </div>
             {% endif %}
-            <div class="pr-help" style="margin:.2rem 0 0;">
-              {% if item.shown_in %}{% trans "On the map in" %} {% for t in item.shown_in %}<b>{{ t }}</b>{% if not forloop.last %}, {% endif %}{% endfor %}.{% else %}{% trans "Not on any map yet — add an “Objects on the map” question to a section and pick this layer." %}{% endif %}
-            </div>
+            {% include "editor/partials/_layer_where.html" %}
           </div>
           {% else %}
           <div class="ref-layer" data-layer-id="{{ item.layer.pk }}" data-source="{{ item.layer.source }}">
@@ -230,9 +230,20 @@
               {% if item.layer.source == 'question' %}<span class="badge badge-pill" style="background:var(--accent-light);color:var(--accent);font-size:.68rem;margin-left:.4rem;" title="{% trans 'Objects are respondents’ marks on this question' %}">{% trans "source: answers" %} · {{ item.layer.source_question_code }}</span>{% endif %}
               <span class="pr-help ref-layer-meta">{{ item.layer.feature_count }} {% trans "objects" %}{% if item.layer.source == 'question' %} · {% trans "read-only" %}{% else %} · {{ item.layer.size_bytes|filesizeformat }}{% endif %}</span>
               <a class="btn btn-sm btn-primary ref-layer-open" href="{% url 'editor_layer_objects' survey.uuid item.layer.pk %}" style="font-size:.74rem;padding:.15rem .55rem;margin-left:.4rem;"><i class="fas fa-edit"></i> {% trans "Open editor" %}</a>
-              <button type="button" class="ref-layer-toggle" title="{% trans 'Settings' %}"><i class="fas fa-pen"></i></button>
-              <button type="button" class="ref-layer-delete" title="{% trans 'Delete' %}"><i class="fas fa-trash"></i></button>
+              {% if item.dataset_id %}<a class="btn btn-sm btn-link" href="{% url 'editor_data_dataset' item.dataset_id %}" style="font-size:.74rem;padding:.15rem .3rem;">{% trans "Open in Data" %}</a>{% endif %}
+              <button type="button" class="ref-layer-toggle" title="{% trans 'Settings' %}" aria-label="{% trans 'Settings' %}"><i class="fas fa-pen"></i></button>
+              <button type="button" class="ref-layer-delete" title="{% trans 'Remove from this survey' %}" aria-label="{% trans 'Remove from this survey' %}"
+                      data-question="{% if item.dataset_id %}{% trans 'Remove this layer from the survey? It stays in Data.' %}{% else %}{% trans 'Delete this layer?' %}{% endif %}"><i class="fas fa-trash"></i></button>
             </div>
+            {% include "editor/partials/_layer_where.html" %}
+            {% if item.card_fields %}
+            <div class="pr-field" style="margin:.2rem .7rem .5rem;" data-fields-url="{% url 'editor_survey_layer_link_fields' survey.uuid item.link.pk %}">
+              <label>{% trans "Fields on the object card" %}</label>
+              <div style="display:flex;flex-wrap:wrap;gap:.25rem .9rem;font-size:.82rem;">
+                {% for f in item.card_fields %}<label class="mb-0" style="font-weight:400;"><input type="checkbox" value="{{ f.name }}" {% if f.shown %}checked{% endif %}> {{ f.label }}</label>{% endfor %}
+              </div>
+            </div>
+            {% endif %}
             <div class="ref-layer-body" hidden>
               <div class="pr-field">
                 <label>{% trans "Name" %}</label>
@@ -336,9 +347,9 @@
           {% comment %}One blocktrans: split into "Drop a" / "here or" / "choose a file"
           the sentence cannot be reordered, and those fragments carry no meaning on
           their own for whoever translates them.{% endcomment %}
-          <i class="fas fa-upload"></i> {% blocktrans %}Drop a <b>.geojson</b> here or <span class="ref-layers-choose">choose a file</span>{% endblocktrans %}
-          <div class="pr-help">{% trans "GeoJSON (WGS84), up to 10 MB, max 10 layers per survey." %}</div>
-          <input type="file" accept=".geojson,.json,application/geo+json,application/json" hidden id="ref-layers-file">
+          <i class="fas fa-upload"></i> {% blocktrans %}Drop a <b>file</b> here or <span class="ref-layers-choose">choose a file</span>{% endblocktrans %}
+          <div class="pr-help">{% trans "GeoJSON, GeoPackage, zipped shapefile, KML or CSV with coordinates — any coordinate system is converted. Up to 10 MB, max 10 layers per survey." %}</div>
+          <input type="file" accept=".geojson,.json,.gpkg,.zip,.kml,.csv,application/geo+json,application/json" hidden id="ref-layers-file">
         </label>
         <div style="text-align:center;margin-top:.5rem;">
           <span class="pr-help">{% trans "No file?" %}</span>
@@ -563,6 +574,13 @@
   #ref-layers-card .ref-layer-head button { border:none; background:none; color:var(--color-text-faint); cursor:pointer; font-size:.78rem; padding:.15rem .3rem; }
   #ref-layers-card .ref-layer-head button:hover { color:var(--color-text-muted); }
   #ref-layers-card .ref-layer-body { border-top:1px solid var(--border-color); padding:.65rem .7rem; }
+  .ref-layer-where { padding:0 .7rem .55rem; font-size:.8rem; }
+  .ref-layer-where-label { display:block; margin:0 0 .2rem; font-size:.74rem; color:var(--color-text-muted); }
+  .ref-layer-where select { max-width:100%; font-size:.8rem; }
+  .ref-layer-where-sections { display:flex; flex-wrap:wrap; gap:.2rem .9rem; margin-top:.35rem; }
+  .ref-layer-where-sections label { font-weight:400; margin:0; }
+  .ref-layer-where-warn { margin-top:.3rem; padding:.25rem .45rem; border-radius:6px; background:var(--color-warning-soft); border:1px solid var(--color-warning-line); }
+  .ref-layer-where-asked { margin:.3rem 0 0; }
   #ref-layers-card .ref-layer-body .pr-field { margin-bottom:.55rem; }
   #ref-layers-card .ref-layer-body input[type=text], #ref-layers-card .ref-layer-body select { width:100%; }
   #ref-layers-card .ref-layers-drop { display:block; border:2px dashed var(--border-color); border-radius:8px;
@@ -601,9 +619,22 @@
             var body = el.querySelector('.ref-layer-body');
             body.hidden = !body.hidden;
         });
-        el.querySelector('.ref-layer-delete').addEventListener('click', function() {
-            post(urlFor('delete', id)).then(function() { el.remove(); })
-                .catch(function(e) { errorBox.textContent = e.message; });
+        var del = el.querySelector('.ref-layer-delete');
+        del.addEventListener('click', function() {
+            var go = function() {
+                post(urlFor('delete', id)).then(function() { el.remove(); })
+                    .catch(function(e) { errorBox.textContent = e.message; });
+            };
+            if (window.Dialog) {
+                Dialog.confirm(del.dataset.question || '', {okLabel: del.title, danger: true})
+                    .then(function(ok) { if (ok) go(); });
+            } else { go(); }
+        });
+        var fieldsBox = el.querySelector('[data-fields-url]');
+        if (fieldsBox) fieldsBox.addEventListener('change', function() {
+            var fd = new FormData();
+            fieldsBox.querySelectorAll('input:checked').forEach(function(c) { fd.append('fields', c.value); });
+            post(fieldsBox.dataset.fieldsUrl, fd).catch(function(err) { errorBox.textContent = err.message; });
         });
         var status = el.querySelector('.ref-layer-status');
         el.querySelectorAll('[data-field]').forEach(function(field) {
@@ -622,7 +653,35 @@
         });
     }
     list.querySelectorAll('.ref-layer:not(.is-linked)').forEach(bindLayer);
-    // Datasets linked "From Data" (change data-links): unlink, card fields, add.
+
+    // Where each layer shows (change map-layers-study-area): scope + picked sections, saved at once.
+    function bindWhere(box) {
+        var id = box.dataset.layerId;
+        var scope = box.querySelector('[data-where-scope]');
+        var picks = box.querySelector('[data-where-sections]');
+        var warn = box.querySelector('[data-where-warn]');
+        function save() {
+            var fd = new FormData();
+            var value = scope.value;
+            var checked = Array.prototype.map.call(picks.querySelectorAll('input:checked'), function(c) { return c.value; });
+            if (value === 'sections' && !checked.length) { value = 'off'; scope.value = 'off'; }
+            fd.append('scope', value);
+            checked.forEach(function(ref) { fd.append('sections', ref); });
+            picks.hidden = value !== 'sections';
+            warn.hidden = value !== 'off';
+            errorBox.textContent = '';
+            post(urlFor('place', id), fd).catch(function(e) { errorBox.textContent = e.message; });
+        }
+        scope.addEventListener('change', function() {
+            if (scope.value === 'sections' && !picks.querySelector('input:checked')) {
+                picks.querySelectorAll('input').forEach(function(c) { c.checked = true; });
+            }
+            save();
+        });
+        picks.addEventListener('change', save);
+    }
+    list.querySelectorAll('.ref-layer-where').forEach(bindWhere);
+    // Views of datasets linked "From Data" (change data-views): unlink, card fields, add.
     list.querySelectorAll('.ref-layer.is-linked').forEach(function(el) {
         el.querySelector('.ref-layer-unlink').addEventListener('click', function(e) {
             errorBox.textContent = '';

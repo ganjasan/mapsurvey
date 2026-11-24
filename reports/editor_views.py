@@ -538,7 +538,16 @@ def _map_panel(request, block, record, geo_subquestions):
     return {'map_layers': layers, 'map_layer_choices': choices, 'map_view': layers[0]['view'],
             'is_point': layers[0]['is_point'],
             'map_switches': {'legend': config.get('legend') is not False, 'scale': config.get('scale') is not False,
-                             'toggle': bool(config.get('toggle'))}}
+                             'toggle': bool(config.get('toggle')),
+                             # Only offered when the block's survey has a study area (map-layers-study-area).
+                             'study_area': config.get('study_area') is not False,
+                             'has_study_area': _has_study_area(block)}}
+
+
+def _has_study_area(block):
+    from survey.services.study_area import get as study_area_of
+    question = getattr(block, 'question', None)
+    return question is not None and study_area_of(question.survey_section.survey_header) is not None
 
 
 def _decorate(request, page, block, record, geo_subquestions=()):
@@ -866,6 +875,9 @@ def _map_display(post, block):
     out.update(color=look['color'], name=look['name'], opts=look['opts'],
                legend=post.get('map_legend') == 'on', scale=post.get('map_scale') == 'on',
                toggle=post.get('map_toggle') == 'on')
+    # Only a panel that offered the switch (the survey has a study area) may turn the outline off.
+    if 'map_study_area_present' in post:
+        out['study_area'] = post.get('map_study_area') == 'on'
     layers = []
     for layer in (block.config or {}).get('layers') or []:
         prefix = 'L%s_' % layer['id']

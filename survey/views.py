@@ -1253,14 +1253,26 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 		'selected_language': selected_language,
 		'section_current': section_current,
 		'section_total': section_total,
-		# Layers on this section's map = layers its Objects questions bind
-		# (spec reference-overlay-layers). The shell loads every layer of the
-		# survey once; this list says which ones this section shows.
-		'visible_layers_json': json.dumps(section_layer_ids(section)),
+		# Layers on this section's map = the placements covering it (spec map-layer-placement).
+		# The shell loads every layer of the survey once; this list says which ones this
+		# section shows, and the panel's "On this map" legend lists them.
+		'visible_layers_json': json.dumps(visible_ids := section_layer_ids(section)),
+		'on_this_map': _on_this_map(section.survey_header, visible_ids),
 		'visibility_rules_json': json.dumps(client_rules),
 		'popup_visibility_rules_json': json.dumps(popup_rules),
 		'entry': entry,
 	}
+
+
+def _on_this_map(survey, layer_ids):
+	"""The panel's "On this map" legend (spec map-layer-placement "The map's legend comes from
+	placements"): the section's placed layers in stacking order, each with the name, colour and
+	legend rows the map draws with — from the same metadata builder, so a private field never
+	becomes a legend label."""
+	if not layer_ids:
+		return []
+	metas = {m['id']: m for m in build_map_layers_metadata(survey)}
+	return [metas[pk] for pk in layer_ids if pk in metas]
 
 
 # Moved to survey/layers.py (shared with the Responses tab); kept under the old
@@ -1321,7 +1333,31 @@ def _add_shell_context(ctx, survey, section):
 
 	ctx['initial_use_geolocation'] = survey.use_geolocation
 	ctx['map_layers'] = _build_map_layers_metadata(survey)
+	ctx['study_area_meta'] = study_area_meta(survey)
 	return ctx
+
+
+def study_area_meta(survey, language=None):
+	"""What the respondent map needs about the study area (change map-layers-study-area): the
+	gated outline URL, fog, the refusal rule and its message in the page language, and the
+	bounds to open on. None when the survey has none or layers are switched off."""
+	from django.conf import settings as django_settings
+	from django.urls import reverse
+	if not django_settings.MAP_REFERENCE_LAYERS:
+		return None
+	from .services import study_area as svc_area
+	area = svc_area.get(survey)
+	if area is None:
+		return None
+	language = language or translation.get_language()
+	primary = (survey.available_languages or ['en'])[0]
+	return {
+		'url': reverse('survey_study_area_geojson', kwargs={'survey_slug': str(survey.uuid)}),
+		'fog': area.fog,
+		'refuse_outside': area.refuse_outside,
+		'message': svc_area.message_for(area, language, [primary]) if area.refuse_outside else '',
+		'bounds': list(area.geometry.extent),
+	}
 
 
 def number_value(question, raw):
@@ -1387,6 +1423,11 @@ def save_section_answers(post, survey_session, session_survey, section, surface=
 		parent_answer_id__isnull=True,
 	).delete()
 
+	# Map answers outside the study area (change map-layers-study-area): refused here as well as in
+	# the browser when the creator switched the rule on; None when nothing is refused.
+	from .study_area_guard import for_section as study_area_guard
+	area_guard = study_area_guard(section)
+
 	for question in section_questions:
 		if not vmap_post.is_question_visible(question.id):
 			continue
@@ -1442,6 +1483,13 @@ def save_section_answers(post, survey_session, session_survey, section, surface=
 								logger.warning(
 									"Skipping unusable spray cloud for %s", question.code)
 								continue
+							if area_guard is not None:
+								resultToSave = area_guard.clip_cloud(resultToSave)
+								if resultToSave is None:
+									continue
+						elif area_guard is not None and not area_guard.accepts(resultToSave):
+							area_guard.refuse(question.code)
+							continue
 						setattr(answer, geo_column(question.input_type), resultToSave)
 
 						answer.save()
@@ -1601,6 +1649,8 @@ def save_section_answers(post, survey_session, session_survey, section, surface=
 	# follows every section submit.
 	from . import required_state
 	required_state.refresh(survey_session, vmap=vmap_final)
+	if area_guard is not None:
+		area_guard.finish(section.survey_header)
 	return vmap_final
 
 
