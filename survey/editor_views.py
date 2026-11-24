@@ -21,14 +21,16 @@ from . import other_option
 from .models import (
     SurveyHeader, SurveySection, Question, SurveyCollaborator, Answer,
     Membership, SURVEY_ROLE_CHOICES,
-    INPUT_TYPE_CHOICES, SurveyMapLayer,
+    INPUT_TYPE_CHOICES, SurveyMapLayer, legend_only_q,
     CreatorPreferences,
     SURVEY_START_AI, SURVEY_START_CHOICES,
 )
 from . import map_start
+from . import study_area_wizard
 from . import basemaps as basemap_registry
 from .layers import (
     normalize_style, legend_for, LAYER_ICONS, layers_for, layer_owner, GEOMETRY_TEXT_FIELDS, MAX_LAYER_BYTES,
+    MAX_LAYERS_PER_SURVEY,
 )
 from . import product_events as pe
 from .question_types import BUDGET_TYPES, SHARED_MAP_SOURCE_TYPES, allowed_display_styles, normalise_choice_extras
@@ -256,9 +258,14 @@ def editor_survey_create(request):
                 # A POST without the map fields (old scripts, the legacy test
                 # shape): the chain decides, exactly as the blank endpoint does.
                 start = map_start.suggest_start_position(request)
-            return _finish_blank_survey(
+            response = _finish_blank_survey(
                 request, survey, start=start, surface=pe.SURFACE_CREATE_PAGE,
             )
+            # The outline the create page's Study area strip shows (change
+            # map-layers-study-area, D8b); no brief is read on this path, so `auto` sets nothing.
+            study_area_wizard.apply(request.user, survey,
+                                    study_area_wizard.resolve(study_area_wizard.from_post(request.POST), ''))
+            return response
     else:
         form = SurveyCreateForm()
     if settings.CREATE_STEER_AI and settings.MOBILE_EDITOR_NAV:
@@ -275,6 +282,8 @@ def editor_survey_create(request):
         'ai_available': ai_client.provider_configured(),
         'initial_start': start,
         'from_start_page': request.GET.get('from') == 'start',
+        # The Wizard's study area strip (change map-layers-study-area, D8b).
+        'study_area_enabled': settings.MAP_REFERENCE_LAYERS,
     })
 
 
@@ -481,6 +490,7 @@ def _start_survey_generation(request, form):
     generate_survey_draft_task.delay(
         event.id, brief.as_dict(), languages, header_overrides,
         map_locked=map_locked, map_source=_posted_map_source(request),
+        study_area=study_area_wizard.from_post(request.POST),
     )
     return render(request, 'editor/partials/generation_status.html', {
         'event': event,
@@ -642,7 +652,7 @@ def editor_survey_detail(request, survey_uuid):
             Question.objects.filter(
                 survey_section=current_section,
                 parent_question_id__isnull=True,
-            ).order_by('order_number')
+            ).exclude(legend_only_q()).order_by('order_number')
         )
 
     can_edit = request.effective_survey_role in ('editor', 'owner')
@@ -761,6 +771,7 @@ def editor_survey_settings(request, survey_uuid):
         'effective_role': request.effective_survey_role,
         'basemap_choices': basemap_registry.choices_for(survey.organization),
         'map_layers': _editor_layers(survey),
+        'layer_map_sections': _map_sections(survey),
         'data_choices': _data_choices(survey),
         'layer_icons': LAYER_ICONS,
         'layers_enabled': settings.MAP_REFERENCE_LAYERS,
@@ -823,6 +834,7 @@ def editor_survey_settings_panel(request, survey_uuid):
         'effective_role': request.effective_survey_role,
         'basemap_choices': basemap_registry.choices_for(survey.organization),
         'map_layers': _editor_layers(survey),
+        'layer_map_sections': _map_sections(survey),
         'data_choices': _data_choices(survey),
         'layer_icons': LAYER_ICONS,
         'layers_enabled': settings.MAP_REFERENCE_LAYERS,
@@ -941,6 +953,7 @@ def _editor_layers(survey):
     from .layers import source_question_for
     links = {link.dataset.layer_id: link for link in
              DatasetLink.objects.filter(survey=layer_owner(survey)).select_related('dataset', 'view')}
+    map_sections = _map_sections(survey)
     items = []
     for layer in layers_for(survey):
         link = links.get(layer.pk)
@@ -954,16 +967,37 @@ def _editor_layers(survey):
         if layer.source == 'question':
             item['source_question'] = source_question_for(layer)
             item['used_by'] = list(layer.questions.values_list('name', flat=True))
-        # Where the layer is on a map: the sections whose Objects questions
-        # bind it (spec survey-editor "Layers are put on a map by adding a
-        # question"). Draft copies and versions carry their own question rows;
-        # the card lists the canonical survey's sections.
-        item['shown_in'] = list(dict.fromkeys(
+        # Where the layer is on a map: its placement (spec map-layer-placement), and which
+        # questions ask about it ("Asked in …"). The card edits the scope in place.
+        item.update(_placement_view(survey, layer.pk, map_sections))
+        item['asked_in'] = list(dict.fromkeys(
             layer.questions.filter(survey_section__survey_header=survey, parent_question_id__isnull=True)
-            .order_by('survey_section__id')
+            .exclude(legend_only_q()).order_by('survey_section__id')
             .values_list('survey_section__title', flat=True)))
+        item['dataset_id'] = link.dataset_id if link is not None else None
         items.append(item)
     return items
+
+
+def _map_sections(survey):
+    """[(ref, title)] of the survey's map sections, in creation order — the scope pickers."""
+    from .services.placements import map_section_refs
+    return [(ref, section.title or section.name) for ref, section in map_section_refs(survey).items()]
+
+
+def _placement_view(survey, layer_id, map_sections):
+    """What a layer row shows about where it is: scope, the picked refs, a one-line summary."""
+    from .section_refs import split
+    from .services import placements as svc_placements
+    placement = svc_placements.get(survey, layer_id)
+    if placement is None:
+        return {'scope': 'off', 'picked': [], 'shown_summary': ''}
+    if placement.scope == 'all':
+        return {'scope': 'all', 'picked': [ref for ref, _t in map_sections], 'shown_summary': ''}
+    wanted = {split(r) for r in placement.sections or []}
+    picked = [ref for ref, _t in map_sections if split(ref) in wanted]
+    return {'scope': 'sections', 'picked': picked,
+            'shown_summary': ', '.join(t for ref, t in map_sections if ref in picked)}
 
 
 def _layer_payload(layer, properties=None):
@@ -997,21 +1031,32 @@ def _layers_enabled_or_404():
 @survey_permission_required('owner')
 @require_POST
 def editor_survey_layer_create(request, survey_uuid):
-    """Upload a GeoJSON reference layer -- through the layer service, which the
-    API and ZIP import share (change api-v2-layers)."""
+    """Upload a reference layer (GeoJSON, GeoPackage, zipped shapefile, KML, CSV) -- through the
+    layer service, which the API and ZIP import share (change api-v2-layers). The layer becomes a
+    workspace dataset linked to the survey and placed on every map section; a Map card upload with
+    `scope=section` places it on that section only (change map-layers-study-area)."""
     from .services import layers as svc_layers
+    from .services import placements as svc_placements
     _layers_enabled_or_404()
     f = request.FILES.get('layer')
     if not f:
         return JsonResponse({'error': 'No file'}, status=400)
     if f.size > MAX_LAYER_BYTES:   # before reading: never pull an oversized file into memory
         return JsonResponse({'error': f'File is larger than {MAX_LAYER_BYTES // (1024 * 1024)} MB.'}, status=400)
+    actor = Actor.from_request(request)
     try:
-        layer, _report = svc_layers.create_from_geojson(Actor.from_request(request), request.survey, f.read(),
-                                                        filename=f.name)
+        layer, report = svc_layers.create_from_geojson(actor, request.survey, f.read(), filename=f.name)
     except svc_layers.LayerError as exc:
         return JsonResponse({'error': exc.message}, status=400)
-    return JsonResponse(_layer_payload(layer, layer.property_names), status=201)
+    section = _map_card_section(request)
+    if section is not None:
+        svc_placements.unplace(actor, request.survey, layer.pk)
+        svc_placements.set_on_section(actor, request.survey, layer.pk, section, True)
+    from .layers import looks_like_boundary
+    payload = _layer_payload(layer, layer.property_names)
+    payload['converted_from'] = report.get('crs', '')
+    payload['looks_like_boundary'] = looks_like_boundary(layer)
+    return JsonResponse(payload, status=201)
 
 
 @survey_permission_required('owner')
@@ -1020,7 +1065,7 @@ def editor_survey_layer_update(request, survey_uuid, layer_id):
     """Update a layer's presentation config (never its geometry)."""
     from .services import layers as svc_layers
     _layers_enabled_or_404()
-    layer = get_object_or_404(SurveyMapLayer.objects.defer(*GEOMETRY_TEXT_FIELDS), pk=layer_id, survey=layer_owner(request.survey))
+    layer = get_object_or_404(layers_for(request.survey), pk=layer_id)
     fields = {}
     if 'style' in request.POST:
         try:
@@ -1047,7 +1092,7 @@ def editor_survey_layer_style_summary(request, survey_uuid, layer_id):
     """Distinct values / numeric range of one object property — what the
     card's Auto-fill builds classes from (spec layer-style)."""
     _layers_enabled_or_404()
-    layer = get_object_or_404(SurveyMapLayer.objects.defer(*GEOMETRY_TEXT_FIELDS), pk=layer_id, survey=layer_owner(request.survey))
+    layer = get_object_or_404(layers_for(request.survey), pk=layer_id)
     if layer.source == 'question':
         raise Http404
     from .layers import style_summary
@@ -1062,13 +1107,110 @@ def editor_survey_layer_style_summary(request, survey_uuid, layer_id):
 def editor_survey_layer_delete(request, survey_uuid, layer_id):
     _layers_enabled_or_404()
     from .services import layers as svc_layers
-    layer = get_object_or_404(SurveyMapLayer.objects.defer(*GEOMETRY_TEXT_FIELDS), pk=layer_id, survey=layer_owner(request.survey))
+    layer = get_object_or_404(layers_for(request.survey), pk=layer_id)
     # Question.layer is PROTECT: the service names the binding question instead of a 500.
     try:
-        svc_layers.delete(Actor.from_request(request), layer)
+        svc_layers.delete(Actor.from_request(request), layer, request.survey)
     except svc_layers.LayerError as exc:
         return JsonResponse({'error': exc.message}, status=400)
     return HttpResponse(status=204)
+
+
+def _placement_payload(survey, layer_id):
+    data = _placement_view(survey, layer_id, _map_sections(survey))
+    data['layer_id'] = layer_id
+    return data
+
+
+@survey_permission_required('editor')
+@require_POST
+def editor_layer_place(request, survey_uuid, layer_id):
+    """Where a layer shows (change map-layers-study-area): `scope=all` (every map section, now and
+    later), `scope=sections` with `sections=<ref>` repeated, or `scope=off` (on no map). A safe edit:
+    applied in place on a published survey, never unpublished changes (design D2)."""
+    _layers_enabled_or_404()
+    from .services import placements as svc_placements
+    get_object_or_404(layers_for(request.survey), pk=layer_id)
+    actor = Actor.from_request(request)
+    scope = request.POST.get('scope')
+    try:
+        if scope == 'off':
+            svc_placements.unplace(actor, request.survey, layer_id)
+        else:
+            svc_placements.place(actor, request.survey, layer_id, scope, request.POST.getlist('sections'))
+    except ValidationFailed as exc:
+        return JsonResponse({'error': exc.message}, status=400)
+    return JsonResponse(_placement_payload(request.survey, layer_id))
+
+
+@survey_permission_required('editor')
+@require_POST
+def editor_layer_place_section(request, survey_uuid, layer_id):
+    """The Map card's tick: put the layer on, or take it off, one section's map (`section`, `on`)."""
+    _layers_enabled_or_404()
+    from .services import placements as svc_placements
+    get_object_or_404(layers_for(request.survey), pk=layer_id)
+    section = get_object_or_404(SurveySection, pk=request.POST.get('section') or 0, survey_header=request.survey)
+    try:
+        svc_placements.set_on_section(Actor.from_request(request), request.survey, layer_id, section,
+                                      request.POST.get('on') in ('1', 'true', 'on'))
+    except ValidationFailed as exc:
+        return JsonResponse({'error': exc.message}, status=400)
+    return JsonResponse(_placement_payload(request.survey, layer_id))
+
+
+@survey_permission_required('editor')
+@require_POST
+def editor_layer_place_reorder(request, survey_uuid):
+    """Stacking order of the layers on the maps: `layer_ids` repeated, every placed layer once."""
+    _layers_enabled_or_404()
+    from .services import placements as svc_placements
+    try:
+        svc_placements.reorder(Actor.from_request(request), request.survey, request.POST.getlist('layer_ids'))
+    except (ValidationFailed, ValueError) as exc:
+        return JsonResponse({'error': getattr(exc, 'message', str(exc))}, status=400)
+    return HttpResponse(status=204)
+
+
+def publish_map_check(survey):
+    """What the publish dialogs list about the map (change map-layers-study-area, spec
+    map-layer-placement "The publish check lists what the map shows"): the study area, every layer
+    the survey uses with its use and where it shows, the layers on no map, and whether the public
+    link shows the "opens on" page for now. Warnings never block publishing."""
+    from django.utils import timezone
+    from .services import study_area as svc_area
+    owner = layer_owner(survey)
+    map_sections = _map_sections(survey)
+    area = svc_area.get(survey)
+    rows = []
+    for layer in layers_for(survey).order_by('position', 'id'):
+        view = _placement_view(survey, layer.pk, map_sections)
+        rows.append({'layer': layer, 'scope': view['scope'], 'summary': view['shown_summary']})
+    opens_at = owner.opens_at if owner.opens_at and owner.opens_at > timezone.now() else None
+    return {
+        'area': area,
+        'area_km2': svc_area.area_km2(area) if area else None,
+        'layers': rows,
+        'unplaced': [r for r in rows if r['scope'] == 'off'],
+        'opens_at': opens_at,
+        'has_map': bool(map_sections),
+    }
+
+
+@survey_permission_required('viewer')
+@require_GET
+def editor_publish_map_check(request, survey_uuid):
+    """The publish dialogs' map block, fetched when a dialog opens."""
+    survey = request.survey
+    check = publish_map_check(survey)
+    first = SurveySection.objects.filter(survey_header=survey, is_head=True).first()
+    pe.emit(pe.PUBLISH_CHECK_SHOWN, request.user.pk, {
+        'survey_id': layer_owner(survey).pk, 'layers': len(check['layers']), 'unplaced': len(check['unplaced']),
+        'study_area': check['area'] is not None})
+    return render(request, 'editor/partials/_publish_map_check.html', {
+        'survey': survey, 'check': check, 'first_section': first,
+        'can_edit': request.effective_survey_role in ('editor', 'owner'),
+    })
 
 
 def _survey_tags_text(survey):
@@ -1114,7 +1256,30 @@ def editor_survey_layer_link(request, survey_uuid):
         link = link_survey(dataset, request.survey, request.user, view=view)
     except LinkRefused as exc:
         return JsonResponse({'error': exc.message}, status=400)
+    # "From Data" links and places in one step (spec data-links): on every map section unless a
+    # section's Map card asked for this section only.
+    from .services import placements as svc_placements
+    actor = Actor.from_request(request)
+    section = _map_card_section(request)
+    if svc_placements.get(request.survey, dataset.layer_id) is None:
+        if section is not None:
+            svc_placements.set_on_section(actor, request.survey, dataset.layer_id, section, True)
+        else:
+            svc_placements.place(actor, request.survey, dataset.layer_id, automatic=True)
+    from .product_events import LAYER_ADDED, emit
+    emit(LAYER_ADDED, actor.user_id, {'survey_id': layer_owner(request.survey).pk, 'source': 'data',
+                                      'surface': actor.surface})
     return JsonResponse({'id': link.pk, 'layer': dataset.layer_id}, status=201)
+
+
+def _map_card_section(request):
+    """The section a Map card request came from when it asked for that section only
+    (`scope=section` + `section=<id>`), else None (every map section)."""
+    if request.POST.get('scope') != 'section':
+        return None
+    from .models import SurveySection
+    return SurveySection.objects.filter(pk=request.POST.get('section') or 0,
+                                        survey_header=request.survey).first()
 
 
 def _survey_link(request, link_id):
@@ -1306,7 +1471,7 @@ def _render_section_detail(request, survey, section, form=None):
         Question.objects.filter(
             survey_section=section,
             parent_question_id__isnull=True,
-        ).order_by('order_number')
+        ).exclude(legend_only_q()).order_by('order_number')
     )
 
     return render(request, 'editor/partials/section_detail_form.html', {
@@ -1319,7 +1484,56 @@ def _render_section_detail(request, survey, section, form=None):
         'questions': questions,
         **_lock_context(survey),
         'layers_enabled': settings.MAP_REFERENCE_LAYERS,
+        'map_card': _map_card(request, survey, section),
     })
+
+
+def _map_card(request, survey, section):
+    """The section's Map card (change map-layers-study-area, spec map-layer-placement "The Map
+    card places layers from Build"): the survey's study area and every layer it uses, each with
+    whether this section's map shows it, what uses it and its scope. None on a section with no map."""
+    if not settings.MAP_REFERENCE_LAYERS or not section.has_map:
+        return None
+    from data.models import DatasetLink
+    from .layers import placement_covers
+    from .section_refs import section_ref
+    from .services import placements as svc_placements
+    from .services import study_area as svc_area
+    ref = section_ref(section)
+    map_sections = _map_sections(survey)
+    titles = {r: t for r, t in map_sections}
+    linked = set(DatasetLink.objects.filter(survey=layer_owner(survey)).values_list('dataset__layer_id', flat=True))
+    asked = {}
+    for layer_id, title in (Question.objects.filter(survey_section__survey_header=survey, layer__isnull=False,
+                                                    parent_question_id__isnull=True)
+                            .exclude(legend_only_q()).order_by('survey_section__id')
+                            .values_list('layer_id', 'survey_section__title')):
+        asked.setdefault(layer_id, []).append(title)
+    rows = []
+    for layer in layers_for(survey).order_by('position', 'id'):
+        placement = svc_placements.get(survey, layer.pk)
+        rows.append({
+            'layer': layer,
+            'on': placement is not None and placement_covers(placement, ref),
+            'scope': placement.scope if placement else 'off',
+            'scope_names': [titles.get(r, r) for r in (placement.sections or [])] if placement else [],
+            'asked_in': list(dict.fromkeys(asked.get(layer.pk, []))),
+            'from_data': layer.pk in linked and layer.source != 'question',
+        })
+    on_rows = sorted((r for r in rows if r['on']), key=lambda r: (
+        getattr(svc_placements.get(survey, r['layer'].pk), 'position', 0)))
+    area = svc_area.get(survey)
+    role = getattr(request, 'effective_survey_role', None)
+    return {
+        'rows': on_rows + [r for r in rows if not r['on']],
+        'area': area,
+        'area_km2': svc_area.area_km2(area) if area else None,
+        'can_place': role in ('editor', 'owner'),
+        'can_add': role == 'owner',
+        'data_choices': _data_choices(survey) if role == 'owner' else [],
+        'section': section,
+        'full': len(rows) >= MAX_LAYERS_PER_SURVEY,
+    }
 
 
 def _translation_languages(survey):
@@ -1384,20 +1598,23 @@ def editor_sections_reorder(request, survey_uuid):
 
 # ─── Question CRUD ────────────────────────────────────────────────────────────
 
-def _shared_map_layer_options(survey):
+def _shared_map_layer_options(survey, section=None):
     """What the Objects-on-the-map layer picker offers (spec survey-editor
     "Objects on the map source picker"): the survey's layers, then the geo
     questions whose answers may become a layer — picking one of those creates
     the `question` layer on save. One geo question ⇒ one layer, so a question
-    that already has its layer is listed under the layer, not twice."""
+    that already has its layer is listed under the layer, not twice. Each layer
+    says whether `section`'s map shows it yet (picking one that is not puts it there)."""
     if not settings.MAP_REFERENCE_LAYERS:
         return [], []
-    from .layers import source_question_for, default_question_name
+    from .layers import section_layer_ids, source_question_for, default_question_name
+    on_map = set(section_layer_ids(section)) if section is not None and section.pk else set()
     layers, taken = [], set()
     for layer in layers_for(survey):
         entry = {'id': layer.pk, 'name': layer.name, 'source': layer.source, 'code': layer.source_question_code,
                  'label_field': layer.label_field, 'approve_first': layer.approve_first, 'labels': [],
-                 'default_name': default_question_name(layer)}
+                 'default_name': default_question_name(layer), 'on_section': layer.pk in on_map,
+                 'feature_count': layer.feature_count}
         if layer.source == 'question':
             entry['labels'] = _label_options(source_question_for(layer))
             taken.add(layer.source_question_code)
@@ -1429,7 +1646,8 @@ def _render_question_modal(request, context):
             context.setdefault(key, value)
         context.setdefault('thread_counts', _thread_counts(survey, request.user))
         if 'layer_options' not in context:
-            context['layer_options'], context['answer_sources'] = _shared_map_layer_options(survey)
+            context['layer_options'], context['answer_sources'] = _shared_map_layer_options(
+                survey, context.get('section'))
     # A create opened from "+ Add question" inside a group keeps the group on
     # every post the modal makes (change question-groups).
     if 'into_group' not in context and not context.get('question') and context.get('section') is not None:
@@ -2218,7 +2436,7 @@ def editor_section_map_picker(request, survey_uuid, section_id):
 def editor_section_preview(request, survey_uuid, section_name):
     # Local import: views imports editor_forms, so a module-level import here
     # would close the circle (the two thanks-page helpers above do the same).
-    from .views import _build_map_layers_metadata
+    from .views import _build_map_layers_metadata, _on_this_map, study_area_meta
     from .layers import section_layer_ids
 
     survey = request.survey
@@ -2287,7 +2505,11 @@ def editor_section_preview(request, survey_uuid, section_name):
         # Same helper the respondent view uses: two views render this shell from
         # two hand-built contexts, and a layer list built twice would drift.
         'map_layers': _build_map_layers_metadata(survey),
-        'visible_layers_json': json.dumps(section_layer_ids(section)),
+        'visible_layers_json': json.dumps(preview_layer_ids := section_layer_ids(section)),
+        # The study area and the "On this map" legend, as the respondent page has them
+        # (change map-layers-study-area): the preview never shows a map the respondent won't.
+        'study_area_meta': study_area_meta(survey),
+        'on_this_map': _on_this_map(survey, preview_layer_ids),
         # Same-section rules so the preview plays both branches live, exactly
         # like the respondent page (conditional_visibility.js reads this).
         'visibility_rules_json': json.dumps(section_rules_for_client(section)),

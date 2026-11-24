@@ -1385,3 +1385,7 @@ msgstr "her biri %(amount)s"
 #: budget-question
 msgid "{left} left after it"
 msgstr "ondan soň {left} galýar"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "Bu kartada"

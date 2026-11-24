@@ -10,6 +10,7 @@ from . import agent_views
 from . import editor_group_views
 from . import layer_object_views
 from . import map_style_views
+from . import study_area_views
 from . import map_style_editor_views
 from . import map_style_io_views
 from . import comment_views
@@ -103,6 +104,8 @@ urlpatterns = [
 
     # WYSIWYG survey editor
     path('editor/surveys/new/', editor_views.editor_survey_create, name='editor_survey_create'),
+    path('editor/surveys/new/place-boundary/', study_area_views.editor_place_boundary,
+         name='editor_place_boundary'),
     path('editor/generation/<int:event_id>/', editor_views.editor_generation_status, name='editor_generation_status'),
     path('editor/abuse-review/<str:token>/', abuse_review_views.abuse_review, name='abuse_review'),
     path('editor/surveys/<uuid:survey_uuid>/', editor_views.editor_survey_detail, name='editor_survey_detail'),
@@ -121,6 +124,20 @@ urlpatterns = [
     path('editor/surveys/<uuid:survey_uuid>/layers/link/<int:link_id>/unlink/', editor_views.editor_survey_layer_unlink, name='editor_survey_layer_unlink'),
     path('editor/surveys/<uuid:survey_uuid>/layers/link/<int:link_id>/fields/', editor_views.editor_survey_layer_link_fields, name='editor_survey_layer_link_fields'),
     path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/style-summary/', editor_views.editor_survey_layer_style_summary, name='editor_survey_layer_style_summary'),
+    # Where layers show (change map-layers-study-area): placements, written by the Map card and Settings.
+    path('editor/surveys/<uuid:survey_uuid>/layers/place/reorder/', editor_views.editor_layer_place_reorder, name='editor_layer_place_reorder'),
+    path('editor/surveys/<uuid:survey_uuid>/publish/map-check/', editor_views.editor_publish_map_check, name='editor_publish_map_check'),
+    path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/place/', editor_views.editor_layer_place, name='editor_layer_place'),
+    path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/place/section/', editor_views.editor_layer_place_section, name='editor_layer_place_section'),
+    # The study area (change map-layers-study-area, spec survey-study-area).
+    path('editor/surveys/<uuid:survey_uuid>/study-area/', study_area_views.editor_study_area, name='editor_study_area'),
+    path('editor/surveys/<uuid:survey_uuid>/study-area/lookup/', study_area_views.editor_study_area_lookup, name='editor_study_area_lookup'),
+    path('editor/surveys/<uuid:survey_uuid>/study-area/candidate/', study_area_views.editor_study_area_candidate, name='editor_study_area_candidate'),
+    path('editor/surveys/<uuid:survey_uuid>/study-area/save/', study_area_views.editor_study_area_save, name='editor_study_area_save'),
+    path('editor/surveys/<uuid:survey_uuid>/study-area/settings/', study_area_views.editor_study_area_settings, name='editor_study_area_settings'),
+    path('editor/surveys/<uuid:survey_uuid>/study-area/clear/', study_area_views.editor_study_area_clear, name='editor_study_area_clear'),
+    path('editor/surveys/<uuid:survey_uuid>/study-area/upload/', study_area_views.editor_study_area_upload, name='editor_study_area_upload'),
+    path('editor/surveys/<uuid:survey_uuid>/study-area/from-layer/', study_area_views.editor_study_area_from_layer, name='editor_study_area_from_layer'),
     # Object editor (overlay-features): one page per layer + its JSON endpoints.
     path('editor/surveys/<uuid:survey_uuid>/layers/new/', layer_object_views.layer_create_empty, name='editor_layer_create_empty'),
     path('editor/surveys/<uuid:survey_uuid>/layers/<int:layer_id>/edit/', layer_object_views.layer_editor, name='editor_layer_objects'),
@@ -278,6 +295,7 @@ urlpatterns = [
     # Before the <section_name> catch-all, or 'upload' would resolve as a section.
     path('surveys/<str:survey_slug>/upload/', views.survey_upload, name='survey_upload'),
     path('surveys/<str:survey_slug>/layers/<int:layer_id>.geojson', views.survey_layer_geojson, name='survey_layer_geojson'),
+    path('surveys/<str:survey_slug>/study-area.geojson', study_area_views.survey_study_area_geojson, name='survey_study_area_geojson'),
     path('surveys/<str:survey_slug>/layers/<int:layer_id>/objects/<str:key>/', views.survey_layer_object, name='survey_layer_object'),
     path('surveys/<str:survey_slug>/<str:section_name>/', views.survey_section, name='section'),
     path('surveys/<str:survey_slug>/download', views.download_data, name='download_data'),

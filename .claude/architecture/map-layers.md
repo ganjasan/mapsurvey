@@ -2,6 +2,46 @@
 
 Moved verbatim from `CLAUDE.md` (change `claude-md-diet`). `CLAUDE.md` keeps the one-line rules; this file keeps the detail. Update it in the PR that changes the behaviour.
 
+**Placements, layers in Data, the study area (change `map-layers-study-area`, #779, #303)** — read this
+first; it overrides the older notes below where they disagree.
+- **A layer is on a section's map only through a `LayerPlacement`** (canonical survey, layer, scope `all`
+  | `sections`, section refs, position). `layers.section_layer_ids(section)` reads placements only;
+  `placements_for(survey)` gives them in stacking order. Scope `all` covers every map section incl.
+  ones added later; `sections` names refs `<code>`/`<code>#<n>` from `survey.section_refs` (the
+  translation table's numbering; `<code>` ≡ `<code>#0`). The ONE writer is
+  `survey/services/placements.py` (editor Map card, Survey settings, Objects question save, REST
+  `api/v1/map.py`, MCP `mcp/tools/map.py`). Placement is a SAFE edit: in place on a live survey, no
+  draft, never copied by draft/publish/restore; `clone_survey` copies the rows.
+- **Questions never show a layer.** An Objects question or a budget only asks; its save calls
+  `placements.ensure_on_section`. Legacy legend-only questions (`panel_mode='legend'`, no
+  sub-question; `models.legend_only_q()`) are hidden everywhere (`SurveySection.questions()`, the
+  editor lists) until release PR 2 deletes them and drops `panel_mode` / `hidden_layers` /
+  `show_tallies` / `show_comments`.
+- **Uploaded and drawn layers live in Data**: `services.layers.new_layer` creates a workspace layer
+  (`survey=NULL`), its `public` Dataset row and a `DatasetLink` to the canonical survey, then
+  `place(scope='all')`. A survey OWNS only its shared-map (`question`) layers (and, without a
+  workspace, its uploads). So `layers_for(survey)` (links + own) is also what the survey's own write
+  paths address (`services.layers.layers_qs`, the layer card, object editor, REST, MCP) — the old
+  "write paths keep owner.map_layers" rule is gone. `services.layers.delete(actor, layer, survey)`
+  deletes an owned layer but only unlinks + unplaces a dataset (it stays in Data); deleting a survey
+  keeps its datasets. Migration 0136 moved every existing upload layer this way.
+- **Uploads**: a WGS 84 GeoJSON keeps the direct parser (properties as JSON values); a projected
+  GeoJSON and GPKG/zipped SHP/KML/CSV go through the Data reader (`data.imports.open_source`,
+  reprojected); the response names `converted_from` and `looks_like_boundary` (1–3 polygons).
+- **Study area** = `StudyArea` (one per canonical survey, MultiPolygon ≤2,000 vertices, fog,
+  refuse_outside, message per language, refused_marks). ONE writer `survey/services/study_area.py`.
+  Place lookup `survey/study_area_lookup.py` (Nominatim `polygon_geojson`, 30-day cache, 1 req/s,
+  editor only): polygon as is, line → `ST_Buffer` geography corridor 50/100/200 m, point → rectangle.
+  Editor page `study_area_views.editor_study_area` + `js/study_area_editor.js`. Respondent outline
+  from the gated `survey_study_area_geojson` (a FeatureCollection, never inlined); `js/study_area.js`
+  draws fog/outline, opens the map on the area, and refuses outside marks in `draw:created`
+  (`StudyArea.admit`, after `BudgetQuestion.admit`). The section POST re-checks through
+  `survey/study_area_guard.py` (PostGIS 5 m buffer once per POST, prepared GEOS per mark; spray
+  clipped; refusals skipped + counted, never an error). The message is translation occurrence
+  `survey:study_area_message`. Print frames on the area (`print.static_map.resolve_frame`,
+  `draw_study_area`, only placed layers drawn); Responses adds it as reference meta `study_area`;
+  Reports map blocks carry `payload['study_area']` unless `config.study_area is False`.
+
 **Reference overlay layers (`SurveyMapLayer`, kill switch `MAP_REFERENCE_LAYERS`)**: creator-uploaded
 GeoJSON rendered read-only beneath answer geometry on four surfaces — the respondent map, the editor
 preview, the Responses **Map pane**, its **Overview thumbnail** and the per-response **map modal**

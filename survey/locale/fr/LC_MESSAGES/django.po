@@ -15053,3 +15053,467 @@ msgstr "Le lien public n'affiche rien à répondre."
 #: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
 msgid "Every section is set to <em>Operators only</em> in <em>Who sees this</em>. Open a section's settings and choose Everyone or Respondents only."
 msgstr "Chaque section est réglée sur <em>Opérateurs uniquement</em> dans <em>Qui le voit</em>. Ouvrez les paramètres d'une section et choisissez Tout le monde ou Répondants uniquement."
+
+#. change map-layers-study-area
+msgid "Add a layer"
+msgstr "Ajouter une couche"
+
+#. change map-layers-study-area
+msgid "Add sub-questions below — they are what respondents answer about each object. To only show a layer, use the section’s Map card."
+msgstr "Ajoutez des sous-questions ci-dessous : ce sont elles que les répondants remplissent pour chaque objet. Pour seulement afficher une couche, utilisez la fiche Carte de la section."
+
+#. change map-layers-study-area
+msgid "Allowed"
+msgstr "Autorisées"
+
+#. change map-layers-study-area
+msgid "Asked about in"
+msgstr "Demandé dans"
+
+#. change map-layers-study-area
+msgid "asked in"
+msgstr "demandé dans"
+
+#. change map-layers-study-area
+msgid "A street or line — becomes a corridor"
+msgstr "Une rue ou une ligne : devient un couloir"
+
+#. change map-layers-study-area
+msgid "Back to survey"
+msgstr "Revenir à l’enquête"
+
+#. change map-layers-study-area
+msgid "Choose a file"
+msgstr "Choisir un fichier"
+
+#. change map-layers-study-area
+msgid "Click to add corners; click the first corner to close the area"
+msgstr "Cliquez pour ajouter des sommets ; cliquez sur le premier pour fermer la zone"
+
+#. change map-layers-study-area
+msgid "Could not reach OpenStreetMap. Upload a boundary or draw it instead."
+msgstr "Impossible de joindre OpenStreetMap. Importez plutôt un contour ou dessinez-le."
+
+#. change map-layers-study-area
+msgid "Dataset"
+msgstr "Jeu de données"
+
+#. change map-layers-study-area
+msgid "Delete this layer?"
+msgstr "Supprimer cette couche ?"
+
+#. change map-layers-study-area
+msgid "Drag a corner to move it, a middle handle to add one; click a corner to remove it"
+msgstr "Faites glisser un sommet pour le déplacer, une poignée centrale pour en ajouter un ; cliquez sur un sommet pour le supprimer"
+
+#. change map-layers-study-area
+msgid "Draw it on the map"
+msgstr "La dessiner sur la carte"
+
+#. change map-layers-study-area
+msgid "Drawn"
+msgstr "Dessinée"
+
+#. change map-layers-study-area
+msgid "Draw on the map"
+msgstr "Dessiner sur la carte"
+
+#. change map-layers-study-area
+msgid "Drop a <b>file</b> here or <span class=\"ref-layers-choose\">choose a file</span>"
+msgstr "Déposez un <b>fichier</b> ici ou <span class=\"ref-layers-choose\">choisissez un fichier</span>"
+
+#. change map-layers-study-area
+msgid "e.g. Midtown, Atlanta"
+msgstr "ex. Midtown, Atlanta"
+
+#. change map-layers-study-area
+msgid "every section"
+msgstr "toutes les sections"
+
+#. change map-layers-study-area
+msgid "Every section with a map"
+msgstr "Toutes les sections avec une carte"
+
+#. change map-layers-study-area
+msgid "Every section with a map, now and later"
+msgstr "Toutes les sections avec une carte, maintenant et plus tard"
+
+#. change map-layers-study-area
+msgid "Find"
+msgstr "Chercher"
+
+#. change map-layers-study-area
+msgid "Find the place"
+msgstr "Trouver le lieu"
+
+#. change map-layers-study-area
+msgid "fog outside"
+msgstr "grisé à l’extérieur"
+
+#. change map-layers-study-area
+msgid "GeoJSON, GeoPackage, zipped shapefile, KML or CSV with coordinates — any coordinate system is converted. Up to 10 MB."
+msgstr "GeoJSON, GeoPackage, shapefile compressé, KML ou CSV avec coordonnées ; tout système de coordonnées est converti. Jusqu’à 10 Mo."
+
+#. change map-layers-study-area
+msgid "GeoJSON, GeoPackage, zipped shapefile, KML or CSV with coordinates — any coordinate system is converted. Up to 10 MB, max 10 layers per survey."
+msgstr "GeoJSON, GeoPackage, shapefile compressé, KML ou CSV avec coordonnées ; tout système de coordonnées est converti. Jusqu’à 10 Mo, 10 couches au plus par enquête."
+
+#. change map-layers-study-area
+msgid "Grey out the map outside"
+msgstr "Griser la carte à l’extérieur"
+
+#. change map-layers-study-area
+msgid "Its map layers stay in Data."
+msgstr "Ses couches de carte restent dans Données."
+
+#. change map-layers-study-area
+msgid "Layers"
+msgstr "Couches"
+
+#. change map-layers-study-area
+msgid "Layers used here"
+msgstr "Couches utilisées ici"
+
+#. change map-layers-study-area
+msgid "Make it the survey's study area"
+msgstr "En faire la zone d’étude de l’enquête"
+
+#. change map-layers-study-area
+msgid "Map answers outside the area"
+msgstr "Réponses sur la carte hors de la zone"
+
+#. change map-layers-study-area
+msgid "Map: questions beside the map — its layers and the study area are set in the section’s Map card. Picture: questions beside a picture, e.g. a welcome page. Form: a classic full-width form. Picture and Form have no map, so geo questions and layers are unavailable."
+msgstr "Carte : les questions à côté de la carte ; ses couches et la zone d’étude se règlent dans la fiche Carte de la section. Image : les questions à côté d’une image, p. ex. une page d’accueil. Formulaire : un formulaire classique pleine largeur. Image et Formulaire n’ont pas de carte : les questions géographiques et les couches n’y sont pas disponibles."
+
+#. change map-layers-study-area
+msgid "Message respondents see"
+msgstr "Message affiché aux répondants"
+
+#. change map-layers-study-area
+msgid "Name respondents see"
+msgstr "Nom affiché aux répondants"
+
+#. change map-layers-study-area
+msgid "no answers outside"
+msgstr "pas de réponses à l’extérieur"
+
+#. change map-layers-study-area
+msgid "No boundary in OpenStreetMap — starts as a rectangle you can adjust"
+msgstr "Aucun contour dans OpenStreetMap : commence par un rectangle à ajuster"
+
+#. change map-layers-study-area
+msgid "No layers yet. Add boundaries, sites or routes respondents should see under the map."
+msgstr "Aucune couche pour l’instant. Ajoutez des limites, des sites ou des itinéraires que les répondants verront sous la carte."
+
+#. change map-layers-study-area
+msgid "No map"
+msgstr "Aucune carte"
+
+#. change map-layers-study-area
+msgid "No study area"
+msgstr "Pas de zone d’étude"
+
+#. change map-layers-study-area
+msgid "Not allowed — the mark is not placed"
+msgstr "Interdites : la marque n’est pas placée"
+
+#. change map-layers-study-area
+msgid "Nothing found. Try a wider name, upload a boundary or draw it."
+msgstr "Aucun résultat. Essayez un nom plus large, importez un contour ou dessinez-le."
+
+#. change map-layers-study-area
+msgid "not on this map yet"
+msgstr "pas encore sur cette carte"
+
+#. change map-layers-study-area
+msgid "Not saved yet — adjust the outline, then Save"
+msgstr "Pas encore enregistré : ajustez le contour, puis enregistrez"
+
+#. change map-layers-study-area
+msgid "Not set"
+msgstr "Non défini"
+
+#. change map-layers-study-area
+msgid "Not set. The map opens on it and can grey out the rest."
+msgstr "Non définie. La carte s’ouvre dessus et peut griser le reste."
+
+#. change map-layers-study-area
+msgid "objects"
+msgstr "objets"
+
+#. change map-layers-study-area
+msgid "one segment of the street"
+msgstr "un tronçon de la rue"
+
+#. change map-layers-study-area
+msgid "Only these sections"
+msgstr "Seulement ces sections"
+
+#. change map-layers-study-area
+msgid "Only this section"
+msgstr "Seulement cette section"
+
+#. change map-layers-study-area
+msgid "on no map"
+msgstr "sur aucune carte"
+
+#. change map-layers-study-area
+msgid "On no map: respondents do not see this layer."
+msgstr "Sur aucune carte : les répondants ne voient pas cette couche."
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "Sur cette carte"
+
+#. change map-layers-study-area
+msgid "OpenStreetMap object the boundary came from, e.g. `R123456`."
+msgstr "Objet OpenStreetMap d’où vient le contour, ex. `R123456`."
+
+#. change map-layers-study-area
+msgid "or keep it as a reference layer."
+msgstr "ou la garder comme couche de référence."
+
+#. change map-layers-study-area
+msgid "Other languages are in the Translations tab."
+msgstr "Les autres langues sont dans l’onglet Traductions."
+
+#. change map-layers-study-area
+msgid "Picked sections"
+msgstr "Sections choisies"
+
+#. change map-layers-study-area
+msgid "Place boundaries © <a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\" rel=\"noopener\">OpenStreetMap contributors</a>."
+msgstr "Contours des lieux © <a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\" rel=\"noopener\">contributeurs d’OpenStreetMap</a>."
+
+#. change map-layers-study-area
+msgid "Place name"
+msgstr "Nom du lieu"
+
+#. change map-layers-study-area
+msgid "Please place your answer inside the study area."
+msgstr "Veuillez placer votre réponse dans la zone d’étude."
+
+#. change map-layers-study-area
+msgid "Preview as a respondent"
+msgstr "Aperçu en tant que répondant"
+
+#. change map-layers-study-area
+msgid "Read-only layers respondents see under the map: boundaries, sites, routes. A layer you add here is on every section with a map, switched on; pick sections to narrow it. Each layer is a dataset in Data."
+msgstr "Couches en lecture seule que les répondants voient sous la carte : limites, sites, itinéraires. Une couche ajoutée ici est activée sur toutes les sections avec une carte ; choisissez des sections pour la restreindre. Chaque couche est un jeu de données dans Données."
+
+#. change map-layers-study-area
+msgid "Remove from this survey"
+msgstr "Retirer de cette enquête"
+
+#. change map-layers-study-area
+msgid "Remove the study area? The map then opens as before and nothing is refused."
+msgstr "Supprimer la zone d’étude ? La carte s’ouvre alors comme avant et rien n’est refusé."
+
+#. change map-layers-study-area
+msgid "Remove this layer from the survey? It stays in Data."
+msgstr "Retirer cette couche de l’enquête ? Elle reste dans Données."
+
+#. change map-layers-study-area
+msgid "Respondents answer about each object of this layer; picking it also puts the layer on this section’s map. Or pick “Respondents’ marks on…” a geo question to ask about what others have already placed."
+msgstr "Les répondants répondent sur chaque objet de cette couche ; la choisir l’ajoute aussi à la carte de cette section. Ou choisissez « Marques des répondants sur… » une question géographique pour interroger sur ce que d’autres ont déjà placé."
+
+#. change map-layers-study-area
+msgid "respondents can still move the map"
+msgstr "les répondants peuvent toujours déplacer la carte"
+
+#. change map-layers-study-area
+msgid "respondents’ marks"
+msgstr "marques des répondants"
+
+#. change map-layers-study-area
+msgid "respondents' marks on"
+msgstr "marques des répondants sur"
+
+#. change map-layers-study-area
+msgid "Saved"
+msgstr "Enregistré"
+
+#. change map-layers-study-area
+msgid "Search again: this result is no longer at hand."
+msgstr "Relancez la recherche : ce résultat n’est plus disponible."
+
+#. change map-layers-study-area
+msgid "`sections` scope only: section references `<code>` or `<code>#<n>`."
+msgstr "Portée `sections` uniquement : références de section `<code>` ou `<code>#<n>`."
+
+#. change map-layers-study-area
+msgid "Show %(name)s on this section"
+msgstr "Afficher %(name)s sur cette section"
+
+#. change map-layers-study-area
+msgid "Show on every section"
+msgstr "Afficher sur toutes les sections"
+
+#. change map-layers-study-area
+msgid "Shows on"
+msgstr "Affichée sur"
+
+#. change map-layers-study-area
+msgid "Study area"
+msgstr "Zone d’étude"
+
+#. change map-layers-study-area
+msgid "Study area message"
+msgstr "Message de la zone d’étude"
+
+#. change map-layers-study-area
+msgid "Study area outline"
+msgstr "Contour de la zone d’étude"
+
+#. change map-layers-study-area
+msgid "Survey layer"
+msgstr "Couche de l’enquête"
+
+#. change map-layers-study-area
+msgid "The coordinates were converted from"
+msgstr "Les coordonnées ont été converties depuis"
+
+#. change map-layers-study-area
+msgid "The file has no area in it. A study area is a polygon."
+msgstr "Le fichier ne contient aucune zone. Une zone d’étude est un polygone."
+
+#. change map-layers-study-area
+msgid "The file is larger than 10 MB."
+msgstr "Le fichier dépasse 10 Mo."
+
+#. change map-layers-study-area
+msgid "The survey has no section with a map yet."
+msgstr "L’enquête n’a pas encore de section avec une carte."
+
+#. change map-layers-study-area
+msgid "The survey opens on %(date)s: until then the public link shows the “opens on” page."
+msgstr "L’enquête ouvre le %(date)s : d’ici là, le lien public affiche la page « ouvre le »."
+
+#. change map-layers-study-area
+msgid "This layer has no area in it. A study area is a polygon."
+msgstr "Cette couche ne contient aucune zone. Une zone d’étude est un polygone."
+
+#. change map-layers-study-area
+msgid "This looks like a boundary"
+msgstr "Cela ressemble à un contour"
+
+#. change map-layers-study-area
+msgid "This survey is published: a saved study area applies to respondents at once. Answers already given are not re-checked."
+msgstr "Cette enquête est publiée : une zone d’étude enregistrée s’applique aussitôt aux répondants. Les réponses déjà données ne sont pas revérifiées."
+
+#. change map-layers-study-area
+msgid "Too many searches. Wait a minute and try again."
+msgstr "Trop de recherches. Patientez une minute et réessayez."
+
+#. change map-layers-study-area
+msgid "Upload a boundary file"
+msgstr "Importer un fichier de contour"
+
+#. change map-layers-study-area
+msgid "Upload a file"
+msgstr "Importer un fichier"
+
+#. change map-layers-study-area
+msgid "Upload a new layer"
+msgstr "Importer une nouvelle couche"
+
+#. change map-layers-study-area
+msgid "Uploaded file"
+msgstr "Fichier importé"
+
+#. change map-layers-study-area
+msgid "Use"
+msgstr "Utiliser"
+
+#. change map-layers-study-area
+msgid "Use a layer of this survey"
+msgstr "Utiliser une couche de cette enquête"
+
+#. change map-layers-study-area
+msgid "Use a layer of this survey…"
+msgstr "Utiliser une couche de cette enquête…"
+
+#. change map-layers-study-area
+msgid "What respondents see"
+msgstr "Ce que voient les répondants"
+
+#. change map-layers-study-area
+msgid "Where it shows"
+msgstr "Où elle s’affiche"
+
+#. change map-layers-study-area
+msgid "Layers and the study area of this section’s map are in its Map card above."
+msgstr "Les couches et la zone d’étude de la carte de cette section se trouvent dans sa fiche Carte ci-dessus."
+
+#. change map-layers-study-area
+msgid "This question asks about the objects of a layer."
+msgstr "Cette question porte sur les objets d’une couche."
+
+#. change map-layers-study-area
+msgid "Pick a layer of the survey or “Respondents’ marks on…” a geo question; if this section’s map does not show the layer yet, picking it puts it there."
+msgstr "Choisissez une couche de l’enquête ou « Marques des répondants sur… » une question géographique ; si la carte de cette section n’affiche pas encore la couche, la choisir l’y ajoute."
+
+#. change map-layers-study-area
+msgid "Sub-questions are what respondents answer."
+msgstr "Les répondants répondent aux sous-questions."
+
+#. change map-layers-study-area
+msgid "Only showing a layer?"
+msgstr "Seulement afficher une couche ?"
+
+#. change map-layers-study-area
+msgid "You need no question for that: tick the layer in the section’s Map card, or add it in Survey settings to show it on every map."
+msgstr "Aucune question n’est nécessaire : cochez la couche dans la fiche Carte de la section, ou ajoutez-la dans les paramètres de l’enquête pour l’afficher sur toutes les cartes."
+
+#. change map-layers-study-area
+msgid "Edit outline"
+msgstr "Modifier le contour"
+
+#. change map-layers-study-area
+msgid "Corridor width"
+msgstr "Largeur du corridor"
+
+#. change map-layers-study-area
+msgid "Map answers outside"
+msgstr "Réponses sur la carte à l’extérieur"
+
+#. change map-layers-study-area
+msgid "Not allowed"
+msgstr "Non autorisées"
+
+#. change map-layers-study-area
+msgid "Looking up the boundary of %%(place)s…"
+msgstr "Recherche des limites de %%(place)s…"
+
+#. change map-layers-study-area
+msgid "Grey outside on the respondent’s map. %%(km2)s km² · from OpenStreetMap"
+msgstr "Grisé à l’extérieur sur la carte des répondants. %%(km2)s km² · depuis OpenStreetMap"
+
+#. change map-layers-study-area
+msgid "Grey outside on the respondent’s map. %%(km2)s km² · edited by you"
+msgstr "Grisé à l’extérieur sur la carte des répondants. %%(km2)s km² · modifié par vous"
+
+#. change map-layers-study-area
+msgid "Drag the corners on the map. Click a middle handle to add one; click a corner to remove it."
+msgstr "Faites glisser les coins sur la carte. Cliquez sur une poignée centrale pour en ajouter un, sur un coin pour le supprimer."
+
+#. change map-layers-study-area
+msgid "No boundary found for %%(place)s. The survey starts without a study area; set one later in its Map card."
+msgstr "Aucune limite trouvée pour %%(place)s. L’enquête démarre sans zone d’étude ; définissez-la plus tard dans sa fiche Carte."
+
+#. change map-layers-study-area
+msgid "OpenStreetMap did not answer. The survey starts without a study area; set one later in its Map card."
+msgstr "OpenStreetMap n’a pas répondu. L’enquête démarre sans zone d’étude ; définissez-la plus tard dans sa fiche Carte."
+
+#. change map-layers-study-area
+msgid "Removed. The survey starts without a study area."
+msgstr "Retirée. L’enquête démarre sans zone d’étude."
+
+#. change map-layers-study-area
+msgid "Use the boundary of %%(place)s"
+msgstr "Utiliser les limites de %%(place)s"
+
+#. change map-layers-study-area
+msgid "Drag a corner to move it"
+msgstr "Faites glisser un coin pour le déplacer"

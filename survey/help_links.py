@@ -17,6 +17,8 @@ HELP_LINKS = {
     'start_here': 'start-here/',
     'ways_to_start': 'how-to/choose-how-to-start/',
     'reference_layers': 'how-to/add-a-reference-layer/',
+    # The study area (change map-layers-study-area, #303).
+    'study_area': 'how-to/set-the-study-area/',
     'embedding': 'how-to/embed-a-survey/',
     'export': 'how-to/export-responses/',
     'pro': 'reference/plans-and-billing/',

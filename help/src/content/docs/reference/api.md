@@ -897,7 +897,8 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 
 ### `DELETE /surveys/{uuid}/layers/{layer_id}`
 
-Delete a layer and its objects -- refused while a question uses it. Owner role.
+Remove a layer from the survey -- a shared-map layer is deleted, a dataset is unlinked and stays in
+Data. Refused while a question uses it. Owner role.
 
 | Parameter | In | Type | Required |
 |---|---|---|---|
@@ -1021,6 +1022,138 @@ Moderate a mark on a shared map: visible, pending or hidden. Editor role.
 **200** no body
 
 Errors: `conflict`, `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+## Map
+
+### `GET /surveys/{uuid}/placements`
+
+Where each layer shows, bottom of the map first. A layer with no placement is on no map.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `PUT /surveys/{uuid}/placements/order`
+
+The stacking order of the placed layers. Editor role.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `layer_ids` | list of integer | yes | Every placed layer id, bottom of the map first. |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `PUT /surveys/{uuid}/layers/{layer_id}/placement`
+
+Put a layer the survey uses on its maps, or change where it shows. Editor role.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `layer_id` | path | integer | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `scope` | string |  | `all` — every section with a map, now and later — or `sections`. |
+| `sections` | list of string |  | `sections` scope: section references, `<code>` or `<code>#<n>` (the n-th section of that code, from 0). |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `DELETE /surveys/{uuid}/layers/{layer_id}/placement`
+
+Take a layer off every map of the survey; it stays linked. Editor role.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `layer_id` | path | integer | yes |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /surveys/{uuid}/study-area`
+
+The survey's study area (geometry, source, fog, refusal rule, message, size), or null.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `PUT /surveys/{uuid}/study-area`
+
+Create or replace the study area. Editor role.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `geometry` | object | yes | A Polygon or MultiPolygon in WGS 84 (a Feature is accepted); made valid and simplified to 2,000 points. |
+| `source` | string |  | place, upload, layer or draw. |
+| `place_name` | string or null |  |  |
+| `fog` | boolean or null |  | Grey out the map outside (on for a new area). |
+| `refuse_outside` | boolean or null |  | Refuse map answers outside the area. |
+| `message` | object or null |  | The refusal message per language code. |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `PATCH /surveys/{uuid}/study-area`
+
+Change the fog, the refusal rule or the message. Editor role.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `fog` | boolean or null |  |  |
+| `refuse_outside` | boolean or null |  |  |
+| `message` | object or null |  | The refusal message per language code. |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `DELETE /surveys/{uuid}/study-area`
+
+Remove the study area. Editor role.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
 
 ## Data
 
@@ -1724,6 +1857,7 @@ Small groups are hidden in every data block.
 | `legend` | boolean or null |  | map: the legend (on by default). |
 | `scale` | boolean or null |  | map: the scale bar (on by default). |
 | `toggle` | boolean or null |  | map: readers may switch layers on and off. |
+| `study_area` | boolean or null |  | map: the outline of the survey's study area (on by default). |
 | `basemap` | string or null |  | map: a basemap key the workspace offers. |
 | `popup_fields` | list of string or null |  | map: codes of sub-questions a popup shows (never free text). |
 | `layers` | list of MapLayerIn or null |  | map: the other map questions on the same map — the whole list, at most 3; [] removes them. |
@@ -1766,6 +1900,7 @@ to show another question, add another block.
 | `legend` | boolean or null |  | map: the legend (on by default). |
 | `scale` | boolean or null |  | map: the scale bar (on by default). |
 | `toggle` | boolean or null |  | map: readers may switch layers on and off. |
+| `study_area` | boolean or null |  | map: the outline of the survey's study area (on by default). |
 | `basemap` | string or null |  | map: a basemap key the workspace offers. |
 | `popup_fields` | list of string or null |  | map: codes of sub-questions a popup shows (never free text). |
 | `layers` | list of MapLayerIn or null |  | map: the other map questions on the same map — the whole list, at most 3; [] removes them. |

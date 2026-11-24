@@ -41,16 +41,19 @@ class LayerToolsTest(TestCase):
 
     def test_delete_needs_confirmation(self):
         """
-        GIVEN a layer
+        GIVEN a layer uploaded to the survey (a workspace dataset it links)
         WHEN delete_layer is called without confirm, then with it
-        THEN the first is confirmation_required and the layer remains; the second deletes it
+        THEN the first is confirmation_required and the layer remains; the second removes it from
+             the survey and the dataset stays in Data (change map-layers-study-area)
         """
+        from survey.layers import layers_for
         layer_id = self._create()['id']
         error = error_of(self.mcp.call('delete_layer', {**self.ref, 'layer_id': layer_id}))
         self.assertEqual(error['error'], 'confirmation_required')
-        self.assertTrue(SurveyMapLayer.objects.filter(pk=layer_id).exists())
+        self.assertTrue(layers_for(self.survey).filter(pk=layer_id).exists())
         data_of(self.mcp.call('delete_layer', {**self.ref, 'layer_id': layer_id, 'confirm': True}))
-        self.assertFalse(SurveyMapLayer.objects.filter(pk=layer_id).exists())
+        self.assertFalse(layers_for(self.survey).filter(pk=layer_id).exists())
+        self.assertTrue(SurveyMapLayer.objects.filter(pk=layer_id, survey__isnull=True).exists())
 
     def test_objects_and_the_link_rule(self):
         """

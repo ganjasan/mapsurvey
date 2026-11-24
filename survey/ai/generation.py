@@ -17,6 +17,7 @@ from . import client, prompts
 from .materialize import materialize_draft
 from .quota import QuotaExceeded, check_quota
 from .geocode import geocode_place
+from .. import study_area_wizard
 from .schema import survey_draft_schema
 from .validator import validate_blob
 from .. import product_events as pe
@@ -267,7 +268,7 @@ def _emit_terminal_events(event, outcome, survey, map_source=''):
 
 
 def generate_survey_draft(event, brief, languages, header_overrides, map_locked=False,
-                          map_source=''):
+                          map_source='', study_area=None):
     """Run one generation attempt-set for `event`, updating it in place.
 
     Never raises for expected failures — every outcome is recorded on the
@@ -278,6 +279,10 @@ def generate_survey_draft(event, brief, languages, header_overrides, map_locked=
     not consulted. Otherwise the hidden fields only hold the untouched
     default (or a geolocation jump), and a place the model read from the
     brief is the better start position.
+
+    `study_area` is the create page's choice (`study_area_wizard.from_post`): the outline the
+    creator kept, `off`, or `auto` — then the boundary of the brief's place is looked up. It is
+    set after the draft is materialized; any failure leaves the survey without one.
     """
     organization = event.organization
     try:
@@ -333,6 +338,11 @@ def generate_survey_draft(event, brief, languages, header_overrides, map_locked=
             return _finish(event, 'invalid_draft', '; '.join(errors), attempts=attempts, blob=blob)
         user_prompt = prompts.build_retry_prompt(brief, languages, errors)
 
+    # The model's title replaces a name the create page cut from the goal; a name the
+    # creator typed is theirs (change map-layers-study-area, Wizard follow-up).
+    if prompts.name_is_derived(brief) and blob.get('survey_name'):
+        header_overrides = {**header_overrides, 'name': blob['survey_name']}
+
     # Outside the transaction below: a slow geocoder must not hold a database
     # transaction open, and its failure is not a materialization failure.
     if not map_locked:
@@ -342,6 +352,9 @@ def generate_survey_draft(event, brief, languages, header_overrides, map_locked=
             # whatever the create page had suggested.
             map_source = pe.MAP_SOURCE_BRIEF
         header_overrides = located
+    # Also outside the transaction: the boundary lookup is a network call (change
+    # map-layers-study-area, D8b). The create page's outline wins over the model's place.
+    area_spec = study_area_wizard.resolve(study_area, blob.get('location') if isinstance(blob, dict) else '')
 
     try:
         with transaction.atomic():
@@ -361,6 +374,7 @@ def generate_survey_draft(event, brief, languages, header_overrides, map_locked=
 
     if warnings:
         logger.info('AI draft imported with warnings: %s', '; '.join(warnings))
+    study_area_wizard.apply(event.user, survey, area_spec)
     return _finish(event, 'success', survey=survey, attempts=attempts, blob=blob,
                    map_source=map_source)
 

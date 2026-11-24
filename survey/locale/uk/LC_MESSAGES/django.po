@@ -1387,3 +1387,7 @@ msgstr "%(amount)s за штуку"
 #: budget-question
 msgid "{left} left after it"
 msgstr "після нього залишиться {left}"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "На цій карті"

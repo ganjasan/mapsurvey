@@ -1384,3 +1384,7 @@ msgstr "တစ်ခုလျှင် %(amount)s"
 #: budget-question
 msgid "{left} left after it"
 msgstr "ထို့နောက် {left} ကျန်မည်"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "ဤမြေပုံပေါ်တွင်"

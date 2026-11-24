@@ -174,6 +174,9 @@ navigation from #section-data[data-stage-image].{% endcomment %}
 
 {# Reference layer config (geometry stays behind the gated endpoint) #}
 {{ map_layers|json_script:"ref-layers-data" }}
+{# The study area (change map-layers-study-area): config only, the outline comes from its gated endpoint #}
+{{ study_area_meta|json_script:"study-area-data" }}
+<script src="{% static 'js/study_area.js' %}"></script>
 
 <script type="text/javascript">
     // Load i18n translations
@@ -300,6 +303,12 @@ navigation from #section-data[data-stage-image].{% endcomment %}
     {% include "partials/ref_layer_factory.html" %}
     {% include "partials/reference_layers.html" %}
     {% include "partials/layer_objects_block.html" %}
+    (function () {
+        var el = document.getElementById('study-area-data');
+        var meta = null;
+        if (el) { try { meta = JSON.parse(el.textContent); } catch (e) {} }
+        if (meta && window.StudyArea) window.StudyArea.init(map, meta);
+    })();
 
     // Geolocation
     var geoMarker = null;
@@ -1031,6 +1040,15 @@ navigation from #section-data[data-stage-image].{% endcomment %}
             refreshGeoQuestionUI();
             return;
         }
+        // Outside the study area while the creator refuses such answers (change
+        // map-layers-study-area): not placed, the creator's message shows.
+        if (window.StudyArea && !StudyArea.admit(layer, type)) {
+            hideDrawbar();
+            toggleInfo(true);
+            currentQ = null;
+            refreshGeoQuestionUI();
+            return;
+        }
 
         var formId = 'subquestion_form_' + L.Util.stamp(layer);
         layer._formId = formId;
@@ -1608,6 +1626,12 @@ navigation from #section-data[data-stage-image].{% endcomment %}
             // isNaN checks on the inputs did not -- and that was the case that
             // actually threw.
             moveMapTo(lat, lng, zoom);
+        } else if (hasMap && window.StudyArea && window.StudyArea.active) {
+            // The map opens on the study area unless the start already lies inside it
+            // (change map-layers-study-area).
+            var startLat = isFinite(lat) ? lat : _initialMapState.lat;
+            var startLng = isFinite(lng) ? lng : _initialMapState.lng;
+            window.StudyArea.openOn(startLat, startLng);
         }
         _mapInitialized = true;
 

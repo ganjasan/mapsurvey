@@ -507,6 +507,19 @@ def _emit_first_question(actor, survey, question):
         pe.emit(pe.SURVEY_QUESTION_ADDED, actor.user_id, {'survey_id': str(survey.id), **surface_props(actor)})
 
 
+def _place_layer_of(actor, question):
+    """An Objects-on-the-map question or a budget over a layer asks about that layer here, so the
+    section's map shows it (change map-layers-study-area, design D3): the save places the layer
+    on the question's section when no placement covers it yet. Picking a layer never removes one."""
+    if question.parent_question_id_id is not None or not question.layer_id:
+        return
+    if question.input_type not in ('layer_objects', 'budget'):
+        return
+    from . import placements
+    placements.ensure_on_section(actor, question.survey_section.survey_header, question.layer_id,
+                                 question.survey_section)
+
+
 def _place(question, section, group, parent=None):
     if group is not None:
         # Inside a group: last in the group, not the section.
@@ -591,6 +604,7 @@ def create(actor, section, data, files=None, *, parent=None, group=None,
     question.save()
     if parent is None:
         _apply_shared_map_settings(question, data)
+        _place_layer_of(actor, question)
         _emit_first_question(actor, survey, question)
     if counted:
         _count_budget_map_use(survey, actor)
@@ -683,6 +697,8 @@ def update(actor, question, data, files=None, *, translations=UNSET, visibility_
     if counted:
         _count_budget_map_use(survey, actor)
     _apply_shared_map_settings(q, data)
+    if before['layer_id'] != q.layer_id or before['input_type'] != q.input_type:
+        _place_layer_of(actor, q)
     if translations is not UNSET:
         save_translations_for(q, survey, translations)
     if structure_locked:
@@ -773,12 +789,14 @@ def delete_with_layers(survey, question):
     orphan_layer = layer_lite(question) if (question.input_type == 'layer_objects' and question.layer_id
                                             and layer_lite(question).source == 'question') else None
     question.delete()
-    if orphan_layer is not None and not orphan_layer.questions.exists():
+    # A shared-map layer lives while anything reads it (change map-layers-study-area, task 2.4):
+    # an Objects question in any header, or a placement that still shows it on a map.
+    if orphan_layer is not None and not orphan_layer.questions.exists() and not orphan_layer.placements.exists():
         orphan_layer.delete()
     # The layer itself goes only when NO header reads it any more -- the
     # published version may still show it to live respondents.
     for layer in source_layers:
-        if not layer.questions.exists():
+        if not layer.questions.exists() and not layer.placements.exists():
             layer.delete()
 
 

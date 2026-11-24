@@ -1386,3 +1386,7 @@ msgstr "%(amount)s το καθένα"
 #: budget-question
 msgid "{left} left after it"
 msgstr "μετά απομένουν {left}"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "Σε αυτόν τον χάρτη"

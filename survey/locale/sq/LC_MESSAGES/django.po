@@ -1385,3 +1385,7 @@ msgstr "%(amount)s secila"
 #: budget-question
 msgid "{left} left after it"
 msgstr "pas kësaj mbeten {left}"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "Në këtë hartë"

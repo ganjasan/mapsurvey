@@ -138,6 +138,29 @@ def normalize_location(blob):
     blob['location'] = value if len(value) <= MAX_LOCATION_CHARS else ''
 
 
+MAX_SURVEY_NAME_CHARS = 45   # SurveyHeader.name max_length
+
+
+def normalize_survey_name(blob):
+    """Coerce `blob['survey_name']` in place to a usable survey name, "" when unusable.
+
+    Like the location, never a validation error: a bad title is not worth a retry.
+    Quotes and whitespace runs go; a long title is cut at a word boundary; a title
+    without a letter or digit fails `validate_url_name` and is dropped.
+    """
+    if not isinstance(blob, dict):
+        return
+    value = blob.get('survey_name')
+    if not isinstance(value, str):
+        blob['survey_name'] = ''
+        return
+    value = ' '.join(value.split()).strip('"\'«»“”„ .')
+    if len(value) > MAX_SURVEY_NAME_CHARS:
+        cut = value[:MAX_SURVEY_NAME_CHARS + 1].rsplit(' ', 1)[0]
+        value = (cut if len(cut) >= 10 else value[:MAX_SURVEY_NAME_CHARS]).rstrip(' ,;:—-')
+    blob['survey_name'] = value if re.search(r'\w', value) else ''
+
+
 def validate_blob(blob, requested_languages):
     """Return a list of human-readable problems; empty means the draft is usable.
 
@@ -153,6 +176,7 @@ def validate_blob(blob, requested_languages):
     if not isinstance(blob, dict):
         return ["model output is not an object"]
     normalize_location(blob)
+    normalize_survey_name(blob)
     sections = blob.get('sections')
     if not isinstance(sections, list) or not sections:
         return ["model output has no sections"]

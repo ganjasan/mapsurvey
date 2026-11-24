@@ -45,7 +45,8 @@ MISSING, STALE, TRANSLATED = 'missing', 'stale', 'translated'
 STATUS_ORDER = (MISSING, STALE, TRANSLATED)
 
 # Fields with a stored length cap (the modals' caps, mirrored).
-CAPS = {'section:title': 256, 'section:next_label': 30, 'question:name': 512, 'group:title': 512}
+CAPS = {'section:title': 256, 'section:next_label': 30, 'question:name': 512, 'group:title': 512,
+        'study_area:message': 300}
 
 # Question types whose `name` is an editor-only label (spec question-subtext).
 LABEL_ONLY_TYPES = ('html', 'image')
@@ -76,13 +77,8 @@ def group_key(text, kind):
 def section_prefix(section):
     """`section:<code>`, with `#n` when the survey has several sections of
     that code (they are not unique within a survey)."""
-    from .models import SurveySection
-    siblings = list(SurveySection.objects.filter(
-        survey_header_id=section.survey_header_id, code=section.code,
-    ).order_by('id').values_list('id', flat=True))
-    if len(siblings) > 1:
-        return f'section:{section.code}#{siblings.index(section.id)}'
-    return f'section:{section.code}'
+    from .section_refs import section_ref
+    return f'section:{section_ref(section)}'
 
 
 def question_prefix(question):
@@ -94,6 +90,7 @@ def group_prefix(group):
 
 
 THANKS_KEY = 'survey:thanks'
+STUDY_AREA_MESSAGE_KEY = 'survey:study_area_message'
 
 
 def prefix_for(owner_field, owner):
@@ -371,6 +368,16 @@ def occurrences(survey, language, source_language=None):
     add(THANKS_KEY, RICH, thanks.get(primary, ''), thanks.get(language, ''),
         len(sections) + 1, _('Thank-you page'), _('Thank-you page'), _('Thank-you page'),
         'survey', survey, 'thanks', shown=thanks.get(source_language, ''), link={'panel': 'thanks'})
+    # The study area's refusal message (change map-layers-study-area): creator text a respondent
+    # reads when a mark outside the area is not placed. The area is the canonical survey's.
+    from .services.study_area import get as study_area_of
+    area = study_area_of(survey)
+    if area is not None and area.refuse_outside:
+        message = area.message or {}
+        add(STUDY_AREA_MESSAGE_KEY, PLAIN, message.get(primary, ''), message.get(language, ''),
+            len(sections) + 1, _('Map'), _('Study area message'), _('Study area message'),
+            'study_area', area, 'message', CAPS.get('study_area:message', 0),
+            shown=message.get(source_language, ''), link={'study_area': True})
     return out
 
 
@@ -506,6 +513,12 @@ def apply(actor, survey, language, values, *, overwrite=False, clear_empty=False
             set_thanks(actor, survey, {language: fields.get('thanks', '')}, languages=[language])
             thanks = survey.thanks_html if isinstance(survey.thanks_html, dict) else {}
             record_hashes(survey, language, [(THANKS_KEY, thanks.get(_primary(survey), ''), RICH, fields.get('thanks', ''))])
+        elif kind == 'study_area':
+            from .services.study_area import set_message_translation
+            area = set_message_translation(survey, language, fields.get('message', ''))
+            if area is not None:
+                record_hashes(survey, language, [(STUDY_AREA_MESSAGE_KEY, (area.message or {}).get(_primary(survey), ''),
+                                                  PLAIN, fields.get('message', ''))])
 
     if planned and locks.locks(survey)[1]:
         pe.emit(pe.LIVE_EDIT_SAVED, actor.user_id,

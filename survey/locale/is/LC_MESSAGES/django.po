@@ -1385,3 +1385,7 @@ msgstr "%(amount)s stk."
 #: budget-question
 msgid "{left} left after it"
 msgstr "{left} eftir á eftir"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "Á þessu korti"

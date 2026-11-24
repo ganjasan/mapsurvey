@@ -1385,3 +1385,7 @@ msgstr "%(amount)s elk"
 #: budget-question
 msgid "{left} left after it"
 msgstr "{left} oor daarna"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "Op hierdie kaart"

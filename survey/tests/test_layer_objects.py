@@ -10,6 +10,7 @@ from unittest.mock import patch
 import json
 import zipfile
 from survey.models import Organization, SurveyHeader, SurveySection, Question, Membership
+from survey.layers import layers_for
 from survey.serialization import export_survey_to_zip, import_survey_from_zip
 from survey.versioning import clone_survey_for_draft
 from survey.tests.helpers import _objects_layer, _validated_geojson_text, _zones_geojson
@@ -505,7 +506,7 @@ class LayerObjectsSerializationTest(TestCase):
         self.survey.save()
         imported, warnings = import_survey_from_zip(buf)
         self.assertEqual(warnings, [])
-        layer = imported.map_layers.get()
+        layer = layers_for(imported).get()
         self.assertEqual(sorted(layer.items.values_list('key', flat=True)), ['1', '2', '3'])
         obj = layer.items.get(key='2')
         self.assertEqual((obj.title, obj.category, obj.link), ('Area 2', 'Парки', 'https://city.example/2'))
@@ -535,7 +536,7 @@ class LayerObjectsSerializationTest(TestCase):
         self.survey.name = 'obj_ser_survey_old'
         self.survey.save()
         imported, warnings = import_survey_from_zip(stripped)
-        obj = imported.map_layers.get().items.get(key='2')
+        obj = layers_for(imported).get().items.get(key='2')
         self.assertEqual(list(obj.assets.values_list('kind', flat=True)), ['embed'])
         self.assertTrue(any('is missing' in w for w in warnings), warnings)
 
@@ -559,7 +560,7 @@ class LayerObjectsSerializationTest(TestCase):
         self.survey.name = 'obj_ser_survey_old'
         self.survey.save()
         imported, warnings = import_survey_from_zip(rebuilt)
-        layer = imported.map_layers.get()
+        layer = layers_for(imported).get()
         self.assertEqual(sorted(layer.items.values_list('key', flat=True)), ['1', '2', '3'])
         self.assertEqual(layer.items.get(key='1').title, 'Area 1')
         self.assertEqual(layer.items.get(key='1').assets.count(), 0)

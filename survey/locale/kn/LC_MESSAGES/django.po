@@ -1385,3 +1385,7 @@ msgstr "ಪ್ರತಿಯೊಂದಕ್ಕೆ %(amount)s"
 #: budget-question
 msgid "{left} left after it"
 msgstr "ಇದರ ನಂತರ {left} ಉಳಿಯುತ್ತದೆ"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "ಈ ನಕ್ಷೆಯಲ್ಲಿ"

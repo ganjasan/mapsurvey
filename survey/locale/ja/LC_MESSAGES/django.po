@@ -1384,3 +1384,7 @@ msgstr "1件あたり%(amount)s"
 #: budget-question
 msgid "{left} left after it"
 msgstr "この後の残り {left}"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "この地図に表示中"

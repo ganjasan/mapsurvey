@@ -88,23 +88,23 @@ class LayerObjectsRespondentTest(TestCase):
         self.assertIn('thumbs__option', forms['LR001'])  # thumbs widget
         self.assertNotIn('"coordinates"', html)
 
-    def test_display_only_question_shows_the_layer_and_collects_nothing(self):
+    def test_legend_only_question_renders_nothing_and_the_placement_shows_the_layer(self):
         """
-        GIVEN an Objects question in legend mode with min_objects=2 but no sub-questions
+        GIVEN a legacy legend-mode Objects question with min_objects=2 and no sub-questions, and the
+              layer placed on every section
         WHEN the respondent opens the section and submits it without touching an object
-        THEN the block renders as a legend line with min 0 and no counter, the layer is visible,
-             and the POST moves on — nothing was there to answer (spec layer-objects-question)
+        THEN the question renders nothing, the layer is on the map through its placement, and the
+             POST moves on — nothing was there to answer (change map-layers-study-area)
         """
+        from survey.models import LayerPlacement
         Question.objects.filter(parent_question_id=self.q).delete()
         self.q.panel_mode = 'legend'
         self.q.min_objects = 2
         self.q.save()
+        LayerPlacement.objects.create(survey=self.survey, layer=self.layer, scope='all')
         self._start()
         html = self.client.get(self.url).content.decode()
-        self.assertIn('data-panel-mode="legend"', html)
-        self.assertIn('data-collects="0"', html)
-        self.assertIn('data-min-objects="0"', html)
-        self.assertIn('data-lo-toggle', html)
+        self.assertNotIn('data-panel-mode="legend"', html)
         self.assertNotIn('class="layer-objects__list"', html)
         self.assertIn('data-visible-layers="[%d]"' % self.layer.pk, html)
         response = self.client.post(self.url, {})

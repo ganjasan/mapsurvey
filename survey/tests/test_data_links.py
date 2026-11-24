@@ -96,18 +96,22 @@ class LinkTest(_LinkFixture):
         labels = [f['label'] for f in self.client.get(url).json()['fields']]
         self.assertEqual(labels, ['Species'])
 
-    def test_linked_layer_cannot_be_edited_from_the_survey(self):
+    def test_linked_layer_is_edited_through_the_survey_that_uses_it(self):
         """
-        GIVEN survey A links the dataset
-        WHEN its owner posts a settings change for that layer
-        THEN the request is refused and the layer keeps its name
+        GIVEN survey A links the dataset and survey B does not
+        WHEN A's owner posts a settings change for that layer, and B's owner posts one too
+        THEN A's edit changes the dataset itself (layers live in Data, change map-layers-study-area)
+             and B's request is refused
         """
         self.link(self.survey_a)
         r = self.client.post(reverse('editor_survey_layer_update', args=[self.survey_a.uuid, self.layer.pk]),
+                             {'name': 'Street trees 2026'})
+        self.assertEqual(r.status_code, 200)
+        r = self.client.post(reverse('editor_survey_layer_update', args=[self.survey_b.uuid, self.layer.pk]),
                              {'name': 'Hijacked'})
         self.assertEqual(r.status_code, 404)
         self.layer.refresh_from_db()
-        self.assertEqual(self.layer.name, 'Street trees')
+        self.assertEqual(self.layer.name, 'Street trees 2026')
 
     def test_duplicate_survey_keeps_the_link(self):
         """

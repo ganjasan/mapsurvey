@@ -2838,3 +2838,282 @@ class BriefLanguageHintTest(TestCase):
         html = self._page()
         self.assertIn("capture('blank_goal')", html)
         self.assertIn('blankReported', html)
+
+
+class AIWizardNameTest(_AIGenerationFixture, TestCase):
+    """Spec ai-survey-generation / Requirement: The Wizard names the survey."""
+
+    GOAL = 'Хочу опрос на тему качества уборки Снега в Санкт-Петербурге, Россия.'
+
+    def _generate(self, name, title):
+        from survey.ai.generation import SurveyBrief, generate_survey_draft, start_generation
+        from survey.ai.materialize import header_overrides_from_form
+        brief = SurveyBrief(name=name, goal=self.GOAL, audience='', map_target='', use_case='urban_planning')
+        event = start_generation(self.user, self.org, brief, ['ru'])
+        overrides = header_overrides_from_form(name=name, languages=['ru'], map_lat='59.9', map_lng='30.3',
+                                               map_zoom='12', default_basemap='streets')
+        blob = _ai_blob(('ru',))
+        blob['survey_name'] = title
+        provider = _FakeProvider([blob])
+        with patch('survey.ai.generation.client.get_provider', return_value=provider), \
+                patch('survey.ai.generation.geocode_place', return_value=None):
+            generate_survey_draft(event, brief, ['ru'], overrides)
+        event.refresh_from_db()
+        return event, provider
+
+    def test_name_cut_from_the_goal_is_replaced(self):
+        """
+        GIVEN the name field was left empty and the create page cut it from the goal
+        WHEN the model returns the title "Уборка снега в Санкт-Петербурге"
+        THEN the survey takes that title, and the user turn never called the cut goal a name
+        """
+        event, provider = self._generate(self.GOAL[:44], '«Уборка снега в Санкт-Петербурге».')
+        self.assertEqual(event.created_survey.name, 'Уборка снега в Санкт-Петербурге')
+        self.assertNotIn('Survey name:', provider.calls[0])
+
+    def test_typed_name_is_kept(self):
+        """
+        GIVEN the creator typed the name "elm_street_2027"
+        WHEN the model returns its own title
+        THEN the survey keeps the typed name and the model was told it
+        """
+        event, provider = self._generate('elm_street_2027', 'Уборка снега в Санкт-Петербурге')
+        self.assertEqual(event.created_survey.name, 'elm_street_2027')
+        self.assertIn('Survey name: elm_street_2027', provider.calls[0])
+
+    def test_unusable_title_keeps_the_derived_name(self):
+        """
+        GIVEN a derived name
+        WHEN the model returns "—" as the title
+        THEN the draft succeeds under the derived name
+        """
+        event, _provider = self._generate('Untitled survey', '—')
+        self.assertEqual(event.outcome, 'success')
+        self.assertEqual(event.created_survey.name, 'Untitled survey')
+
+    def test_long_title_is_cut_at_a_word(self):
+        """
+        GIVEN a title longer than the 45-character name limit
+        WHEN it is normalised
+        THEN it is cut at a word boundary and fits the limit
+        """
+        from survey.ai.validator import normalize_survey_name
+        blob = {'survey_name': 'Качество уборки снега во дворах и на улицах Санкт-Петербурга зимой'}
+        normalize_survey_name(blob)
+        self.assertLessEqual(len(blob['survey_name']), 45)
+        self.assertTrue('Качество уборки снега во дворах и на улицах'.startswith(blob['survey_name']))
+
+
+# A square of about 1.1 × 1.1 km in Midtown, Atlanta.
+_WSA_SQUARE = {'type': 'Polygon', 'coordinates': [[
+    [-84.39, 33.78], [-84.38, 33.78], [-84.38, 33.79], [-84.39, 33.79], [-84.39, 33.78]]]}
+
+
+class AIWizardStudyAreaTest(_AIGenerationFixture, TestCase):
+    """Spec ai-survey-generation / Requirement: The Wizard sets the study area
+    (change map-layers-study-area, D8b)."""
+
+    def _generate(self, study_area, location='Tallinn, Estonia', found=None, raises=None):
+        from survey.ai.generation import generate_survey_draft, start_generation
+        from survey.ai.materialize import header_overrides_from_form
+        brief = self._brief()
+        event = start_generation(self.user, self.org, brief, ['en'])
+        overrides = header_overrides_from_form(name=brief.name, languages=['en'], map_lat='52.52',
+                                               map_lng='13.405', map_zoom='12', default_basemap='streets')
+        blob = _ai_blob(('en',))
+        blob['location'] = location
+        lookup = patch('survey.study_area_wizard.boundary_for', return_value=found, side_effect=raises)
+        with patch('survey.ai.generation.client.get_provider', return_value=_FakeProvider([blob])), \
+                patch('survey.ai.generation.geocode_place', return_value=None), lookup as boundary:
+            generate_survey_draft(event, brief, ['en'], overrides, study_area=study_area)
+        event.refresh_from_db()
+        return event, boundary
+
+    @staticmethod
+    def _spec(mode, geometry=None, refuse=False):
+        return {'mode': mode, 'geometry': geometry, 'place_name': 'Midtown, Atlanta' if geometry else '',
+                'osm_ref': 'R123' if geometry else '', 'refuse_outside': refuse}
+
+    def test_outline_from_the_create_page_is_set(self):
+        """
+        GIVEN the create page posted an outline the creator kept, with answers outside not allowed
+        WHEN the draft is generated
+        THEN the survey's study area is that outline from `place`, fog on, refusal on, and no lookup runs
+        """
+        from survey.services import study_area as svc_area
+        event, boundary = self._generate(self._spec('set', _WSA_SQUARE, refuse=True))
+        self.assertEqual(event.outcome, 'success')
+        area = svc_area.get(event.created_survey)
+        self.assertEqual((area.source, area.place_name, area.osm_ref), ('place', 'Midtown, Atlanta', 'R123'))
+        self.assertTrue(area.fog)
+        self.assertTrue(area.refuse_outside)
+        boundary.assert_not_called()
+
+    def test_auto_looks_up_the_briefs_place(self):
+        """
+        GIVEN the form carried no outline (`auto`) and the model read "Tallinn, Estonia" from the brief
+        WHEN the draft is generated
+        THEN the boundary of that place is looked up and set, with answers outside allowed
+        """
+        from survey.services import study_area as svc_area
+        found = {'geometry': _WSA_SQUARE, 'name': 'Tallinn, Estonia', 'osm_ref': 'R2164745'}
+        event, boundary = self._generate(self._spec('auto'), found=found)
+        boundary.assert_called_once_with(query='Tallinn, Estonia')
+        area = svc_area.get(event.created_survey)
+        self.assertEqual((area.place_name, area.osm_ref, area.refuse_outside), ('Tallinn, Estonia', 'R2164745', False))
+
+    def test_removed_area_stays_removed(self):
+        """
+        GIVEN the creator removed the study area on the create page (`off`)
+        WHEN the brief names a place
+        THEN the survey has no study area and nothing is looked up
+        """
+        from survey.services import study_area as svc_area
+        event, boundary = self._generate(self._spec('off'))
+        self.assertEqual(event.outcome, 'success')
+        self.assertIsNone(svc_area.get(event.created_survey))
+        boundary.assert_not_called()
+
+    def test_lookup_down_never_fails_the_draft(self):
+        """
+        GIVEN OpenStreetMap does not answer during generation
+        WHEN the draft is generated with `auto`
+        THEN the draft succeeds without a study area
+        """
+        from survey.services import study_area as svc_area
+        from survey.study_area_lookup import LookupUnavailable
+        event, _boundary = self._generate(self._spec('auto'), raises=LookupUnavailable())
+        self.assertEqual(event.outcome, 'success')
+        self.assertIsNone(svc_area.get(event.created_survey))
+
+    def test_brief_without_a_place_gets_no_area(self):
+        """
+        GIVEN `auto` and a brief that names no place (empty `location`)
+        WHEN the draft is generated
+        THEN no lookup runs and the survey has no study area
+        """
+        from survey.services import study_area as svc_area
+        event, boundary = self._generate(self._spec('auto'), location='')
+        boundary.assert_not_called()
+        self.assertIsNone(svc_area.get(event.created_survey))
+
+
+class AIWizardStudyAreaPageTest(TestCase):
+    """The create page side of the Wizard's study area: the strip, the boundary endpoint, the POSTs."""
+
+    def setUp(self):
+        from django.core.cache import cache
+        cache.clear()
+        self.org = _make_org('WsaOrg')
+        self.user = User.objects.create_user('wsauser', password='pass')
+        Membership.objects.create(user=self.user, organization=self.org, role='owner')
+        self.client.login(username='wsauser', password='pass')
+
+    def _nominatim(self, results):
+        response = mock.Mock(status_code=200)
+        response.json.return_value = results
+        return patch('survey.study_area_lookup.requests.get', return_value=response)
+
+    def test_page_has_the_strip_and_its_fields(self):
+        """
+        GIVEN map layers are on
+        WHEN the create page renders
+        THEN it carries the Study area strip, its hidden fields defaulting to `auto`, and its script
+        """
+        html = self.client.get(reverse('editor_survey_create')).content.decode()
+        self.assertIn('id="wsa"', html)
+        self.assertIn('name="study_area_mode" id="wsa-mode" value="auto"', html)
+        self.assertIn('wizard_study_area', html)
+        self.assertIn('editor/surveys/new/place-boundary/', html)
+
+    def test_boundary_endpoint_returns_the_place_outline(self):
+        """
+        GIVEN Nominatim answers "Midtown, Atlanta" with a point first and a polygon second
+        WHEN the create page asks for the boundary
+        THEN the polygon candidate is chosen, cleaned to a MultiPolygon, with its size and name
+        """
+        raw = [{'osm_type': 'node', 'osm_id': 9, 'display_name': 'Midtown station', 'type': 'station',
+                'boundingbox': ['33.781', '33.781', '-84.386', '-84.386'], 'lat': '33.781', 'lon': '-84.386',
+                'geojson': {'type': 'Point', 'coordinates': [-84.386, 33.781]}},
+               {'osm_type': 'relation', 'osm_id': 123, 'display_name': 'Midtown, Atlanta', 'type': 'neighbourhood',
+                'boundingbox': ['33.78', '33.79', '-84.39', '-84.38'], 'lat': '33.785', 'lon': '-84.385',
+                'geojson': _WSA_SQUARE}]
+        with self._nominatim(raw):
+            data = self.client.get(reverse('editor_place_boundary'), {'q': 'Midtown, Atlanta'}).json()
+        self.assertTrue(data['found'])
+        self.assertEqual((data['osm_ref'], data['kind'], data['geometry']['type']), ('R123', 'polygon', 'MultiPolygon'))
+        self.assertGreater(data['km2'], 1)
+
+    def test_street_corridor_width_from_the_strip(self):
+        """
+        GIVEN the brief named a street Nominatim knows as a line
+        WHEN the strip asks for it, then for the same candidate at 50 m
+        THEN both answers are corridors, the second narrower
+        """
+        line = {'type': 'LineString', 'coordinates': [[-84.39, 33.785], [-84.38, 33.785]]}
+        raw = [{'osm_type': 'way', 'osm_id': 77, 'display_name': 'North Highland Avenue', 'type': 'secondary',
+                'boundingbox': ['33.785', '33.785', '-84.39', '-84.38'], 'lat': '33.785', 'lon': '-84.385',
+                'geojson': line}]
+        with self._nominatim(raw):
+            wide = self.client.get(reverse('editor_place_boundary'), {'q': 'North Highland Avenue'}).json()
+        narrow = self.client.get(reverse('editor_place_boundary'), {'osm_ref': 'W77', 'width': 50}).json()
+        self.assertEqual((wide['kind'], wide['width'], narrow['width']), ('line', 100, 50))
+        self.assertLess(narrow['km2'], wide['km2'])
+
+    def test_lookup_down_says_so(self):
+        """
+        GIVEN Nominatim cannot be reached
+        WHEN the create page asks for a boundary
+        THEN the answer is "not found, unavailable", never an error page
+        """
+        import requests
+        with patch('survey.study_area_lookup.requests.get', side_effect=requests.ConnectionError):
+            data = self.client.get(reverse('editor_place_boundary'), {'q': 'Tallinn'}).json()
+        self.assertEqual((data['found'], data['unavailable']), (False, True))
+
+    @override_settings(AI_PROVIDER='anthropic', ANTHROPIC_API_KEY='sk-test')
+    def test_generate_hands_the_choice_to_the_task(self):
+        """
+        GIVEN the strip holds an outline and "Not allowed"
+        WHEN the draft is requested
+        THEN the task receives that outline with the refusal flag
+        """
+        with patch('survey.editor_views.generate_survey_draft_task.delay') as delay:
+            self.client.post(reverse('editor_survey_create'), {
+                'name': 'ai_survey', 'available_languages': '["en"]', 'action': 'generate',
+                'goal': 'Where is traffic worst', 'use_case': 'urban_planning',
+                'study_area_mode': 'set', 'study_area_geometry': json.dumps(_WSA_SQUARE),
+                'study_area_place': 'Midtown, Atlanta', 'study_area_osm_ref': 'R123', 'study_area_refuse': '1',
+            })
+        spec = delay.call_args.kwargs['study_area']
+        self.assertEqual((spec['mode'], spec['place_name'], spec['refuse_outside']), ('set', 'Midtown, Atlanta', True))
+        self.assertEqual(spec['geometry'], _WSA_SQUARE)
+
+    def test_empty_survey_keeps_the_strip_outline(self):
+        """
+        GIVEN the strip holds an outline
+        WHEN the creator creates an empty survey from the same page
+        THEN that survey has the outline as its study area
+        """
+        from survey.services import study_area as svc_area
+        self.client.post(reverse('editor_survey_create'), {
+            'name': 'manual_area', 'available_languages': '["en"]', 'action': 'empty',
+            'study_area_mode': 'set', 'study_area_geometry': json.dumps(_WSA_SQUARE),
+            'study_area_place': 'Midtown, Atlanta',
+        })
+        area = svc_area.get(SurveyHeader.objects.get(name='manual_area'))
+        self.assertEqual((area.source, area.place_name, area.refuse_outside), ('place', 'Midtown, Atlanta', False))
+
+    def test_empty_survey_without_an_outline_has_no_area(self):
+        """
+        GIVEN the strip never showed an outline (`auto`)
+        WHEN an empty survey is created
+        THEN it has no study area and nothing is looked up
+        """
+        from survey.services import study_area as svc_area
+        with patch('survey.study_area_wizard.boundary_for') as boundary:
+            self.client.post(reverse('editor_survey_create'), {
+                'name': 'manual_none', 'available_languages': '["en"]', 'action': 'empty',
+            })
+        boundary.assert_not_called()
+        self.assertIsNone(svc_area.get(SurveyHeader.objects.get(name='manual_none')))

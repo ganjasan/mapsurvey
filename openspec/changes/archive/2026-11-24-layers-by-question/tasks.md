@@ -1,9 +1,9 @@
 # Tasks — layers-by-question
 
 ## 0. Prerequisites
-- [ ] 0.1 Archive `overlay-features` and `respondent-shared-map` (sync their deltas into main
+- [x] 0.1 Archive `overlay-features` and `respondent-shared-map` (sync their deltas into main
       specs) — this change's MODIFIED requirements need them there
-- [ ] 0.2 Owner decisions on the two open questions in design.md (type name; legend line
+- [x] 0.2 Owner decisions on the two open questions in design.md (type name; legend line
       for "Marks" layers)
 
 ## 0b. Bugs found while testing (owner: they ride this branch)
@@ -47,7 +47,7 @@
 - [x] 1.2 `Question.collects_objects` property (layer_objects with ≥1 sub-question)
 - [x] 1.3 Data migration: Objects question per (map section × visible unbound layer), across
       canonical / versions / draft copies; idempotent; historical-model `layer_owner`
-- [ ] 1.4 (next release) migration dropping `SurveySection.hidden_layers`
+- [x] 1.4 (next release) migration dropping `SurveySection.hidden_layers` — moved to `map-layers-study-area` 9.1
 
 ## 2. Server
 - [x] 2.1 `layers.section_layers(section)`; `build_map_layers_metadata(survey, section=None)`
@@ -75,7 +75,7 @@
 - [x] 4.0 Objects settings block rebuilt per direction A of `mockups/Main.dc.html` (owner pick
       2026-09-07): one card — layer + "Upload new…", segmented panel mode with per-mode help,
       search only for list, minimum inside "Ask about each object", status pill
-- [ ] 4.1 Objects form: "Upload a new layer…" entry (D7) reusing the settings upload flow
+- [x] 4.1 Objects form: "Upload a new layer…" entry (D7) reusing the settings upload flow — moved to `map-layers-study-area` 4.3
 - [x] 4.2 Section question list row: panel mode word next to the layer badge
 - [x] 4.3 Type picker hint copy for "Objects on the map" (per 0.2)
 
@@ -89,7 +89,7 @@
 - [x] "Others see" switches on sub-question rows (`editor_question_share`); checkbox in the sub-question form
 - [x] Quick-add chips 👍/👎 · Rating · Comment · Other… (`QUICK_SUBQUESTIONS`)
 - [x] Serialization + cloning carry the flag; legacy archives seeded from layer flags
-- [ ] (next release) drop `SurveyMapLayer.show_tallies` / `show_comments` with `hidden_layers`
+- [x] (next release) drop `SurveyMapLayer.show_tallies` / `show_comments` with `hidden_layers` — moved to `map-layers-study-area` 9.1
 
 - [x] Export: no objects CSV for display-only questions; layer results GeoJSON aggregates scoped to
       the exported header (draft/version sub-questions no longer add empty columns)
@@ -109,4 +109,4 @@
 
 ## 6. Ship
 - [x] 6.1 Browser pass on the dev stand with the dog-bin survey (both modes, preview, Responses)
-- [ ] 6.2 Offer commit / push / PR; PR 2 for 1.4 one release later
+- [x] 6.2 Offer commit / push / PR; PR 2 for 1.4 one release later (shipped; PR 2 moved to `map-layers-study-area`)

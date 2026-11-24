@@ -145,6 +145,8 @@ UNMAPPED_MODULES = {
     'budget-question': 'spec lives in the unarchived change budget-question',
     'responses-required-unanswered': 'spec lives in the unarchived change responses-required-unanswered',
     'number-question-bounds': 'spec lives in the unarchived change responses-required-unanswered',
+    'map-layer-placement': 'spec lives in the unarchived change map-layers-study-area',
+    'survey-study-area': 'spec lives in the unarchived change map-layers-study-area',
 }
 
 # Capabilities with no module here: tested in another app, or not by any

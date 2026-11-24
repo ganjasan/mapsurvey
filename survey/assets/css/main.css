@@ -1485,6 +1485,14 @@ body.sidebar-hidden .leaflet-top.leaflet-left {
 .layer-objects__legend input { margin:0; }
 .layer-objects__swatch { width:12px; height:12px; border-radius:3px; flex:none; }
 .layer-objects__count { margin-left:auto; font-size:.78rem; color:var(--text-secondary); }
+/* "On this map" (change map-layers-study-area): the section's placed layers in the panel. */
+.on-this-map { margin:0 0 12px; display:flex; flex-direction:column; gap:6px; }
+.on-this-map__title { font-size:.78rem; font-weight:600; color:var(--text-secondary); text-transform:uppercase; letter-spacing:.03em; }
+.on-this-map__classes { list-style:none; margin:0 0 2px 30px; padding:0; font-size:.8rem; color:var(--text-secondary); }
+.on-this-map__classes li { display:flex; align-items:center; gap:6px; }
+/* A mark refused outside the study area (study_area.js): the creator's message over the map. */
+.study-area-toast { position:absolute; left:50%; top:72px; transform:translateX(-50%); z-index:1000; max-width:min(90%, 420px); background:var(--card-bg); border:1px solid var(--card-border); border-radius:var(--radius-sm); box-shadow:var(--shadow-md); padding:8px 12px; font-size:.88rem; }
+.study-area-toast[hidden] { display:none; }
 .leaflet-tooltip.ref-layer-tally { cursor:pointer; background:#fff; border:1px solid rgba(0,0,0,.12); border-radius:999px; padding:1px 7px; font-size:11px; box-shadow:0 1px 3px rgba(0,0,0,.12); }
 .leaflet-tooltip.ref-layer-tally::before { display:none; }
 .lo-empty { font-size:.85rem; color:var(--text-tertiary); padding:8px 2px; }

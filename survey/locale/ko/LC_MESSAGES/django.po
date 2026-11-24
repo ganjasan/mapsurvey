@@ -1384,3 +1384,7 @@ msgstr "개당 %(amount)s"
 #: budget-question
 msgid "{left} left after it"
 msgstr "이후 {left} 남음"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "이 지도에 표시"

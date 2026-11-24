@@ -22,9 +22,9 @@ from django.db.models import Max
 from ..audit import record as audit_record
 from ..html_sanitize import coerce_creator_html
 from ..layers import (
-    GEOMETRY_TEXT_FIELDS, MAX_LAYER_BYTES, MAX_LAYERS_PER_SURVEY, LayerValidationError, _clean_key,
-    check_object_caps, clean_object_link, explode_geometry, layer_owner, normalize_style,
-    objects_from_features, rebuild_layer, validate_layer_upload,
+    GEOMETRY_TEXT_FIELDS, MAX_LAYER_BYTES, MAX_LAYER_FEATURES, MAX_LAYERS_PER_SURVEY, LayerValidationError,
+    _clean_key, _geometry_coords, check_object_caps, clean_object_link, explode_geometry, layer_owner,
+    layers_for, normalize_style, objects_from_features, rebuild_layer, validate_layer_upload,
 )
 from ..models import LayerObject, SurveyMapLayer
 
@@ -48,8 +48,11 @@ class LayerError(Exception):
 # ─── lookups ─────────────────────────────────────────────────────────────────
 
 def layers_qs(survey):
-    """The survey's layers, geometry text deferred, in map order."""
-    return SurveyMapLayer.objects.defer(*GEOMETRY_TEXT_FIELDS).filter(survey=layer_owner(survey))
+    """The survey's layers, geometry text deferred: the datasets it links and the shared-map layers
+    it owns (change map-layers-study-area: layers live in Data, the survey reaches them through
+    its links). A survey edits the style and objects of a layer it uses; Data shows the edit on
+    every place that links it."""
+    return layers_for(survey).order_by('position', 'id')
 
 
 def get_layer(survey, layer_id):
@@ -85,52 +88,154 @@ def _writable(layer):
         raise LayerError(CONFLICT, READ_ONLY_MESSAGE)
 
 
-def _audit(actor, action, layer, **meta):
+def _audit(actor, action, layer, survey=None, **meta):
     if actor is not None:
-        audit_record(actor, action, layer.survey, layer_id=layer.pk, **meta)
+        audit_record(actor, action, survey or layer.survey, layer_id=layer.pk, **meta)
 
 
 # ─── layers ──────────────────────────────────────────────────────────────────
 
 def _assert_room(owner):
-    if owner.map_layers.count() >= MAX_LAYERS_PER_SURVEY:
+    if layers_for(owner).count() >= MAX_LAYERS_PER_SURVEY:
         raise LayerError(LIMIT_REACHED, f'A survey can hold {MAX_LAYERS_PER_SURVEY} reference layers.')
 
 
 def _next_position(owner):
-    return (owner.map_layers.aggregate(m=Max('position'))['m'] or 0) + 1
+    return (layers_for(owner).aggregate(m=Max('position'))['m'] or 0) + 1
 
 
-def create_from_geojson(actor, survey, data, name=None, filename=None):
-    """A layer from GeoJSON bytes (an upload or a serialised JSON body), its
-    features turned into objects. Refuses a full survey, an oversized file and
-    anything `validate_layer_upload` refuses, before writing a row."""
+# Files the Data import reads (GDAL / csv). A GeoJSON in WGS 84 keeps the direct parser, so its
+# properties stay JSON values exactly as before; a projected GeoJSON and every other format go
+# through the Data reader, which reprojects (spec reference-overlay-layers, design D4).
+DATA_READER_EXTS = ('.gpkg', '.zip', '.kml', '.csv')
+GEOJSON_EXTS = ('', '.geojson', '.json')
+
+
+def new_layer(actor, owner, name, fields=None, position=None, **values):
+    """A new uploaded or drawn layer of `owner`: a workspace dataset the survey links (layers
+    live in Data). The dataset row comes first — the rebuild reads its field dictionary. A survey
+    without a workspace keeps the layer itself (there is no Data to put it in). The ZIP import
+    calls it too, with the archive's position and cleaned config."""
+    position = _next_position(owner) if position is None else position
+    if owner.organization_id is None:
+        return SurveyMapLayer.objects.create(survey=owner, name=name, geojson='', position=position, **values)
+    from data.models import Dataset, DatasetLink
+    layer = SurveyMapLayer.objects.create(survey=None, organization_id=owner.organization_id, name=name,
+                                          geojson='', position=position, **values)
+    dataset = Dataset.objects.create(organization_id=owner.organization_id, kind=Dataset.KIND_LAYER, layer=layer,
+                                     name=name[:200], privacy_class=Dataset.PRIVACY_PUBLIC, fields=fields or [])
+    DatasetLink.objects.create(dataset=dataset, survey=owner, created_by=getattr(actor, 'user', None))
+    return layer
+
+
+def _read_with_data_reader(data, filename):
+    """(features, profile) of a file the Data import reads, reprojected to WGS 84."""
+    import shutil
+    import tempfile
+    from data.imports import ImportRefused, open_source
+    ext = os.path.splitext(filename or '')[1].lower() or '.geojson'
+    workdir = tempfile.mkdtemp(prefix='layer-upload-')
+    try:
+        path = os.path.join(workdir, 'upload' + ext)
+        with open(path, 'wb') as fh:
+            fh.write(data)
+        try:
+            source = open_source(path, 'upload' + ext)
+            profile = source.profile()
+            located = profile['count'] - profile['no_location']
+            if located == 0:
+                raise ImportRefused('No feature of the file has a location.')
+            if located > MAX_LAYER_FEATURES:
+                raise ImportRefused(f'The file has {located} features; the limit is {MAX_LAYER_FEATURES}.')
+            features = list(source.features())
+        except ImportRefused as exc:
+            raise LayerError(VALIDATION, str(exc), 'geojson')
+        except Exception:  # noqa: BLE001 — GDAL raises plain errors on a broken file
+            raise LayerError(VALIDATION, 'This file could not be read. Upload a GeoPackage, a zipped shapefile, '
+                                         'KML, GeoJSON or a CSV with coordinate columns.', 'geojson')
+    finally:
+        shutil.rmtree(workdir, ignore_errors=True)
+    for feature in features:
+        for lng, lat in _geometry_coords(feature.get('geometry')):
+            if not (-180 <= lng <= 180 and -90 <= lat <= 90):
+                raise LayerError(VALIDATION, 'The file has no coordinate system and its coordinates are not '
+                                             'longitude/latitude. Re-export it with its coordinate system '
+                                             '(or as WGS84, EPSG:4326).', 'geojson')
+    return features, profile
+
+
+def _converted_from(crs):
+    """The coordinate system a file was converted from, '' when it was already WGS 84."""
+    crs = crs or ''
+    if crs in ('EPSG:4326', 'unknown') or crs.startswith('none'):
+        return ''
+    return crs
+
+
+def create_from_upload(actor, survey, data, name=None, filename=None):
+    """A layer from an uploaded file (or a serialised GeoJSON body): GeoJSON, GeoPackage, zipped
+    shapefile, KML or CSV with coordinate columns, reprojected to WGS 84 when the file says it is
+    in another coordinate system. It becomes a workspace dataset linked to the survey and placed
+    on every map section, now and later (spec map-layer-placement). Refuses a full survey, an
+    oversized file and anything the readers refuse, before writing a row. Returns (layer, report);
+    `report['crs']` names the coordinate system the file was converted from ('' when none)."""
     owner = layer_owner(survey)
     _assert_room(owner)
     if len(data) > MAX_LAYER_BYTES:
         raise LayerError(VALIDATION, f'File is larger than {MAX_LAYER_BYTES // (1024 * 1024)} MB.', 'geojson')
-    try:
-        features, _properties, _dropped_z = validate_layer_upload(data)
-    except LayerValidationError as exc:
-        raise LayerError(VALIDATION, exc, 'geojson')
+    ext = os.path.splitext(filename or '')[1].lower()
+    fields, converted = [], ''
+    if ext in DATA_READER_EXTS:
+        features, profile = _read_with_data_reader(data, filename)
+        fields, converted = profile['fields'], _converted_from(profile['crs'])
+    elif ext in GEOJSON_EXTS:
+        try:
+            features, _properties, _dropped_z = validate_layer_upload(data)
+        except LayerValidationError as exc:
+            if 'projected coordinate system' not in str(exc):
+                raise LayerError(VALIDATION, exc, 'geojson')
+            # A GeoJSON in State Plane, UTM… — the Data reader honours its `crs` member.
+            features, profile = _read_with_data_reader(data, 'upload.geojson')
+            converted = _converted_from(profile['crs'])
+    else:
+        raise LayerError(VALIDATION, 'Upload a GeoJSON, a GeoPackage (.gpkg), a zipped shapefile (.zip), KML or '
+                                     'a CSV with coordinate columns.', 'geojson')
     name = (name or (os.path.splitext(filename)[0] if filename else '') or 'Layer').strip()[:100] or 'Layer'
     # Atomic: an exception while building objects used to leave an empty layer
     # counting against the cap (one such orphan reached production).
     with transaction.atomic():
-        layer = SurveyMapLayer.objects.create(survey=owner, name=name, geojson='', position=_next_position(owner))
+        layer = new_layer(actor, owner, name, fields=fields)
         report = objects_from_features(layer, features, sanitize=coerce_creator_html)
         rebuild_layer(layer)
-    _audit(actor, 'layer_create', layer, name=layer.name, objects=report.get('created', 0))
+        from . import placements
+        placements.place(actor, owner, layer.pk, automatic=True)
+    report = dict(report, crs=converted)
+    _audit(actor, 'layer_create', layer, survey=owner, name=layer.name, objects=report.get('created', 0))
+    _layer_added(actor, owner, 'upload')
     return layer, report
 
 
+# The name every caller used before other formats were accepted.
+create_from_geojson = create_from_upload
+
+
+def _layer_added(actor, owner, source):
+    if actor is not None:
+        from ..product_events import LAYER_ADDED, emit
+        emit(LAYER_ADDED, actor.user_id, {'survey_id': owner.pk, 'source': source, 'surface': actor.surface})
+
+
 def create_empty(actor, survey, name=None):
+    """A layer to draw on: a workspace dataset linked to the survey and placed on every map."""
     owner = layer_owner(survey)
     _assert_room(owner)
-    layer = SurveyMapLayer.objects.create(survey=owner, name=((name or '').strip() or 'New layer')[:100],
-                                          geojson='', position=_next_position(owner))
-    rebuild_layer(layer)
-    _audit(actor, 'layer_create', layer, name=layer.name, objects=0)
+    with transaction.atomic():
+        layer = new_layer(actor, owner, ((name or '').strip() or 'New layer')[:100])
+        rebuild_layer(layer)
+        from . import placements
+        placements.place(actor, owner, layer.pk, automatic=True)
+    _audit(actor, 'layer_create', layer, survey=owner, name=layer.name, objects=0)
+    _layer_added(actor, owner, 'draw')
     return layer
 
 
@@ -180,25 +285,52 @@ def bound_question_names(layer):
     return list(layer.questions.values_list('name', flat=True))
 
 
-def delete(actor, layer):
-    bound = bound_question_names(layer)
+def _family(owner):
+    from django.db.models import Q
+    from ..models import SurveyHeader
+    return SurveyHeader.objects.filter(Q(pk=owner.pk) | Q(canonical_survey=owner) | Q(published_version=owner))
+
+
+def delete(actor, layer, survey=None):
+    """Remove a layer from a survey. A layer the survey owns (a shared map, or a survey without a
+    workspace) is deleted; a dataset it links is unlinked, taken off its maps and stays in Data
+    (spec reference-overlay-layers "Remove from this survey"). Refused while a question of the
+    survey asks about it."""
+    from ..models import LayerPlacement, Question
+    owner = layer_owner(survey) if survey is not None else layer.survey
+    if owner is None:
+        raise LayerError(CONFLICT, 'Delete a workspace dataset from its page in Data.')
+    bound = list(Question.objects.filter(layer=layer, survey_section__survey_header__in=_family(owner))
+                 .values_list('name', flat=True))
     if bound:
         names = ', '.join(f'“{n}”' for n in bound if n) or 'a question'
         raise LayerError(CONFLICT, f'This layer is used by {names}. Change that question\'s layer or delete it first.')
-    layer_id, name, survey = layer.pk, layer.name, layer.survey
-    layer.delete()
+    layer_id, name = layer.pk, layer.name
+    with transaction.atomic():
+        LayerPlacement.objects.filter(survey=owner, layer_id=layer_id).delete()
+        if layer.survey_id == owner.pk:
+            layer.delete()
+            action = 'layer_delete'
+        else:
+            from data.models import DatasetLink
+            DatasetLink.objects.filter(survey=owner, dataset__layer_id=layer_id).delete()
+            action = 'layer_unlink'
     if actor is not None:
-        audit_record(actor, 'layer_delete', survey, layer_id=layer_id, name=name)
+        audit_record(actor, action, owner, layer_id=layer_id, name=name)
 
 
 def reorder(actor, survey, layer_ids):
+    """The order of the survey's layers: their placements' stacking order on the maps and the
+    layers' own position (the list order in Survey settings, REST and MCP)."""
+    from ..models import LayerPlacement
     owner = layer_owner(survey)
-    current = list(owner.map_layers.values_list('pk', flat=True))
+    current = list(layers_for(owner).values_list('pk', flat=True))
     if sorted(current) != sorted(layer_ids) or len(set(layer_ids)) != len(layer_ids):
         raise LayerError(VALIDATION, 'Give every layer of the survey exactly once.', 'layer_ids')
     with transaction.atomic():
         for position, pk in enumerate(layer_ids, start=1):
             SurveyMapLayer.objects.filter(pk=pk).update(position=position)
+            LayerPlacement.objects.filter(survey=owner, layer_id=pk).update(position=position)
     if actor is not None:
         audit_record(actor, 'layer_reorder', owner, layer_ids=list(layer_ids))
 

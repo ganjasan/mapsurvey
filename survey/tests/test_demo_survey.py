@@ -5,6 +5,7 @@ Moved from survey/tests.py by #273; classes are unchanged.
 from django.test import TestCase, Client, override_settings
 from django.utils import timezone
 from survey.models import Organization, SurveyHeader, SurveySection, Question, SurveySession, Answer
+from survey.layers import layers_for
 from reports.models import Report
 from io import StringIO
 from django.core.management import call_command
@@ -41,7 +42,7 @@ class SeedDemoSurveyTest(TestCase):
         survey = self._demo()
         self.assertEqual(survey.status, 'published')
         self.assertEqual(SurveySection.objects.filter(survey_header=survey).count(), 6)
-        bridges = survey.map_layers.get(source='upload')
+        bridges = layers_for(survey).get(source='upload')
         self.assertEqual(bridges.items.count(), 10)
         self.assertEqual(LayerObjectAsset.objects.filter(object__layer=bridges).count(), 10)
         shared = survey.map_layers.get(source='question')

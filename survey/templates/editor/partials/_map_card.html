@@ -1,0 +1,250 @@
+{% load i18n %}{% comment %}
+The section's Map card (change map-layers-study-area, spec map-layer-placement "The Map card places
+layers from Build"): what this section's map shows — the survey's study area and every layer the
+survey uses, each ticked when this section's map shows it. Ticks save at once through
+`editor_layer_place_section` (a safe edit, also on a published survey). "+ Layer" uploads, links a
+dataset "From Data" or starts an empty layer to draw on; a new layer goes on every map section,
+switched on, unless the dialog narrows it to this section.
+Context: `map_card` from editor_views._map_card, `survey`, `section`.
+{% endcomment %}
+<div class="map-card" id="map-card"
+     data-place-url="{% url 'editor_layer_place_section' survey.uuid 0 %}"
+     data-scope-url="{% url 'editor_layer_place' survey.uuid 0 %}"
+     data-update-url="{% url 'editor_survey_layer_update' survey.uuid 0 %}"
+     data-section="{{ section.id }}">
+  <div class="map-card-head">
+    <h6><i class="fas fa-map"></i> {% trans "Map" %}</h6>
+    {% if map_card.can_add and not map_card.full %}
+    <div class="dropdown">
+      <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        <i class="fas fa-plus"></i> {% trans "Layer" %}
+      </button>
+      <div class="dropdown-menu dropdown-menu-right">
+        <button type="button" class="dropdown-item" data-map-card-add="upload"><i class="fas fa-upload"></i> {% trans "Upload a file" %}</button>
+        {% if map_card.data_choices %}<button type="button" class="dropdown-item" data-map-card-add="data"><i class="fas fa-database"></i> {% trans "From Data" %}</button>{% endif %}
+        <button type="button" class="dropdown-item" data-map-card-add="draw" data-url="{% url 'editor_layer_create_empty' survey.uuid %}"><i class="fas fa-draw-polygon"></i> {% trans "Draw on the map" %}</button>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="map-card-row map-card-area">
+    <span class="map-card-icon"><i class="fas fa-vector-square"></i></span>
+    {% if map_card.area %}
+    <div class="map-card-main">
+      <b>{% trans "Study area" %}</b>{% if map_card.area.place_name %} · {{ map_card.area.place_name }}{% endif %}
+      <div class="pr-help">{{ map_card.area_km2 }} km²{% if map_card.area.fog %} · {% trans "fog outside" %}{% endif %}{% if map_card.area.refuse_outside %} · {% trans "no answers outside" %}{% endif %}</div>
+    </div>
+    {% if map_card.can_place %}<a class="btn btn-sm btn-link" href="{% url 'editor_study_area' survey.uuid %}">{% trans "Edit" %}</a>{% endif %}
+    {% else %}
+    <div class="map-card-main">
+      <b>{% trans "Study area" %}</b>
+      <div class="pr-help">{% trans "Not set. The map opens on it and can grey out the rest." %}</div>
+    </div>
+    {% if map_card.can_place %}<a class="btn btn-sm btn-outline-primary" href="{% url 'editor_study_area' survey.uuid %}">{% trans "Set" %}</a>{% endif %}
+    {% endif %}
+  </div>
+
+  <div class="map-card-layers">
+    {% for row in map_card.rows %}
+    <label class="map-card-row map-card-layer{% if not row.on %} is-off{% endif %}" data-layer-id="{{ row.layer.pk }}">
+      <input type="checkbox" class="map-card-tick" {% if row.on %}checked{% endif %}{% if not map_card.can_place %} disabled{% endif %}
+             aria-label="{% blocktrans with name=row.layer.name %}Show {{ name }} on this section{% endblocktrans %}">
+      <span class="map-card-swatch" style="background:{{ row.layer.color }}"></span>
+      <span class="map-card-main">
+        <b>{{ row.layer.name }}</b>
+        <span class="pr-help">{{ row.layer.feature_count }} {% trans "objects" %}{% if row.asked_in %} · {% trans "asked in" %} {{ row.asked_in|join:", " }}{% endif %}{% if row.layer.source == 'question' %} · {% trans "respondents’ marks" %}{% endif %}
+          · <span class="map-card-scope">{% if row.scope == 'all' %}{% trans "every section" %}{% elif row.scope == 'sections' %}{{ row.scope_names|join:", " }}{% else %}{% trans "on no map" %}{% endif %}</span></span>
+      </span>
+    </label>
+    {% empty %}
+    <div class="pr-help map-card-empty">{% trans "No layers yet. Add boundaries, sites or routes respondents should see under the map." %}</div>
+    {% endfor %}
+  </div>
+  <div class="map-card-error text-danger" aria-live="polite"></div>
+</div>
+
+{% if map_card.can_add %}
+<div class="modal fade editor-modal" id="mapCardAddModal" tabindex="-1" role="dialog" aria-labelledby="mapCardAddTitle" aria-hidden="true">
+  <div class="modal-dialog" role="document"><div class="modal-content">
+    <div class="modal-header">
+      <h5 class="modal-title" id="mapCardAddTitle">{% trans "Add a layer" %}</h5>
+      <button type="button" class="close" data-dismiss="modal" aria-label="{% trans 'Close' %}"><span aria-hidden="true">&times;</span></button>
+    </div>
+    <div class="modal-body">
+      <div data-step="upload">
+        <label class="ref-layers-drop" style="display:block;">
+          <i class="fas fa-upload"></i> {% trans "Choose a file" %}
+          <div class="pr-help">{% trans "GeoJSON, GeoPackage, zipped shapefile, KML or CSV with coordinates — any coordinate system is converted. Up to 10 MB." %}</div>
+          <input type="file" accept=".geojson,.json,.gpkg,.zip,.kml,.csv,application/geo+json,application/json" hidden data-map-card-file
+                 data-url="{% url 'editor_survey_layer_create' survey.uuid %}">
+        </label>
+      </div>
+      <div data-step="data" hidden>
+        <label for="map-card-dataset">{% trans "Dataset" %}</label>
+        <select id="map-card-dataset" class="custom-select custom-select-sm" data-url="{% url 'editor_survey_layer_link' survey.uuid %}">
+          <option value="">— {% trans "pick a dataset" %} —</option>
+          {% for value, label, refusal in map_card.data_choices %}<option value="{{ value }}"{% if refusal %} disabled title="{{ refusal }}"{% endif %}>{{ label }}{% if refusal %} — {{ refusal }}{% endif %}</option>{% endfor %}
+        </select>
+        <div class="pr-help">{% trans "Linked, not copied: an edit of the dataset shows on this survey's map." %}</div>
+      </div>
+      <div data-step="scope">
+        <div class="map-card-label">{% trans "Where it shows" %}</div>
+        <label class="d-block mb-1"><input type="radio" name="map_card_scope" value="all" checked> {% trans "Every section with a map, now and later" %}</label>
+        <label class="d-block"><input type="radio" name="map_card_scope" value="section"> {% trans "Only this section" %}</label>
+      </div>
+      <div data-step="done" hidden>
+        <div class="map-card-done-title"><i class="fas fa-check-circle"></i> <span data-done-name></span> · <span data-done-count></span> {% trans "objects" %}</div>
+        <div class="pr-help" data-done-converted hidden>{% trans "The coordinates were converted from" %} <b data-done-crs></b>.</div>
+        <label for="map-card-name" class="mt-2">{% trans "Name respondents see" %}</label>
+        <input id="map-card-name" type="text" class="form-control form-control-sm" maxlength="100">
+        <div class="map-card-boundary" data-done-boundary hidden>
+          <div class="map-card-label">{% trans "This looks like a boundary" %}</div>
+          <button type="button" class="btn btn-sm btn-outline-primary" data-make-area
+                  data-url="{% url 'editor_study_area_from_layer' survey.uuid %}">{% trans "Make it the survey's study area" %}</button>
+          <span class="pr-help">{% trans "or keep it as a reference layer." %}</span>
+        </div>
+      </div>
+      <div class="text-danger mt-2" data-modal-error aria-live="polite"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Close" %}</button>
+      <button type="button" class="btn btn-primary" data-map-card-go hidden>{% trans "Add" %}</button>
+    </div>
+  </div></div>
+</div>
+{% endif %}
+
+<style>
+  .map-card { border:1px solid var(--border-color, var(--color-border)); border-radius:8px; padding:.6rem .75rem; margin:.75rem 0 1rem; }
+  .map-card-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:.35rem; }
+  .map-card-head h6 { margin:0; font-weight:600; }
+  .map-card-row { display:flex; align-items:center; gap:.55rem; padding:.35rem 0; margin:0; font-weight:400; }
+  .map-card-area { border-bottom:1px solid var(--border-color, var(--color-border)); margin-bottom:.25rem; }
+  .map-card-icon { width:16px; text-align:center; color:var(--color-text-muted); }
+  .map-card-main { flex:1; min-width:0; font-size:.85rem; }
+  .map-card-main .pr-help { display:block; margin:0; font-size:.74rem; }
+  .map-card-swatch { width:12px; height:12px; border-radius:3px; flex:none; }
+  .map-card-layer { cursor:pointer; }
+  .map-card-layer.is-off .map-card-main b { color:var(--color-text-muted); }
+  .map-card-empty { margin:.35rem 0; }
+  .map-card-label { font-size:.78rem; font-weight:600; margin:.6rem 0 .3rem; }
+  .map-card-done-title { font-weight:600; }
+  .map-card-error:empty, [data-modal-error]:empty { display:none; }
+</style>
+<script>
+(function() {
+    var card = document.getElementById('map-card');
+    if (!card) return;
+    var csrfEl = document.querySelector('[name=csrfmiddlewaretoken]');
+    var csrf = csrfEl ? csrfEl.value : '';
+    var errorBox = card.querySelector('.map-card-error');
+    function post(url, body) {
+        return fetch(url, {method: 'POST', headers: {'X-CSRFToken': csrf}, body: body}).then(function(r) {
+            if (r.status === 204) return null;
+            return r.json().then(function(d) { if (!r.ok) throw new Error(d.error || 'Request failed'); return d; });
+        });
+    }
+    function forLayer(url, id) { return url.replace(/\/0\//, '/' + id + '/'); }
+    function refreshPreview() { if (window.refreshBuildPreview) window.refreshBuildPreview(); }
+
+    card.querySelectorAll('.map-card-layer').forEach(function(row) {
+        var tick = row.querySelector('.map-card-tick');
+        tick.addEventListener('change', function() {
+            var fd = new FormData();
+            fd.append('section', card.dataset.section);
+            fd.append('on', tick.checked ? '1' : '0');
+            errorBox.textContent = '';
+            post(forLayer(card.dataset.placeUrl, row.dataset.layerId), fd).then(function(data) {
+                row.classList.toggle('is-off', !tick.checked);
+                var scope = row.querySelector('.map-card-scope');
+                if (scope) scope.textContent = data.scope === 'all' ? '{% filter escapejs %}{% trans "every section" %}{% endfilter %}'
+                    : (data.scope === 'off' ? '{% filter escapejs %}{% trans "on no map" %}{% endfilter %}' : (data.shown_summary || ''));
+                refreshPreview();
+            }).catch(function(e) { tick.checked = !tick.checked; errorBox.textContent = e.message; });
+        });
+    });
+
+    var modal = document.getElementById('mapCardAddModal');
+    if (!modal) return;
+    // A Bootstrap modal inside the scrolling section panel would sit under its backdrop: move it to
+    // <body>, dropping the copy an earlier render of this panel left there.
+    document.querySelectorAll('body > #mapCardAddModal').forEach(function(m) { if (m !== modal) m.remove(); });
+    if (modal.parentElement !== document.body) document.body.appendChild(modal);
+    var $modal = window.jQuery ? jQuery(modal) : null;
+    var step = function(name, on) { var el = modal.querySelector('[data-step="' + name + '"]'); if (el) el.hidden = !on; };
+    var modalError = modal.querySelector('[data-modal-error]');
+    var goBtn = modal.querySelector('[data-map-card-go]');
+    var added = null;
+    var mode = null;
+    function scopeChoice() { var c = modal.querySelector('input[name="map_card_scope"]:checked'); return c ? c.value : 'all'; }
+    function open(which) {
+        mode = which; added = null; modalError.textContent = '';
+        step('upload', which === 'upload'); step('data', which === 'data'); step('scope', true); step('done', false);
+        goBtn.hidden = which !== 'data';
+        if ($modal) $modal.modal('show');
+    }
+    function done(layer) {
+        added = layer;
+        step('upload', false); step('data', false); step('scope', false); step('done', true);
+        goBtn.hidden = true;
+        modal.querySelector('[data-done-name]').textContent = layer.name;
+        modal.querySelector('[data-done-count]').textContent = layer.feature_count;
+        modal.querySelector('#map-card-name').value = layer.name;
+        var conv = modal.querySelector('[data-done-converted]');
+        conv.hidden = !layer.converted_from;
+        modal.querySelector('[data-done-crs]').textContent = layer.converted_from || '';
+        // A boundary: polygons only and at most three of them (design D5's "looks like a boundary").
+        modal.querySelector('[data-done-boundary]').hidden = !layer.looks_like_boundary;
+        refreshPreview();
+    }
+    card.querySelectorAll('[data-map-card-add]').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            var which = btn.dataset.mapCardAdd;
+            if (which === 'draw') {
+                var fd = new FormData();
+                fd.append('name', 'New layer');
+                post(btn.dataset.url, fd).then(function(data) {
+                    window.location = '{% url "editor_layer_objects" survey.uuid 0 %}'.replace('/0/edit/', '/' + data.id + '/edit/');
+                }).catch(function(e) { errorBox.textContent = e.message; });
+                return;
+            }
+            open(which);
+        });
+    });
+    var file = modal.querySelector('[data-map-card-file]');
+    file.addEventListener('change', function() {
+        if (!file.files[0]) return;
+        var fd = new FormData();
+        fd.append('layer', file.files[0]);
+        if (scopeChoice() === 'section') { fd.append('scope', 'section'); fd.append('section', card.dataset.section); }
+        modalError.textContent = '';
+        post(file.dataset.url, fd).then(done).catch(function(e) { modalError.textContent = e.message; });
+        file.value = '';
+    });
+    goBtn.addEventListener('click', function() {
+        var pick = modal.querySelector('#map-card-dataset');
+        if (!pick.value) return;
+        var fd = new FormData();
+        fd.append('dataset', pick.value);
+        if (scopeChoice() === 'section') { fd.append('scope', 'section'); fd.append('section', card.dataset.section); }
+        modalError.textContent = '';
+        post(pick.dataset.url, fd).then(function() { window.location.reload(); })
+            .catch(function(e) { modalError.textContent = e.message; });
+    });
+    modal.querySelector('#map-card-name').addEventListener('change', function(e) {
+        if (!added) return;
+        var fd = new FormData();
+        fd.append('name', e.target.value);
+        post(forLayer(card.dataset.updateUrl, added.id), fd).catch(function(err) { modalError.textContent = err.message; });
+    });
+    modal.querySelector('[data-make-area]').addEventListener('click', function(e) {
+        if (!added) return;
+        var fd = new FormData();
+        fd.append('layer', added.id);
+        post(e.currentTarget.dataset.url, fd).then(function(data) { window.location = data.editor_url; })
+            .catch(function(err) { modalError.textContent = err.message; });
+    });
+    if ($modal) $modal.on('hidden.bs.modal', function() { if (added) window.location.reload(); });
+})();
+</script>

@@ -1385,3 +1385,7 @@ msgstr "प्रति इकाई %(amount)s"
 #: budget-question
 msgid "{left} left after it"
 msgstr "यसपछि {left} बाँकी"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "यो नक्सामा"

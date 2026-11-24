@@ -14968,3 +14968,467 @@ msgstr "Julkinen linkki ei näytä mitään vastattavaa."
 #: survey/templates/survey_no_public_pages.html survey/templates/editor/survey_detail.html
 msgid "Every section is set to <em>Operators only</em> in <em>Who sees this</em>. Open a section's settings and choose Everyone or Respondents only."
 msgstr "Jokaisen osion <em>Kuka tämän näkee</em> -asetus on <em>Vain syöttäjät</em>. Avaa osion asetukset ja valitse Kaikki tai Vain vastaajat."
+
+#. change map-layers-study-area
+msgid "Add a layer"
+msgstr "Lisää taso"
+
+#. change map-layers-study-area
+msgid "Add sub-questions below — they are what respondents answer about each object. To only show a layer, use the section’s Map card."
+msgstr "Lisää alakysymykset alle – niihin vastaajat vastaavat jokaisesta kohteesta. Jos haluat vain näyttää tason, käytä osion Kartta-korttia."
+
+#. change map-layers-study-area
+msgid "Allowed"
+msgstr "Sallittu"
+
+#. change map-layers-study-area
+msgid "Asked about in"
+msgstr "Kysytään osiossa"
+
+#. change map-layers-study-area
+msgid "asked in"
+msgstr "kysytään osiossa"
+
+#. change map-layers-study-area
+msgid "A street or line — becomes a corridor"
+msgstr "Katu tai viiva – muuttuu käytäväksi"
+
+#. change map-layers-study-area
+msgid "Back to survey"
+msgstr "Takaisin kyselyyn"
+
+#. change map-layers-study-area
+msgid "Choose a file"
+msgstr "Valitse tiedosto"
+
+#. change map-layers-study-area
+msgid "Click to add corners; click the first corner to close the area"
+msgstr "Lisää kulmia napsauttamalla; sulje alue napsauttamalla ensimmäistä kulmaa"
+
+#. change map-layers-study-area
+msgid "Could not reach OpenStreetMap. Upload a boundary or draw it instead."
+msgstr "OpenStreetMapiin ei saatu yhteyttä. Lataa raja tiedostona tai piirrä se."
+
+#. change map-layers-study-area
+msgid "Dataset"
+msgstr "Aineisto"
+
+#. change map-layers-study-area
+msgid "Delete this layer?"
+msgstr "Poistetaanko tämä taso?"
+
+#. change map-layers-study-area
+msgid "Drag a corner to move it, a middle handle to add one; click a corner to remove it"
+msgstr "Siirrä kulmaa vetämällä, lisää kulma vetämällä keskikahvaa; poista kulma napsauttamalla"
+
+#. change map-layers-study-area
+msgid "Draw it on the map"
+msgstr "Piirrä se kartalle"
+
+#. change map-layers-study-area
+msgid "Drawn"
+msgstr "Piirretty"
+
+#. change map-layers-study-area
+msgid "Draw on the map"
+msgstr "Piirrä kartalle"
+
+#. change map-layers-study-area
+msgid "Drop a <b>file</b> here or <span class=\"ref-layers-choose\">choose a file</span>"
+msgstr "Pudota <b>tiedosto</b> tähän tai <span class=\"ref-layers-choose\">valitse tiedosto</span>"
+
+#. change map-layers-study-area
+msgid "e.g. Midtown, Atlanta"
+msgstr "esim. Midtown, Atlanta"
+
+#. change map-layers-study-area
+msgid "every section"
+msgstr "jokainen osio"
+
+#. change map-layers-study-area
+msgid "Every section with a map"
+msgstr "Jokainen osio, jossa on kartta"
+
+#. change map-layers-study-area
+msgid "Every section with a map, now and later"
+msgstr "Jokainen osio, jossa on kartta, nyt ja myöhemmin"
+
+#. change map-layers-study-area
+msgid "Find"
+msgstr "Hae"
+
+#. change map-layers-study-area
+msgid "Find the place"
+msgstr "Etsi paikka"
+
+#. change map-layers-study-area
+msgid "fog outside"
+msgstr "harmaa ulkopuolella"
+
+#. change map-layers-study-area
+msgid "GeoJSON, GeoPackage, zipped shapefile, KML or CSV with coordinates — any coordinate system is converted. Up to 10 MB."
+msgstr "GeoJSON, GeoPackage, pakattu shapefile, KML tai CSV koordinaatein – mikä tahansa koordinaatisto muunnetaan. Enintään 10 Mt."
+
+#. change map-layers-study-area
+msgid "GeoJSON, GeoPackage, zipped shapefile, KML or CSV with coordinates — any coordinate system is converted. Up to 10 MB, max 10 layers per survey."
+msgstr "GeoJSON, GeoPackage, pakattu shapefile, KML tai CSV koordinaatein – mikä tahansa koordinaatisto muunnetaan. Enintään 10 Mt ja 10 tasoa kyselyä kohden."
+
+#. change map-layers-study-area
+msgid "Grey out the map outside"
+msgstr "Harmaannuta kartta ulkopuolelta"
+
+#. change map-layers-study-area
+msgid "Its map layers stay in Data."
+msgstr "Sen karttatasot jäävät Aineistoihin."
+
+#. change map-layers-study-area
+msgid "Layers"
+msgstr "Tasot"
+
+#. change map-layers-study-area
+msgid "Layers used here"
+msgstr "Täällä käytetyt tasot"
+
+#. change map-layers-study-area
+msgid "Make it the survey's study area"
+msgstr "Tee siitä kyselyn tutkimusalue"
+
+#. change map-layers-study-area
+msgid "Map answers outside the area"
+msgstr "Karttavastaukset alueen ulkopuolella"
+
+#. change map-layers-study-area
+msgid "Map: questions beside the map — its layers and the study area are set in the section’s Map card. Picture: questions beside a picture, e.g. a welcome page. Form: a classic full-width form. Picture and Form have no map, so geo questions and layers are unavailable."
+msgstr "Kartta: kysymykset kartan vieressä – sen tasot ja tutkimusalue asetetaan osion Kartta-kortissa. Kuva: kysymykset kuvan vieressä, esim. tervetulosivu. Lomake: perinteinen koko leveyden lomake. Kuvassa ja lomakkeessa ei ole karttaa, joten karttakysymykset ja tasot eivät ole käytettävissä."
+
+#. change map-layers-study-area
+msgid "Message respondents see"
+msgstr "Viesti, jonka vastaajat näkevät"
+
+#. change map-layers-study-area
+msgid "Name respondents see"
+msgstr "Nimi, jonka vastaajat näkevät"
+
+#. change map-layers-study-area
+msgid "no answers outside"
+msgstr "ei vastauksia ulkopuolelta"
+
+#. change map-layers-study-area
+msgid "No boundary in OpenStreetMap — starts as a rectangle you can adjust"
+msgstr "Ei rajaa OpenStreetMapissa – alkaa suorakulmiona, jota voit muokata"
+
+#. change map-layers-study-area
+msgid "No layers yet. Add boundaries, sites or routes respondents should see under the map."
+msgstr "Ei vielä tasoja. Lisää rajat, kohteet tai reitit, jotka vastaajien pitää nähdä kartan alla."
+
+#. change map-layers-study-area
+msgid "No map"
+msgstr "Ei karttaa"
+
+#. change map-layers-study-area
+msgid "No study area"
+msgstr "Ei tutkimusaluetta"
+
+#. change map-layers-study-area
+msgid "Not allowed — the mark is not placed"
+msgstr "Ei sallittu – merkintää ei lisätä"
+
+#. change map-layers-study-area
+msgid "Nothing found. Try a wider name, upload a boundary or draw it."
+msgstr "Mitään ei löytynyt. Kokeile laajempaa nimeä, lataa raja tai piirrä se."
+
+#. change map-layers-study-area
+msgid "not on this map yet"
+msgstr "ei vielä tällä kartalla"
+
+#. change map-layers-study-area
+msgid "Not saved yet — adjust the outline, then Save"
+msgstr "Ei vielä tallennettu – muokkaa rajausta ja tallenna"
+
+#. change map-layers-study-area
+msgid "Not set"
+msgstr "Ei asetettu"
+
+#. change map-layers-study-area
+msgid "Not set. The map opens on it and can grey out the rest."
+msgstr "Ei asetettu. Kartta avautuu siihen ja voi harmaannuttaa muun alueen."
+
+#. change map-layers-study-area
+msgid "objects"
+msgstr "kohdetta"
+
+#. change map-layers-study-area
+msgid "one segment of the street"
+msgstr "yksi kadun osuus"
+
+#. change map-layers-study-area
+msgid "Only these sections"
+msgstr "Vain nämä osiot"
+
+#. change map-layers-study-area
+msgid "Only this section"
+msgstr "Vain tämä osio"
+
+#. change map-layers-study-area
+msgid "on no map"
+msgstr "ei millään kartalla"
+
+#. change map-layers-study-area
+msgid "On no map: respondents do not see this layer."
+msgstr "Ei millään kartalla: vastaajat eivät näe tätä tasoa."
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "Tällä kartalla"
+
+#. change map-layers-study-area
+msgid "OpenStreetMap object the boundary came from, e.g. `R123456`."
+msgstr "OpenStreetMap-kohde, josta raja on peräisin, esim. `R123456`."
+
+#. change map-layers-study-area
+msgid "or keep it as a reference layer."
+msgstr "tai pidä se viitetasona."
+
+#. change map-layers-study-area
+msgid "Other languages are in the Translations tab."
+msgstr "Muut kielet ovat Käännökset-välilehdellä."
+
+#. change map-layers-study-area
+msgid "Picked sections"
+msgstr "Valitut osiot"
+
+#. change map-layers-study-area
+msgid "Place boundaries © <a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\" rel=\"noopener\">OpenStreetMap contributors</a>."
+msgstr "Paikkojen rajat © <a href=\"https://www.openstreetmap.org/copyright\" target=\"_blank\" rel=\"noopener\">OpenStreetMapin tekijät</a>."
+
+#. change map-layers-study-area
+msgid "Place name"
+msgstr "Paikan nimi"
+
+#. change map-layers-study-area
+msgid "Please place your answer inside the study area."
+msgstr "Sijoita vastauksesi tutkimusalueen sisälle."
+
+#. change map-layers-study-area
+msgid "Preview as a respondent"
+msgstr "Esikatsele vastaajana"
+
+#. change map-layers-study-area
+msgid "Read-only layers respondents see under the map: boundaries, sites, routes. A layer you add here is on every section with a map, switched on; pick sections to narrow it. Each layer is a dataset in Data."
+msgstr "Vain luku -tasot, jotka vastaajat näkevät kartan alla: rajat, kohteet, reitit. Tässä lisätty taso näkyy päällä jokaisessa osiossa, jossa on kartta; rajaa sitä valitsemalla osiot. Jokainen taso on aineisto Aineistoissa."
+
+#. change map-layers-study-area
+msgid "Remove from this survey"
+msgstr "Poista tästä kyselystä"
+
+#. change map-layers-study-area
+msgid "Remove the study area? The map then opens as before and nothing is refused."
+msgstr "Poistetaanko tutkimusalue? Kartta avautuu silloin kuten ennen eikä mitään hylätä."
+
+#. change map-layers-study-area
+msgid "Remove this layer from the survey? It stays in Data."
+msgstr "Poistetaanko taso kyselystä? Se jää Aineistoihin."
+
+#. change map-layers-study-area
+msgid "Respondents answer about each object of this layer; picking it also puts the layer on this section’s map. Or pick “Respondents’ marks on…” a geo question to ask about what others have already placed."
+msgstr "Vastaajat vastaavat tämän tason jokaisesta kohteesta; valinta lisää tason myös tämän osion kartalle. Tai valitse ”Vastaajien merkinnät kysymykseen…” karttakysymys kysyäksesi muiden jo lisäämistä merkinnöistä."
+
+#. change map-layers-study-area
+msgid "respondents can still move the map"
+msgstr "vastaajat voivat yhä siirtää karttaa"
+
+#. change map-layers-study-area
+msgid "respondents’ marks"
+msgstr "vastaajien merkinnät"
+
+#. change map-layers-study-area
+msgid "respondents' marks on"
+msgstr "vastaajien merkinnät kysymykseen"
+
+#. change map-layers-study-area
+msgid "Saved"
+msgstr "Tallennettu"
+
+#. change map-layers-study-area
+msgid "Search again: this result is no longer at hand."
+msgstr "Hae uudelleen: tämä tulos ei ole enää saatavilla."
+
+#. change map-layers-study-area
+msgid "`sections` scope only: section references `<code>` or `<code>#<n>`."
+msgstr "Vain laajuus `sections`: osioviittaukset `<code>` tai `<code>#<n>`."
+
+#. change map-layers-study-area
+msgid "Show %(name)s on this section"
+msgstr "Näytä %(name)s tässä osiossa"
+
+#. change map-layers-study-area
+msgid "Show on every section"
+msgstr "Näytä jokaisessa osiossa"
+
+#. change map-layers-study-area
+msgid "Shows on"
+msgstr "Näkyy"
+
+#. change map-layers-study-area
+msgid "Study area"
+msgstr "Tutkimusalue"
+
+#. change map-layers-study-area
+msgid "Study area message"
+msgstr "Tutkimusalueen viesti"
+
+#. change map-layers-study-area
+msgid "Study area outline"
+msgstr "Tutkimusalueen rajaus"
+
+#. change map-layers-study-area
+msgid "Survey layer"
+msgstr "Kyselyn taso"
+
+#. change map-layers-study-area
+msgid "The coordinates were converted from"
+msgstr "Koordinaatit muunnettiin järjestelmästä"
+
+#. change map-layers-study-area
+msgid "The file has no area in it. A study area is a polygon."
+msgstr "Tiedostossa ei ole aluetta. Tutkimusalue on monikulmio."
+
+#. change map-layers-study-area
+msgid "The file is larger than 10 MB."
+msgstr "Tiedosto on yli 10 Mt."
+
+#. change map-layers-study-area
+msgid "The survey has no section with a map yet."
+msgstr "Kyselyssä ei ole vielä osiota, jossa on kartta."
+
+#. change map-layers-study-area
+msgid "The survey opens on %(date)s: until then the public link shows the “opens on” page."
+msgstr "Kysely avautuu %(date)s: siihen asti julkinen linkki näyttää ”avautuu”-sivun."
+
+#. change map-layers-study-area
+msgid "This layer has no area in it. A study area is a polygon."
+msgstr "Tällä tasolla ei ole aluetta. Tutkimusalue on monikulmio."
+
+#. change map-layers-study-area
+msgid "This looks like a boundary"
+msgstr "Tämä näyttää rajalta"
+
+#. change map-layers-study-area
+msgid "This survey is published: a saved study area applies to respondents at once. Answers already given are not re-checked."
+msgstr "Tämä kysely on julkaistu: tallennettu tutkimusalue koskee vastaajia heti. Jo annettuja vastauksia ei tarkisteta uudelleen."
+
+#. change map-layers-study-area
+msgid "Too many searches. Wait a minute and try again."
+msgstr "Liian monta hakua. Odota hetki ja yritä uudelleen."
+
+#. change map-layers-study-area
+msgid "Upload a boundary file"
+msgstr "Lataa rajatiedosto"
+
+#. change map-layers-study-area
+msgid "Upload a file"
+msgstr "Lataa tiedosto"
+
+#. change map-layers-study-area
+msgid "Upload a new layer"
+msgstr "Lataa uusi taso"
+
+#. change map-layers-study-area
+msgid "Uploaded file"
+msgstr "Ladattu tiedosto"
+
+#. change map-layers-study-area
+msgid "Use"
+msgstr "Käytä"
+
+#. change map-layers-study-area
+msgid "Use a layer of this survey"
+msgstr "Käytä tämän kyselyn tasoa"
+
+#. change map-layers-study-area
+msgid "Use a layer of this survey…"
+msgstr "Käytä tämän kyselyn tasoa…"
+
+#. change map-layers-study-area
+msgid "What respondents see"
+msgstr "Mitä vastaajat näkevät"
+
+#. change map-layers-study-area
+msgid "Where it shows"
+msgstr "Missä se näkyy"
+
+#. change map-layers-study-area
+msgid "Layers and the study area of this section’s map are in its Map card above."
+msgstr "Tämän osion kartan tasot ja tutkimusalue ovat yllä sen Kartta-kortissa."
+
+#. change map-layers-study-area
+msgid "This question asks about the objects of a layer."
+msgstr "Tämä kysymys koskee tason kohteita."
+
+#. change map-layers-study-area
+msgid "Pick a layer of the survey or “Respondents’ marks on…” a geo question; if this section’s map does not show the layer yet, picking it puts it there."
+msgstr "Valitse kyselyn taso tai ”Vastaajien merkinnät kysymykseen…” karttakysymys; jos tämän osion kartta ei vielä näytä tasoa, valinta lisää sen sinne."
+
+#. change map-layers-study-area
+msgid "Sub-questions are what respondents answer."
+msgstr "Vastaajat vastaavat alakysymyksiin."
+
+#. change map-layers-study-area
+msgid "Only showing a layer?"
+msgstr "Pelkkä tason näyttäminen?"
+
+#. change map-layers-study-area
+msgid "You need no question for that: tick the layer in the section’s Map card, or add it in Survey settings to show it on every map."
+msgstr "Siihen ei tarvita kysymystä: valitse taso osion Kartta-kortissa tai lisää se kyselyn asetuksissa, niin se näkyy jokaisella kartalla."
+
+#. change map-layers-study-area
+msgid "Edit outline"
+msgstr "Muokkaa rajausta"
+
+#. change map-layers-study-area
+msgid "Corridor width"
+msgstr "Käytävän leveys"
+
+#. change map-layers-study-area
+msgid "Map answers outside"
+msgstr "Karttavastaukset alueen ulkopuolella"
+
+#. change map-layers-study-area
+msgid "Not allowed"
+msgstr "Ei sallittu"
+
+#. change map-layers-study-area
+msgid "Looking up the boundary of %%(place)s…"
+msgstr "Haetaan rajaa: %%(place)s…"
+
+#. change map-layers-study-area
+msgid "Grey outside on the respondent’s map. %%(km2)s km² · from OpenStreetMap"
+msgstr "Vastaajan kartalla ulkopuoli harmaana. %%(km2)s km² · OpenStreetMapista"
+
+#. change map-layers-study-area
+msgid "Grey outside on the respondent’s map. %%(km2)s km² · edited by you"
+msgstr "Vastaajan kartalla ulkopuoli harmaana. %%(km2)s km² · sinun muokkaamasi"
+
+#. change map-layers-study-area
+msgid "Drag the corners on the map. Click a middle handle to add one; click a corner to remove it."
+msgstr "Vedä kulmia kartalla. Lisää kulma napsauttamalla keskikahvaa, poista napsauttamalla kulmaa."
+
+#. change map-layers-study-area
+msgid "No boundary found for %%(place)s. The survey starts without a study area; set one later in its Map card."
+msgstr "Paikalle %%(place)s ei löytynyt rajaa. Kysely alkaa ilman tutkimusaluetta; aseta se myöhemmin Kartta-kortissa."
+
+#. change map-layers-study-area
+msgid "OpenStreetMap did not answer. The survey starts without a study area; set one later in its Map card."
+msgstr "OpenStreetMap ei vastannut. Kysely alkaa ilman tutkimusaluetta; aseta se myöhemmin Kartta-kortissa."
+
+#. change map-layers-study-area
+msgid "Removed. The survey starts without a study area."
+msgstr "Poistettu. Kysely alkaa ilman tutkimusaluetta."
+
+#. change map-layers-study-area
+msgid "Use the boundary of %%(place)s"
+msgstr "Käytä rajaa: %%(place)s"
+
+#. change map-layers-study-area
+msgid "Drag a corner to move it"
+msgstr "Siirrä kulmaa vetämällä"

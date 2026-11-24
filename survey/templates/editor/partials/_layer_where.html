@@ -1,0 +1,19 @@
+{% load i18n %}{% comment %}
+Where one layer shows (change map-layers-study-area, spec map-layer-placement): its placement scope,
+edited in place — "Layers used here" in Survey settings. Controls carry no name= so the settings
+autosave never posts them; the card's script saves them through `editor_layer_place`.
+Context: `item` (an `_editor_layers` row), `layer_map_sections` [(ref, title)].
+{% endcomment %}
+<div class="ref-layer-where" data-layer-id="{{ item.layer.pk }}">
+  <label class="ref-layer-where-label" for="lw-{{ item.layer.pk }}">{% trans "Shows on" %}</label>
+  <select id="lw-{{ item.layer.pk }}" class="custom-select custom-select-sm" data-where-scope>
+    <option value="all"{% if item.scope == 'all' %} selected{% endif %}>{% trans "Every section with a map, now and later" %}</option>
+    <option value="sections"{% if item.scope == 'sections' %} selected{% endif %}>{% trans "Only these sections" %}</option>
+    <option value="off"{% if item.scope == 'off' %} selected{% endif %}>{% trans "No map" %}</option>
+  </select>
+  <div class="ref-layer-where-sections" data-where-sections{% if item.scope != 'sections' %} hidden{% endif %}>
+    {% for ref, title in layer_map_sections %}<label><input type="checkbox" value="{{ ref }}"{% if ref in item.picked %} checked{% endif %}> {{ title }}</label>{% empty %}<span class="pr-help">{% trans "The survey has no section with a map yet." %}</span>{% endfor %}
+  </div>
+  <div class="ref-layer-where-warn" data-where-warn{% if item.scope != 'off' %} hidden{% endif %}>{% trans "On no map: respondents do not see this layer." %}</div>
+  {% if item.asked_in %}<div class="pr-help ref-layer-where-asked">{% trans "Asked about in" %} {% for t in item.asked_in %}<b>{{ t }}</b>{% if not forloop.last %}, {% endif %}{% endfor %}</div>{% endif %}
+</div>

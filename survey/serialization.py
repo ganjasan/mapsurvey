@@ -77,7 +77,37 @@ def serialize_survey_to_dict(survey: SurveyHeader) -> Dict[str, Any]:
         "embed_allowed_hosts": survey.embed_allowed_hosts or [],
         "style_settings": survey.style_settings or {},
         "layers": serialize_layers(survey),
+        "placements": serialize_placements(survey),
+        **({"study_area": area} if (area := serialize_study_area(survey)) else {}),
         "sections": serialize_sections(survey),
+    }
+
+
+def serialize_placements(survey: SurveyHeader) -> List[Dict[str, Any]]:
+    """Where each layer shows (change map-layers-study-area): the layer as its index in the
+    exported `layers` array, the scope and the section references, in stacking order."""
+    from .layers import placements_for
+    layer_index = {layer.pk: i for i, layer in enumerate(layers_for(survey))}
+    return [
+        {"layer": layer_index[p.layer_id], "scope": p.scope, "sections": list(p.sections or [])}
+        for p in placements_for(survey) if p.layer_id in layer_index
+    ]
+
+
+def serialize_study_area(survey: SurveyHeader) -> Optional[Dict[str, Any]]:
+    """The study area (geometry as GeoJSON, flags, message); the refused-marks counter stays home."""
+    from .layers import layer_owner
+    from .models import StudyArea
+    area = StudyArea.objects.filter(survey=layer_owner(survey)).first()
+    if area is None:
+        return None
+    return {
+        "geometry": json.loads(area.geometry.geojson),
+        "source": area.source,
+        "place_name": area.place_name,
+        "fog": area.fog,
+        "refuse_outside": area.refuse_outside,
+        "message": area.message or {},
     }
 
 
@@ -792,15 +822,15 @@ def import_structure_from_archive(
     if not _archive_has_share_flags(sections_data):
         seed_share_flags_from_layers(survey)
 
-    # Archives from before layers-by-question carry a per-section `hidden_layers`
-    # list instead of Objects questions: convert it so the imported survey shows
-    # the same maps the archive did (spec survey-serialization "Section layer
-    # visibility rides as questions"). Newer archives have no such key.
-    convert_hidden_layers(sections, sections_data, layer_ids)
-
     # Resolve section links
     link_warnings = resolve_section_links(sections, sections_data)
     warnings.extend(link_warnings)
+
+    # Where the layers show (spec survey-serialization "Reference layers serialization"): the
+    # archive's `placements`, or — for an archive from before them — its `hidden_layers` lists
+    # and legend-only Objects questions converted, so the imported maps match the archive's.
+    warnings.extend(import_placements(survey, sections, sections_data, layer_ids, survey_data))
+    warnings.extend(import_study_area(survey, survey_data.get("study_area")))
 
     # Extract images
     image_warnings = extract_structure_images(zip_file, survey, code_remap)
@@ -1476,9 +1506,11 @@ def extract_layers(
         # `_category`, so keys round-trip exactly; an FD-1-era archive has no
         # reserved fields and gets its objects as the split migration derives them.
         from .layers import objects_from_features, rebuild_layer
-        layer = SurveyMapLayer.objects.create(
-            survey=survey, geojson='', position=index, **clean,
-        )
+        from .services.layers import new_layer
+        # Layers live in Data (change map-layers-study-area): an imported layer is a workspace
+        # dataset linked to the imported survey; placements follow once sections exist.
+        values = {k: v for k, v in clean.items() if k != 'name'}
+        layer = new_layer(None, survey, clean['name'], position=index, **values)
         derived = any(isinstance(f.get('properties'), dict) and '_key' in f['properties'] for f in features)
         mapping = {'key': '_key', 'title': '_title', 'category': '_category'} if derived else None
         objects_from_features(layer, features, mapping=mapping, sanitize=coerce_creator_html)
@@ -1511,22 +1543,103 @@ def seed_share_flags_from_layers(survey: SurveyHeader) -> None:
             subs.filter(input_type__in=('text', 'text_line')).update(share_with_respondents=True)
 
 
-def convert_hidden_layers(sections, sections_data, layer_ids) -> None:
-    """Legacy `hidden_layers` (indexes into the exported layers array) → one
-    display-only Objects question per layer the section did NOT hide, unless a
-    question of the section already binds it."""
-    from .layers import ensure_layer_questions
-    for section_data in sections_data:
-        if 'hidden_layers' not in section_data:
+def import_placements(survey, sections, sections_data, layer_ids, survey_data) -> List[str]:
+    """Placements for an imported survey (change map-layers-study-area). An archive with a
+    `placements` array is taken as written (layers by index, section references checked against
+    the imported map sections). An older archive is converted: a section's `hidden_layers` list
+    places every other layer there, each Objects or budget question places its layer on its
+    section, and a legend-only Objects question (no sub-questions) becomes that placement and is
+    not kept as a question. A layer that then covers every map section gets scope `all`."""
+    from django.db.models import Exists, OuterRef
+    from .models import LayerPlacement
+    from .section_refs import refs_for, split
+    warnings: List[str] = []
+    layer_ids = layer_ids or []
+
+    def layer_of(index):
+        return layer_ids[index] if isinstance(index, int) and 0 <= index < len(layer_ids) else None
+
+    refs = refs_for(survey.pk)
+    map_sections = [s for s in SurveySection.objects.filter(survey_header=survey).order_by('id') if s.has_map]
+    map_refs = [refs[s.pk] for s in map_sections]
+    known = {split(r) for r in map_refs}
+
+    if isinstance(survey_data.get("placements"), list):
+        position = 0
+        for item in survey_data["placements"]:
+            if not isinstance(item, dict):
+                continue
+            layer_id = layer_of(item.get("layer"))
+            if layer_id is None or LayerPlacement.objects.filter(survey=survey, layer_id=layer_id).exists():
+                continue
+            position += 1
+            if item.get("scope") == LayerPlacement.SCOPE_SECTIONS:
+                picked = [str(r) for r in (item.get("sections") or []) if split(str(r)) in known]
+                if not picked:
+                    warnings.append(f"A layer placement named no section of this survey with a map; layer {item.get('layer')} is on no map.")
+                    continue
+                LayerPlacement.objects.create(survey=survey, layer_id=layer_id, scope=LayerPlacement.SCOPE_SECTIONS,
+                                              sections=picked, position=position)
+            else:
+                LayerPlacement.objects.create(survey=survey, layer_id=layer_id, scope=LayerPlacement.SCOPE_ALL,
+                                              position=position)
+        return warnings
+
+    covered: Dict[int, set] = {}
+
+    def add(layer_id, ref):
+        if layer_id is not None:
+            covered.setdefault(layer_id, set()).add(ref)
+
+    by_name = {s.pk: s for s in map_sections}
+    for section_data in sections_data or []:
+        section = sections.get(section_data.get("name"))
+        if section is None or section.pk not in by_name:
             continue
-        section = sections.get(section_data["name"])
-        if section is None:
-            continue
-        hidden = [
-            layer_ids[i] for i in (section_data.get("hidden_layers") or [])
-            if isinstance(i, int) and 0 <= i < len(layer_ids or []) and layer_ids[i] is not None
-        ]
-        ensure_layer_questions(section, hidden)
+        ref = refs[section.pk]
+        if 'hidden_layers' in section_data:
+            hidden = {layer_of(i) for i in (section_data.get("hidden_layers") or [])}
+            for layer_id in layer_ids:
+                if layer_id is not None and layer_id not in hidden:
+                    add(layer_id, ref)
+        for layer_id in (Question.objects.filter(survey_section=section, parent_question_id__isnull=True,
+                                                 input_type__in=('layer_objects', 'budget'), layer__isnull=False)
+                         .order_by('order_number', 'id').values_list('layer_id', flat=True)):
+            add(layer_id, ref)
+    subs = Question.objects.filter(parent_question_id=OuterRef('pk'))
+    Question.objects.filter(survey_section__survey_header=survey, parent_question_id__isnull=True,
+                            input_type='layer_objects').exclude(Exists(subs)).delete()
+    all_refs = {split(r) for r in map_refs}
+    position = 0
+    for layer_id in [i for i in layer_ids if i in covered]:
+        position += 1
+        picked = covered[layer_id]
+        if all_refs and all_refs <= {split(r) for r in picked}:
+            LayerPlacement.objects.create(survey=survey, layer_id=layer_id, scope=LayerPlacement.SCOPE_ALL,
+                                          position=position)
+        else:
+            LayerPlacement.objects.create(survey=survey, layer_id=layer_id, scope=LayerPlacement.SCOPE_SECTIONS,
+                                          sections=[r for r in map_refs if r in picked], position=position)
+    return warnings
+
+
+def import_study_area(survey, data) -> List[str]:
+    """The archive's study area through the study area service's validation; a broken one is a
+    report line, never a failed import (spec survey-serialization "The study area rides the archive")."""
+    if not data:
+        return []
+    if not isinstance(data, dict):
+        return ["The archive's study area is not an object; the survey has no study area."]
+    from .services import study_area as svc_area
+    from .services.errors import ServiceError
+    try:
+        svc_area.set_area(None, survey, data.get("geometry"), source=data.get("source") or 'upload',
+                          place_name=data.get("place_name") or '', fog=data.get("fog", True),
+                          refuse_outside=bool(data.get("refuse_outside")),
+                          message=data.get("message") if isinstance(data.get("message"), dict) else {})
+    except ServiceError as exc:
+        return [f"The archive's study area was skipped: {exc.message or exc}"]
+    return []
 
 
 def resolve_question_layers(survey: SurveyHeader, code_remap: Dict[str, str]) -> List[str]:

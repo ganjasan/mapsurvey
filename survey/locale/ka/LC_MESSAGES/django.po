@@ -1385,3 +1385,7 @@ msgstr "%(amount)s თითოეული"
 #: budget-question
 msgid "{left} left after it"
 msgstr "ამის შემდეგ რჩება {left}"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "ამ რუკაზე"

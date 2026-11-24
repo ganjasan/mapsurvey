@@ -84,7 +84,7 @@ def entry_of(block):
                 entry['marks'] = True
             # How it is drawn and what else is on the map (change report-map-views): the keys of
             # story.clean_config('map'), written beside "marks".
-            for key in ('view', 'frame', 'color', 'name', 'opts', 'legend', 'scale', 'toggle', 'layers'):
+            for key in ('view', 'frame', 'color', 'name', 'opts', 'legend', 'scale', 'toggle', 'study_area', 'layers'):
                 if key in config:
                     entry[key] = config[key]
     elif block.block_type == 'compare':

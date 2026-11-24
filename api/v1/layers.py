@@ -197,11 +197,12 @@ def update_layer(request, uuid: UUID, layer_id: int, body: LayerPatchIn):
 
 @router.delete('/surveys/{uuid}/layers/{layer_id}', auth=WRITE, openapi_extra=errors(codes=(CONFLICT,)))
 def delete_layer(request, uuid: UUID, layer_id: int):
-    """Delete a layer and its objects -- refused while a question uses it. Owner role."""
+    """Remove a layer from the survey -- a shared-map layer is deleted, a dataset is unlinked and stays in
+    Data. Refused while a question uses it. Owner role."""
     survey = deps.survey(request, uuid, role='owner')
     layer = _layer(request, survey, layer_id)
     try:
-        svc_layers.delete(deps.actor(request), layer)
+        svc_layers.delete(deps.actor(request), layer, survey)
     except svc_layers.LayerError as exc:
         raise api_error(exc)
     return {'deleted': layer_id}

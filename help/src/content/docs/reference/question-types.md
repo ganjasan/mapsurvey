@@ -36,7 +36,7 @@ Map questions need a section with the map layout. The respondent draws on the ma
 | **Geo Line** (`line`) | Draws a route or line. | A line | A layer and a row per line; `lat`/`lon` are the centroid |
 | **Geo Polygon** (`polygon`) | Outlines an area. | A polygon | A layer and a row per polygon; `lat`/`lon` are the centroid |
 | **Spray area** (`spraycan`) | Sprays a cloud of dots with a brush — thicker where they are sure. One cloud per respondent; there is no "add another". | A multipoint (dots snapped to a 1 m grid, duplicates dropped) | A layer and a row per cloud with `dot_count` and `area_m2`; on a public results page, a density grid, never the dots |
-| **Objects on the map** (`layer_objects`) | Taps objects from a reference layer the creator chose and answers the sub-questions about each one. Collects nothing itself. | One answer per object per sub-question | An `objects_<code>` sheet (one row per respondent per object) and a `<layer>.results.geojson` with per-object totals |
+| **Objects on the map** (`layer_objects`) | Asks about the objects of a reference layer: the respondent opens an object from the panel list or the map and answers the sub-questions about it. Picking the layer also puts it on that section's map. Collects nothing itself. | One answer per object per sub-question | An `objects_<code>` sheet (one row per respondent per object) and a `<layer>.results.geojson` with per-object totals |
 
 Settings that apply to map questions:
 

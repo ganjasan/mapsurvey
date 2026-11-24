@@ -1,52 +1,64 @@
 ---
 title: Add a reference layer
-description: Upload a GeoJSON file (boundaries, sites, a plan) and show it beneath the respondent map on the sections that need it.
+description: Upload boundaries, sites or a plan once and show them under the respondent map on every section with a map — or only on the sections you pick.
 sidebar:
   order: 12
 ---
 
-You end up with a read-only layer drawn beneath respondents' answers, styled and labelled, visible on exactly the sections you choose.
+You end up with a read-only layer drawn beneath respondents' answers, styled and labelled, on every section with a map or only the ones you pick, switched on from the first page.
 
 ## Before you start
 
-- A GeoJSON file in WGS 84 (longitude/latitude, EPSG:4326). Files in a projected coordinate system are rejected with a message about the coordinate system; reproject in your GIS first.
-- Limits: 10 MB per file, 5,000 features per layer, 10 layers per survey. If the file is bigger, simplify or split it; see [Layer too large](/troubleshooting/layer-too-large/).
-- You must be an owner of the survey to manage layers.
+- A file with the layer: GeoJSON, GeoPackage (`.gpkg`), a zipped shapefile (`.zip`), KML, or a CSV with coordinate columns. A file in another coordinate system (State Plane, UTM, British National Grid…) is converted to longitude/latitude for you; the dialog says so.
+- Limits: 10 MB per file, 5,000 objects per layer, 10 layers per survey. If the file is bigger, simplify or split it; see [Layer too large](/troubleshooting/layer-too-large/).
+- You must be an owner of the survey to add or remove layers. Editors can change where a layer shows.
 
 ## Steps
 
-### Upload the layer
+### Add the layer
 
-1. Open **Survey settings** and scroll to the **Reference layers** card.
-2. Drop the file on the upload zone, or click it to choose the file. The card now shows the layer with its feature count and size.
-3. Give it a **Name** respondents will understand, such as `Study area` or `Proposed crossings`.
-4. Under **Style**, set the **Colour**, **Opacity**, **Line width** and, for point layers, **Point size** and **Point icon**. If the file already carries simplestyle properties (`stroke`, `fill`, `marker-color` and so on), those win over the layer colour.
-5. To colour features by one of their properties, switch on **Style by attribute**, pick the **Property** and a **Mode**: **Categories** for a text property (one class per value) or **Graduated** for a number (**Colour from → to** across **Classes** with quantile, equal-interval or manual **Breaks**). **Auto-fill from data** creates the classes for you; **Add class** adds one by hand. Tick **Show legend to respondents** so the panel explains the colours.
-6. Under **Label field**, pick the property whose value is written on each feature; leave it on **none** for no labels. **Key field** names the property that makes each feature addressable; most reference layers can leave it on **none**.
-7. Switch on **Info popups** if respondents may click a feature to read its name and description. Leave it off for a pure backdrop; either way the layer never intercepts a tap meant to place an answer.
+There are two doors to the same dialog:
 
-<!-- screenshot: the Reference layers card with one layer, its style controls and the Label field dropdown open -->
+- In **Build**, select a section with a map. The **Map** card at the top of its panel lists what this map shows. Click **+ Layer** and choose **Upload a file**, **From Data** (a dataset of your workspace) or **Draw on the map**.
+- In **Survey settings**, the **Layers used here** card has the same choices.
 
-### Show it on a section
+Pick the file. The dialog names the layer after the file and tells you how many objects it holds. Under **Where it shows**, keep **Every section with a map, now and later** — a section you add later gets the layer too — or choose **Only this section**. Give the layer a **Name respondents see**, such as `Study area` or `Proposed crossings`.
 
-A layer is on a section's map because a question of that section shows it. Repeat for each section that needs the layer:
+If the file is one to three areas, the dialog asks whether it is your study area. **Make it the survey's study area** turns it into the area the map opens on and can grey out the rest; see [Set the study area](/how-to/set-the-study-area/). Otherwise keep it as a reference layer.
 
-1. Select the section and click **New Question**.
-2. Under **Map questions**, choose **Objects on the map**.
-3. Under **Layer**, pick the uploaded layer. (**Upload new…** here uploads a file without going back to settings.)
-4. Under **In the panel**, choose how the layer appears beside the map: a list respondents can browse and search, or a legend line with only the name, colour and a toggle. The legend line is right for a backdrop such as boundaries.
-5. Click **Create**. Add no sub-questions if the layer is only for context; without them the question collects nothing and is a display block.
+<!-- screenshot: the Add a layer dialog after an upload, with the conversion note, the name field and the study-area question -->
 
-A layer can be shown once per section; a second question picking the same layer is refused with the name of the question that already shows it.
+### Style it
+
+In **Survey settings › Layers used here**, open the layer with the pencil:
+
+1. Under **Style**, set the **Colour**, **Opacity**, **Line width** and, for point layers, **Point size** and **Point icon**. If the file already carries simplestyle properties (`stroke`, `fill`, `marker-color` and so on), those win over the layer colour.
+2. To colour features by one of their properties, switch on **Style by attribute**, pick the **Property** and a **Mode**: **Categories** for a text property or **Graduated** for a number. **Auto-fill from data** creates the classes for you.
+3. Under **Label field**, pick the property whose value is written on each feature; leave it on **none** for no labels.
+4. Switch on **Info popups** if respondents may click a feature to read its name and description.
+
+### Change where it shows
+
+- In a section's **Map** card, tick or untick the layer for that section. Unticking a layer that is on every section keeps it on all the others.
+- In **Layers used here**, **Shows on** sets the same thing for the whole survey: **Every section with a map, now and later**, **Only these sections** (tick them) or **No map**.
+
+Both save at once — also on a published survey, without **Publish changes**: a layer collects nothing, so respondents simply see the new map on their next page.
+
+### Ask about each object
+
+To ask respondents about each feature of the layer (thumbs up or down, a comment, a rating), add an **Objects on the map** question and pick the layer; add sub-questions to it. Picking the layer also puts it on that section's map if it was not there yet. See [Add sub-questions](/how-to/add-sub-questions/).
 
 ## Result
 
-The **Live preview** renders the layer beneath the map's answer geometry with your styling and labels. Respondents see it on every section that has an **Objects on the map** question for it, can switch it off in the map's layers control, and cannot select, move or edit its features. The **Reference layers** card lists the sections each layer is on. A layer that no question uses stays in the library and is shown nowhere.
+Every layer placed on a section is switched on when the section opens; respondents can switch it off in the panel's **On this map** list or the map's layers control. Sections without a map show no map. When you publish, the dialog lists every layer with where it shows and flags any layer that is on no map, with **Show on every section** and **Remove** right there.
 
-To ask respondents about each feature in the layer (thumbs up or down, a comment, a rating), add sub-questions to the **Objects on the map** question; see [Question types](/reference/question-types/).
+## Where the layer lives
+
+Each layer is a dataset in **Data**. Its page there lists the surveys and sites that use it under **Used by**; edit it in one place and every survey that uses it changes. **Remove from this survey** takes it off this survey's maps and keeps it in Data; deleting the survey keeps it too.
 
 ## Related
 
+- [Set the study area](/how-to/set-the-study-area/)
+- [Data](/how-to/data/)
 - [Layer too large](/troubleshooting/layer-too-large/)
-- [Survey settings](/reference/survey-settings/)
-- [Add a map question](/how-to/add-a-map-question/)
+- [Add sub-questions](/how-to/add-sub-questions/)

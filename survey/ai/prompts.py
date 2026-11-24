@@ -146,6 +146,13 @@ written. Return it as a name a geocoder will resolve — "<locality>, <region>,
 <country>", e.g. "Ülemiste, Tallinn, Estonia" — using the spelling most likely to
 resolve (local or English). Return an empty string when the brief names no place;
 never guess one.
+
+SURVEY NAME
+The `survey_name` field is the title the creator will see in their survey list:
+at most 40 characters, in the survey's primary language, naming the topic and,
+when the brief names one, the place — e.g. "Snow clearing in Saint Petersburg",
+"Уборка снега в Санкт-Петербурге", "Bike lanes on Elm Street". A noun phrase, not
+a sentence: no quotes, no "Survey about", no "I want", no trailing full stop.
 """ % (PLATFORM_DESCRIPTION, DESIGN_RULES)
 
 USE_CASE_GUIDANCE = {
@@ -177,16 +184,31 @@ USE_CASE_GUIDANCE = {
 }
 
 
+UNTITLED = 'Untitled survey'
+
+
+def name_is_derived(brief):
+    """True when the survey name was not typed by the creator: the create page fills an
+    empty name with the start of the goal (`ensureName`, cut to 44 characters) or with
+    "Untitled survey". Then the model's `survey_name` replaces it."""
+    name = (brief.name or '').strip()
+    goal = (brief.goal or '').strip()
+    if not name or name == UNTITLED:
+        return True
+    return bool(goal) and name in (goal, goal[:44].strip(), goal[:45].strip())
+
+
 def build_user_prompt(brief, languages):
     """Render the creator's brief into the user turn.
 
     `brief` is a SurveyBrief; `languages` is the ordered list of content
     language codes, the first of which is the survey's primary language.
     """
-    parts = [
-        "Survey name: %s" % brief.name,
-        "Goal — what the creator wants to find out:\n%s" % brief.goal.strip(),
-    ]
+    parts = []
+    # A name the create page cut from the goal is not a name: leave the title to the model.
+    if not name_is_derived(brief):
+        parts.append("Survey name: %s" % brief.name)
+    parts.append("Goal — what the creator wants to find out:\n%s" % brief.goal.strip())
     if brief.audience.strip():
         parts.append("Who will answer: %s" % brief.audience.strip())
     if brief.map_target.strip():

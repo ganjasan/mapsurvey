@@ -581,7 +581,7 @@ Permission `surveys:write` · role **owner**
 
 ### `delete_layer`
 
-Delete a layer and all its objects. Refused while a question uses it. Needs `confirm: true` after the user agreed, and the survey owner.
+Remove a layer from the survey: a shared-map layer is deleted, a dataset is unlinked and stays in Data. Refused while a question uses it. Needs `confirm: true` after the user agreed, and the survey owner.
 
 Permission `surveys:write` · role **owner** · needs `confirm: true`
 
@@ -665,6 +665,100 @@ Permission `surveys:write` · role **editor**
 | `layer_id` | integer | **required** | A layer id from list_layers. |
 | `key` | string | **required** | An object key from list_layer_objects. |
 | `status` | string | **required** | visible, pending or hidden. |
+
+### `place_layer`
+
+Put a layer of the survey on its maps, or change where it shows: `scope` "all" = every section with a map, now and later (what a creator usually wants), or "sections" with `sections` = section codes ("S2", or "S2#1" for the second section with that code). A layer with no placement is on no map. Applies to a published survey at once. Needs the editor role.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `scope` | string |  | `all` — every section with a map, now and later — or `sections`. Default `all`. |
+| `sections` | list of string |  | `sections` scope: section references, `<code>` or `<code>#<n>` (the n-th section of that code, from 0). |
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `layer_id` | integer | **required** | A layer id from list_layers. |
+
+### `unplace_layer`
+
+Take a layer off every map of the survey; it stays in the survey and in Data. Needs the editor role.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `layer_id` | integer | **required** | A layer id from list_layers. |
+
+### `list_placements`
+
+Each placed layer with its scope and sections, bottom of the map first.
+
+Permission `surveys:read` · role **viewer** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+
+### `reorder_placements`
+
+The stacking order of the placed layers: every placed layer id, bottom first. Needs the editor role.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `layer_ids` | list of integer | **required** |  |
+
+### `get_study_area`
+
+The area the survey is about: its outline (GeoJSON), where it came from, whether the map is greyed outside, whether map answers outside are refused, the message respondents then see, its size in km² — or null.
+
+Permission `surveys:read` · role **viewer** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+
+### `set_study_area`
+
+Create or replace the study area from a Polygon or MultiPolygon in WGS 84 (made valid, simplified to 2,000 points). The respondent map opens on it; `fog` greys the outside (on for a new area); `refuse_outside` refuses map answers outside it, with `message` per language. Not a layer. Applies to a published survey at once. Needs the editor role.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `geometry` | map | **required** | A Polygon or MultiPolygon in WGS 84 (a Feature is accepted); made valid and simplified to 2,000 points. |
+| `source` | string |  | place, upload, layer or draw. Default `draw`. |
+| `place_name` | string |  |  |
+| `fog` | boolean |  | Grey out the map outside (on for a new area). |
+| `refuse_outside` | boolean |  | Refuse map answers outside the area. |
+| `message` | map |  | The refusal message per language code. |
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+
+### `update_study_area`
+
+Change the fog, the refusal of answers outside, or its message. Needs the editor role.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `fog` | boolean |  |  |
+| `refuse_outside` | boolean |  |  |
+| `message` | map |  | The refusal message per language code. |
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+
+### `clear_study_area`
+
+Remove the study area: the map opens as before and nothing is refused. Needs the editor role.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
 
 ### `list_groups`
 
@@ -1036,7 +1130,7 @@ Permission `surveys:write` · role **editor**
 
 ### `add_report_block`
 
-Add a block at the end of a report. Written by you: heading (`text`), text (`html`, may hold tokens {responses} {opened} {finished} {marks:CODE} {respondents:CODE} that are filled from the home survey), numbers (`items` of value + label), quotes (`items` of text + source — publish a quote only when the person asked for it). Shown from answers: chart, map, objects or budget of one `question` code; crosstab of `rows` and `columns` question codes; engagement; compare of one `question` code with the same code in an `other` survey (two rounds side by side). Small groups are hidden in every data block. `show_marks` on a map shows individual marks, which can point at someone's home: off unless the person asks. A map is drawn as `view` heat, hotspots (point questions only), squares or marks (needs `show_marks`), with the view's `opts` (send the whole set), `color`, `name`, a kept `frame` [west, south, east, north] (null clears it), `legend`, `scale`, `toggle`, `basemap` and `popup_fields`; `layers` are up to 3 other map questions drawn on the same map — always the whole list: read it from get_report, change it, send it back (ids are kept). A layer's `show_marks` is off unless the person asks. A crosstab's look is `display` {view: bars | stacked | ranking | table, values: percent | count, sort}.
+Add a block at the end of a report. Written by you: heading (`text`), text (`html`, may hold tokens {responses} {opened} {finished} {marks:CODE} {respondents:CODE} that are filled from the home survey), numbers (`items` of value + label), quotes (`items` of text + source — publish a quote only when the person asked for it). Shown from answers: chart, map, objects or budget of one `question` code; crosstab of `rows` and `columns` question codes; engagement; compare of one `question` code with the same code in an `other` survey (two rounds side by side). Small groups are hidden in every data block. `show_marks` on a map shows individual marks, which can point at someone's home: off unless the person asks. A map is drawn as `view` heat, hotspots (point questions only), squares or marks (needs `show_marks`), with the view's `opts` (send the whole set), `color`, `name`, a kept `frame` [west, south, east, north] (null clears it), `legend`, `scale`, `toggle`, `study_area` (the survey's study area outline, on by default), `basemap` and `popup_fields`; `layers` are up to 3 other map questions drawn on the same map — always the whole list: read it from get_report, change it, send it back (ids are kept). A layer's `show_marks` is off unless the person asks. A crosstab's look is `display` {view: bars | stacked | ranking | table, values: percent | count, sort}.
 
 Permission `surveys:write` · role **editor**
 
@@ -1067,6 +1161,7 @@ Permission `surveys:write` · role **editor**
 | `legend` | boolean |  | map: the legend (on by default). |
 | `scale` | boolean |  | map: the scale bar (on by default). |
 | `toggle` | boolean |  | map: readers may switch layers on and off. |
+| `study_area` | boolean |  | map: the outline of the survey's study area (on by default). |
 | `basemap` | string |  | map: a basemap key the workspace offers. |
 | `popup_fields` | list of string |  | map: codes of sub-questions a popup shows (never free text). |
 | `layers` | list of object (`id`, `survey`, `question`, `view`, `show_marks`, `color`, `name`, `opts`, `popup_fields`) |  | map: the other map questions on the same map — the whole list, at most 3; [] removes them. |
@@ -1075,7 +1170,7 @@ Permission `surveys:write` · role **editor**
 
 ### `update_report_block`
 
-Change a block's text, items, title, width (full or half — two halves in a row sit side by side) or whether it is hidden. Its type and its question stay: to show another question, add another block. Settings left out stay as they are. A map is drawn as `view` heat, hotspots (point questions only), squares or marks (needs `show_marks`), with the view's `opts` (send the whole set), `color`, `name`, a kept `frame` [west, south, east, north] (null clears it), `legend`, `scale`, `toggle`, `basemap` and `popup_fields`; `layers` are up to 3 other map questions drawn on the same map — always the whole list: read it from get_report, change it, send it back (ids are kept). A layer's `show_marks` is off unless the person asks. A crosstab's look is `display` {view: bars | stacked | ranking | table, values: percent | count, sort}.
+Change a block's text, items, title, width (full or half — two halves in a row sit side by side) or whether it is hidden. Its type and its question stay: to show another question, add another block. Settings left out stay as they are. A map is drawn as `view` heat, hotspots (point questions only), squares or marks (needs `show_marks`), with the view's `opts` (send the whole set), `color`, `name`, a kept `frame` [west, south, east, north] (null clears it), `legend`, `scale`, `toggle`, `study_area` (the survey's study area outline, on by default), `basemap` and `popup_fields`; `layers` are up to 3 other map questions drawn on the same map — always the whole list: read it from get_report, change it, send it back (ids are kept). A layer's `show_marks` is off unless the person asks. A crosstab's look is `display` {view: bars | stacked | ranking | table, values: percent | count, sort}.
 
 Permission `surveys:write` · role **editor**
 
@@ -1100,6 +1195,7 @@ Permission `surveys:write` · role **editor**
 | `legend` | boolean |  | map: the legend (on by default). |
 | `scale` | boolean |  | map: the scale bar (on by default). |
 | `toggle` | boolean |  | map: readers may switch layers on and off. |
+| `study_area` | boolean |  | map: the outline of the survey's study area (on by default). |
 | `basemap` | string |  | map: a basemap key the workspace offers. |
 | `popup_fields` | list of string |  | map: codes of sub-questions a popup shows (never free text). |
 | `layers` | list of object (`id`, `survey`, `question`, `view`, `show_marks`, `color`, `name`, `opts`, `popup_fields`) |  | map: the other map questions on the same map — the whole list, at most 3; [] removes them. |

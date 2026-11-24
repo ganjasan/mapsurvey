@@ -274,6 +274,16 @@ def map_image(payload, survey=None):
         x, y = static_map.project(lng, lat, zoom)
         return ((x - cx + MAP_W / 2) * scale, (y - cy + MAP_H / 2) * scale)
 
+    # The study area outline (change map-layers-study-area): after the basemap, under the layers.
+    area = payload.get('study_area') or {}
+    if area.get('type') in ('Polygon', 'MultiPolygon'):
+        outline = ImageDraw.Draw(image)
+        polygons = area['coordinates'] if area['type'] == 'MultiPolygon' else [area['coordinates']]
+        for polygon in polygons:
+            ring = [px(x, y) for x, y in polygon[0]]
+            if len(ring) >= 2:
+                outline.line(ring + [ring[0]], fill=(79, 70, 229, 230), width=3 * scale, joint='curve')
+
     badges = []
     for layer in reversed(layers):                  # bottom first
         marks, display, features, spots = _layer_parts(layer)

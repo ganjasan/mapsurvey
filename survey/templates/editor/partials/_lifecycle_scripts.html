@@ -19,6 +19,7 @@ Draft-publish modals render only when `show_draft_actions` is set (Build view).
                     <input class="form-check-input" type="checkbox" id="clearTestData" checked>
                     <label class="form-check-label" for="clearTestData">{% trans "Delete all test responses (recommended)" %}</label>
                 </div>
+                <div data-publish-map-check></div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">{% trans "Cancel" %}</button>
@@ -45,6 +46,7 @@ Draft-publish modals render only when `show_draft_actions` is set (Build view).
             the translator gets a clause ending on "under" that no other language can
             reorder around the bold run.{% endcomment %}
             <p class="text-muted"><i class="fas fa-chart-bar mr-1"></i>{% blocktrans %}Nothing disappears: all existing responses stay visible in Responses and on the public results page under <strong>All versions</strong>.{% endblocktrans %}</p>
+            <div data-publish-map-check></div>
         </div>
         <div class="modal-footer">
             <label class="mr-auto mb-0" style="font-size:.85rem;font-weight:400;display:flex;align-items:center;gap:.4rem;cursor:pointer;">
@@ -140,6 +142,14 @@ function doTransition(status){
     var form = new FormData(); form.append('status', status);
     postTransition(form);
 }
+// The map block of both publish dialogs (change map-layers-study-area): study area, layers and
+// where they show, layers on no map, the scheduled-survey note — fetched as the dialog opens.
+function loadPublishMapCheck(modalId){
+    var holder = document.querySelector('#' + modalId + ' [data-publish-map-check]');
+    if (!holder || !window.htmx) return;
+    htmx.ajax('GET', '{% url "editor_publish_map_check" survey.uuid %}', {target: holder, swap: 'innerHTML'});
+}
+$(document).on('show.bs.modal', '#publishConfirmModal, #publishDraftModal', function(){ loadPublishMapCheck(this.id); });
 function showPublishConfirm(){ $('#publishConfirmModal').modal('show'); }
 function doPublishFromTesting(){
     var form = new FormData(); form.append('status','published');

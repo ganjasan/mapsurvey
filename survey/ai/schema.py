@@ -145,8 +145,11 @@ def survey_draft_schema(languages):
             # the brief names none. A name, never coordinates: a name that does
             # not geocode is dropped, a hallucinated coordinate would be saved.
             "location": {"type": "string"},
+            # A short title for the survey list. Used only when the creator did not
+            # name the survey themselves (the create page derives a name from the goal).
+            "survey_name": {"type": "string"},
             "sections": {"type": "array", "items": section},
         },
-        "required": ["location", "sections"],
+        "required": ["location", "survey_name", "sections"],
         "additionalProperties": False,
     }

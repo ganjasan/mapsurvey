@@ -64,7 +64,7 @@ QR_MM = 20
 QR_ERROR = 'h'
 # Bump when the page geometry changes: it is part of the structure hash, so a form
 # printed with an older layout is never silently reused with a different item map.
-LAYOUT_VERSION = 4   # 2: two QR + copy numbers; 3: fiducial squares beside the frame corners; 4: also mid-side
+LAYOUT_VERSION = 5   # 2: two QR + copy numbers; 3: fiducial squares beside the frame corners; 4: also mid-side; 5: study area frame + placed layers only
 BOX = '☐'
 SYMBOLS = {'point': '●', 'line': '━', 'polygon': '▭', 'spraycan': '░'}
 DEFAULT_MARKS = 3
@@ -751,8 +751,15 @@ def _structure(survey, language, paper, keep=False):
         digest.append({'sec': section.code, 'title': plain(section.get_translated_title(language)),
                        'sub': plain(section.get_translated_subheading(language)), 'layout': section.layout,
                        'rule': section.visibility_rule})
+    # What the printed maps show (change map-layers-study-area): the study area frames them and only
+    # placed layers are drawn, so a change of either prints a new form.
+    from survey.layers import placements_for
+    from survey.services.study_area import get as study_area_of
+    area = study_area_of(survey)
+    map_state = {'area': area.updated_at.isoformat() if area else None,
+                 'placed': [[p.layer_id, p.scope, list(p.sections or [])] for p in placements_for(survey)]}
     payload = json.dumps({'lang': language, 'paper': paper, 'items': digest, 'layout': LAYOUT_VERSION,
-                          'keep': bool(keep)},
+                          'keep': bool(keep), 'map': map_state},
                          sort_keys=True, ensure_ascii=False)
     return plan, hashlib.sha256(payload.encode('utf-8')).hexdigest()
 

@@ -1385,3 +1385,7 @@ msgstr "%(amount)s darabja"
 #: budget-question
 msgid "{left} left after it"
 msgstr "utána {left} marad"
+
+#. change map-layers-study-area
+msgid "On this map"
+msgstr "Ezen a térképen"

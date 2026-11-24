@@ -92,6 +92,10 @@ reports.editor_views._block_edit reads. `b` the block, `item` its record.{% endc
         <label class="lb-check"><input type="checkbox" name="map_legend"{% if item.map_switches.legend %} checked{% endif %}> {% trans "Legend under the map" %}</label>
         <label class="lb-check"><input type="checkbox" name="map_scale"{% if item.map_switches.scale %} checked{% endif %}> {% trans "Scale bar" %}</label>
         <label class="lb-check"><input type="checkbox" name="map_toggle"{% if item.map_switches.toggle %} checked{% endif %}> {% trans "Readers can switch layers on and off" %}</label>
+        {% if item.map_switches.has_study_area %}{# the survey's study area outline (change map-layers-study-area) #}
+        <input type="hidden" name="map_study_area_present" value="1">
+        <label class="lb-check"><input type="checkbox" name="map_study_area"{% if item.map_switches.study_area %} checked{% endif %}> {% trans "Study area outline" %}</label>
+        {% endif %}
 
         {% elif b.block_type == 'crosstab' %}
         {% comment %}Set up in the block, not in the library (change crosstab-settings-in-block, #751): the

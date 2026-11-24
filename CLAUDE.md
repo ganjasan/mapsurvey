@@ -115,7 +115,11 @@ Each block: the rules you must not break. Detail → the linked file.
   `layers.layer_lite(question)` on respondent/Responses paths. Gunicorn worker is
   `DrainingThreadWorker`, not stock gthread.
 - `SurveyMapLayer.geojson` is a cache of `LayerObject`s (`rebuild_layer`) — never edit it as a source.
-  Layers belong to the CANONICAL survey (`layers_for`/`layer_owner`), never copied.
+  Uploaded/drawn layers live in Data (workspace layer + link to the CANONICAL survey); a survey owns
+  only shared-map layers. `layers_for` resolves both, never copied.
+- A layer is on a map ONLY through a `LayerPlacement` (`services/placements.py`, the one writer;
+  section refs via `section_refs`) — never because a question binds it. The study area is
+  `StudyArea` (`services/study_area.py`), not a layer; POST refusal in `study_area_guard`.
 - Sub-questions are the one "ask about an object" mechanism; object answers use `Answer.layer_object`,
   never `parent_answer_id`. Shared-map objects keyed `s<session>-<n>`, never by answer id.
 - One density renderer: `L.SprayAgreementLayer` (spray, coverage).
@@ -143,8 +147,9 @@ through `survey/services/sites.py`; never name a context variable `block` in an 
   `{% pro_badge %}`; sidebar items `{% pro_nav_mark %}`.
 
 **Data module** → [`.claude/architecture/data.md`](.claude/architecture/data.md)
-- `data/services.py` is the one write path; datasets are LINKED, never copied; write paths keep
-  `owner.map_layers`, never `layers_for`. A private field never leaves via any output (`data.fields`).
+- `data/services.py` is the one write path; datasets are LINKED, never copied; a survey edits the
+  layers it links through `layers_for` (layers live in Data). A private field never leaves via any
+  output (`data.fields`).
 - Versions update `LayerObject` rows in place — never delete + create (answers hang on rows).
 - View kinds = one table `dataviews.kinds_for`; there is no unmasked reading of a view.
 - Session scope = `data.scope.SessionScope`; never filter `is_deleted`/`validation_status`/emptiness

@@ -101,15 +101,20 @@ map SHALL continue to work over layer features while a draw mode is active.
 - **THEN** the object popup with the card and sub-questions opens
 
 ### Requirement: Layer visibility is controllable per section and by the respondent
-Each section SHALL be able to hide any subset of the survey's layers
-(`hidden_layers`; default — all visible; unknown IDs ignored). The respondent SHALL be
-able to toggle each visible layer via the Leaflet layers control, which SHALL appear
-whenever at least one reference layer is visible. Form-layout sections render no map
-and therefore no layers.
+A layer SHALL appear on a section's map if and only if a top-level "Objects on the map"
+(`layer_objects`) question of that section binds it; layers SHALL render in the order of
+those questions. Sections SHALL NOT carry a separate visibility list. The respondent SHALL
+be able to toggle each visible layer via the Leaflet layers control, which SHALL appear
+whenever at least one layer is on the map. Form-layout sections render no map and
+therefore no layers.
 
-#### Scenario: Section hides a layer
-- **WHEN** a section lists a layer in `hidden_layers` and the respondent navigates to it
-- **THEN** that layer is removed from the map and re-added on a section where it is not hidden
+#### Scenario: Layer shown through a question
+- **WHEN** section A has an Objects question bound to "existing-dog-bins" and section B has none
+- **THEN** the layer renders on A's map and not on B's
+
+#### Scenario: Question removed
+- **WHEN** the creator deletes the only question binding a layer in a section
+- **THEN** the layer is gone from that section's map on the next render
 
 #### Scenario: Respondent toggles a layer off
 - **WHEN** the respondent unchecks the layer in the layers control
@@ -151,21 +156,13 @@ Stored layers SHALL be preserved.
 - **THEN** the dashboard HTML contains no layer metadata and no layer URL
 
 ### Requirement: The editor preview renders reference layers
-The editor's section preview SHALL render the survey's reference layers on its map with
-the same styling, labels and per-section visibility as the respondent page, so a creator
-verifying an upload sees what respondents will see.
+The editor's Live preview SHALL render exactly the layers the previewed section's questions
+bind, from the same metadata builder the respondent page uses, so the preview never shows a
+layer the respondent will not see.
 
-#### Scenario: Uploaded layer appears in the preview
-- **WHEN** a creator uploads a layer and opens a map section in the editor
-- **THEN** the preview iframe carries that layer's config and its geometry URL
-
-#### Scenario: Preview honours per-section visibility
-- **WHEN** the previewed section hides a layer
-- **THEN** the preview marks that layer hidden, exactly as the respondent page does
-
-#### Scenario: Kill switch applies to the preview too
-- **WHEN** `MAP_REFERENCE_LAYERS` is off
-- **THEN** the preview carries no layer config
+#### Scenario: Preview after adding a layer question
+- **WHEN** the creator adds an Objects question bound to a layer and the preview refreshes
+- **THEN** the layer appears on the preview map with its legend line in the panel
 
 ### Requirement: The Responses Map pane renders reference layers
 The Responses tab's Map pane SHALL render every reference layer of the survey beneath answer

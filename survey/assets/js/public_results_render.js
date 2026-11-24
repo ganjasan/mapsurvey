@@ -136,6 +136,11 @@ window.renderResultBlocks = function (blocks, BASEMAPS) {
     var base = BASEMAPS[b.basemap] || BASEMAPS.streets;
     L.tileLayer(base.url, base.opts).addTo(map);
     if (b.scale !== false && L.control.scale) L.control.scale({ imperial: false }).addTo(map);
+    // The survey's study area outline (change map-layers-study-area): under every layer, not
+    // clickable, never part of the frame the map fits.
+    if (b.study_area) {
+      L.geoJSON(b.study_area, { interactive: false, style: { color: '#4f46e5', weight: 2, fill: false, opacity: 0.9 } }).addTo(map);
+    }
 
     var groups = {}, bounds = L.latLngBounds([]), soft = false;
     for (var i = layers.length - 1; i >= 0; i--) {          // bottom first

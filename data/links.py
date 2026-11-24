@@ -93,12 +93,17 @@ def _family_ids(owner):
 
 
 def unlink_survey(link):
-    """Remove a survey link; refused while a question of that survey is bound to the layer."""
+    """Remove a survey link and the layer's placement on that survey's maps; refused while a
+    question of that survey is bound to the layer (spec data-links "Links are guarded")."""
+    from django.db import transaction
+    from survey.models import LayerPlacement
     questions = bound_questions(link.dataset.layer_id, link.survey)
     if questions:
         raise LinkRefused(_('The question “%(name)s” shows this layer. Remove the question or pick another layer first.')
                           % {'name': questions[0].name})
-    link.delete()
+    with transaction.atomic():
+        LayerPlacement.objects.filter(survey=link.survey_id, layer_id=link.dataset.layer_id).delete()
+        link.delete()
 
 
 def sync_site_block(block, dataset_id, view_id=None):

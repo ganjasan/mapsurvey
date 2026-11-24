@@ -341,7 +341,7 @@ def update_block(actor, block, *, viz=None, is_hidden=None, custom_title=None, c
         if show_marks is not None or map_display is not None:
             before = dict(block.config or {})
             config = dict(before)
-            for key in ('view', 'frame', 'color', 'name', 'opts', 'legend', 'scale', 'toggle', 'layers'):
+            for key in ('view', 'frame', 'color', 'name', 'opts', 'legend', 'scale', 'toggle', 'study_area', 'layers'):
                 if map_display is not None and key in map_display:
                     config[key] = map_display[key]
             if show_marks is not None:
