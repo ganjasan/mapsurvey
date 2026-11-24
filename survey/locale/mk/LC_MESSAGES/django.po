@@ -1393,3 +1393,7 @@ msgstr "На оваа карта"
 # change section-study-area: place search
 msgid "More results"
 msgstr "Повеќе резултати"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Промени ја позицијата"

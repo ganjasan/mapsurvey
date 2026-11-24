@@ -1393,3 +1393,7 @@ msgstr "இந்த வரைபடத்தில்"
 # change section-study-area: place search
 msgid "More results"
 msgstr "மேலும் முடிவுகள்"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "நிலையை மாற்று"

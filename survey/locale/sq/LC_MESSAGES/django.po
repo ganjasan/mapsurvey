@@ -1393,3 +1393,7 @@ msgstr "Në këtë hartë"
 # change section-study-area: place search
 msgid "More results"
 msgstr "Më shumë rezultate"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Ndrysho pozicionin"

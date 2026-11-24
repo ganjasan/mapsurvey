@@ -252,6 +252,23 @@
             transition: opacity 0.2s;
         }
         .map-center-pin.is-inherit { opacity: 0.4; }
+        /* Lock (openspec: map-picker-lock): the inline settings maps open
+           locked so a scroll over them cannot move the saved position. The
+           overlay sits above Leaflet's controls (1000); both buttons are
+           added by map_position_picker.js. */
+        .map-lock-overlay {
+            position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 1001;
+            display: flex; align-items: flex-end; justify-content: center;
+            padding-bottom: 0.75rem; cursor: pointer;
+        }
+        .map-lock-overlay[hidden], .map-lock-done[hidden] { display: none; }
+        .map-lock-done {
+            position: absolute; bottom: 0.75rem; left: 50%; transform: translateX(-50%);
+            z-index: 1001;
+        }
+        .map-lock-button, .map-lock-done { border: 1px solid var(--border-color); box-shadow: var(--shadow-md); }
+        .picker-map.is-locked .leaflet-control-zoom,
+        .picker-map.is-locked .leaflet-bar { opacity: 0.5; }
         /* Saved / saving / error indicator. Question forms use it under
            EDITOR_AUTOSAVE (editor_autosave.js); the map pickers always do. */
         .autosave-indicator { display: inline-flex; align-items: center; gap: 6px; font-size: 0.82rem; color: var(--color-text-muted); }

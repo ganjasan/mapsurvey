@@ -476,7 +476,12 @@
             },
             watch: [document.getElementById('survey-use-geolocation')],
             locate: true,
+            // Inline in a scrolling page: locked until the creator asks to
+            // move it (openspec: map-picker-lock).
+            lock: true,
             labels: {
+                unlock: '{% filter escapejs %}{% trans "Change position" %}{% endfilter %}',
+                lock: '{% filter escapejs %}{% trans "Done" %}{% endfilter %}',
                 centre: '{{ lbl_centre|escapejs }}',
                 zoom: '{{ lbl_zoom|escapejs }}',
                 saving: '{{ lbl_saving|escapejs }}',

@@ -10734,3 +10734,7 @@ msgstr "На этой карте"
 # change section-study-area: place search
 msgid "More results"
 msgstr "Ещё результаты"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Изменить положение"

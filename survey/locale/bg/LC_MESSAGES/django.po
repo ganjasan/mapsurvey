@@ -1394,3 +1394,7 @@ msgstr "На тази карта"
 # change section-study-area: place search
 msgid "More results"
 msgstr "Още резултати"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Промяна на позицията"

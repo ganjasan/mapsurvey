@@ -1395,3 +1395,7 @@ msgstr "Na této mapě"
 # change section-study-area: place search
 msgid "More results"
 msgstr "Další výsledky"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Změnit polohu"

@@ -1391,3 +1391,7 @@ msgstr "روی این نقشه"
 # change section-study-area: place search
 msgid "More results"
 msgstr "نتایج بیشتر"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "تغییر موقعیت"

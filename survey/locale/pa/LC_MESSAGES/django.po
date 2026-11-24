@@ -1393,3 +1393,7 @@ msgstr "ਇਸ ਨਕਸ਼ੇ ਉੱਤੇ"
 # change section-study-area: place search
 msgid "More results"
 msgstr "ਹੋਰ ਨਤੀਜੇ"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "ਸਥਿਤੀ ਬਦਲੋ"

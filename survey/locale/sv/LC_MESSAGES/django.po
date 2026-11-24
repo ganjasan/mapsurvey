@@ -1393,3 +1393,7 @@ msgstr "På den här kartan"
 # change section-study-area: place search
 msgid "More results"
 msgstr "Fler resultat"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Ändra position"

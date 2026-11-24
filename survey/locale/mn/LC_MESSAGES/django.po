@@ -1393,3 +1393,7 @@ msgstr "Энэ газрын зураг дээр"
 # change section-study-area: place search
 msgid "More results"
 msgstr "Илүү олон үр дүн"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Байрлалыг өөрчлөх"

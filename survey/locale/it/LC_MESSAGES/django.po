@@ -15547,3 +15547,7 @@ msgstr "Scegli una sezione."
 # change section-study-area: place search
 msgid "More results"
 msgstr "Altri risultati"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Cambia posizione"

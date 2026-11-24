@@ -15482,3 +15482,7 @@ msgstr "Pilih bagian."
 # change section-study-area: place search
 msgid "More results"
 msgstr "Hasil lainnya"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Ubah posisi"

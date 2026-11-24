@@ -1392,3 +1392,7 @@ msgstr "Trên bản đồ này"
 # change section-study-area: place search
 msgid "More results"
 msgstr "Thêm kết quả"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Thay đổi vị trí"

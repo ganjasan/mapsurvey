@@ -1530,6 +1530,23 @@ class EditorMapPickerCentreAutosaveTest(TestCase):
         html = self._html('settings_page')
         self.assertIn('.autosave-indicator[data-state="error"]', html)
 
+    def test_inline_settings_maps_open_locked_and_the_modal_does_not(self):
+        """
+        GIVEN the two settings surfaces, whose map sits inline in a scrolling
+              page, and the section modal, which is opened to move the map
+        WHEN each renders
+        THEN the settings pickers ask for the lock with both button labels and
+             the styles of the lock controls are served, while the modal picker
+             stays unlocked (openspec: map-picker-lock)
+        """
+        for surface in ('settings_page', 'settings_panel'):
+            html = self._html(surface)
+            self.assertIn('lock: true,', html, surface)
+            self.assertIn("unlock: 'Change position'", html, surface)
+            self.assertIn("lock: 'Done'", html, surface)
+        self.assertIn('.map-lock-overlay', self._html('settings_page'))
+        self.assertNotIn('lock: true', self._html('section_modal'))
+
     def test_section_endpoint_stores_a_centre_and_clears_on_inherit(self):
         """
         GIVEN the section map-position endpoint the picker posts to
@@ -1606,6 +1623,25 @@ class MapPickerAutosaveTeardownGuardTest(SimpleTestCase):
         source = self._picker_source()
         self.assertIn('detach: detach', source)
         self.assertRegex(source, r'function detach\(\)\s*\{[^}]*clearTimeout\(timer\)')
+
+    def test_lock_switches_every_gesture_off_and_locks_again_by_itself(self):
+        """
+        GIVEN the picker module with `lock: true`
+        WHEN its lock is read
+        THEN every Leaflet handler a creator can move the map with is switched
+             by it, the map starts locked, and it locks again on a press
+             outside the map and when the map leaves the viewport — a scroll
+             over the settings map must not rewrite the saved position
+        """
+        source = self._picker_source()
+        for handler in ('dragging', 'touchZoom', 'doubleClickZoom',
+                        'scrollWheelZoom', 'boxZoom', 'keyboard'):
+            self.assertIn(f"'{handler}'", source)
+        block = source[source.index('if (o.lock) {'):source.index('// Stop everything.')]
+        self.assertIn("on(document, 'pointerdown'", block)
+        self.assertIn('IntersectionObserver', block)
+        self.assertRegex(block, r'\n\s+lock\(\);\n\s+\}\s*$')
+        self.assertIn('lock: lock, unlock: unlock', source)
 
     def test_save_refuses_to_fire_at_a_detached_container(self):
         """

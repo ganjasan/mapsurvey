@@ -1394,3 +1394,7 @@ msgstr "Sa mapang ito"
 # change section-study-area: place search
 msgid "More results"
 msgstr "Higit pang resulta"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Baguhin ang posisyon"

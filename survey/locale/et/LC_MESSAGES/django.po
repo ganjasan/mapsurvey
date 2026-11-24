@@ -15480,3 +15480,7 @@ msgstr "Vali jaotis."
 # change section-study-area: place search
 msgid "More results"
 msgstr "Rohkem tulemusi"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Muuda asukohta"

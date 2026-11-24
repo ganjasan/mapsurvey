@@ -1392,3 +1392,7 @@ msgstr "이 지도에 표시"
 # change section-study-area: place search
 msgid "More results"
 msgstr "결과 더 보기"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "위치 변경"

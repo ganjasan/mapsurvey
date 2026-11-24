@@ -1393,3 +1393,7 @@ msgstr "इस मानचित्र पर"
 # change section-study-area: place search
 msgid "More results"
 msgstr "और परिणाम"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "स्थिति बदलें"
