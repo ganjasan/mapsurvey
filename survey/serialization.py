@@ -79,6 +79,7 @@ def serialize_survey_to_dict(survey: SurveyHeader) -> Dict[str, Any]:
         "layers": serialize_layers(survey),
         "placements": serialize_placements(survey),
         **({"study_area": area} if (area := serialize_study_area(survey)) else {}),
+        **({"section_study_areas": rows} if (rows := serialize_section_study_areas(survey)) else {}),
         "sections": serialize_sections(survey),
     }
 
@@ -109,6 +110,29 @@ def serialize_study_area(survey: SurveyHeader) -> Optional[Dict[str, Any]]:
         "refuse_outside": area.refuse_outside,
         "message": area.message or {},
     }
+
+
+def serialize_section_study_areas(survey: SurveyHeader) -> List[Dict[str, Any]]:
+    """Map sections that chose their own area or none (change section-study-area), by section
+    reference; a row back on the survey's area stays home, and so do refused counters."""
+    from .layers import layer_owner
+    from .models import SectionStudyArea
+    out = []
+    for row in SectionStudyArea.objects.filter(survey=layer_owner(survey)).order_by('id'):
+        if row.mode == SectionStudyArea.MODE_NONE:
+            out.append({"section": row.section_ref, "mode": row.mode})
+        elif row.mode == SectionStudyArea.MODE_OWN and row.geometry is not None:
+            out.append({
+                "section": row.section_ref,
+                "mode": row.mode,
+                "geometry": json.loads(row.geometry.geojson),
+                "source": row.source,
+                "place_name": row.place_name,
+                "fog": row.fog,
+                "refuse_outside": row.refuse_outside,
+                "message": row.message or {},
+            })
+    return out
 
 
 def serialize_layers(survey: SurveyHeader) -> List[Dict[str, Any]]:
@@ -831,6 +855,7 @@ def import_structure_from_archive(
     # and legend-only Objects questions converted, so the imported maps match the archive's.
     warnings.extend(import_placements(survey, sections, sections_data, layer_ids, survey_data))
     warnings.extend(import_study_area(survey, survey_data.get("study_area")))
+    warnings.extend(import_section_study_areas(survey, survey_data.get("section_study_areas")))
 
     # Extract images
     image_warnings = extract_structure_images(zip_file, survey, code_remap)
@@ -1640,6 +1665,40 @@ def import_study_area(survey, data) -> List[str]:
     except ServiceError as exc:
         return [f"The archive's study area was skipped: {exc.message or exc}"]
     return []
+
+
+def import_section_study_areas(survey, data) -> List[str]:
+    """The archive's section choices through the study area service (change section-study-area);
+    an entry naming no map section or with a broken outline is a report line, never a failed import."""
+    if not data:
+        return []
+    if not isinstance(data, list):
+        return ["The archive's section study areas are not a list; every section uses the survey's area."]
+    from .section_refs import section_for
+    from .services import study_area as svc_area
+    from .services.errors import ServiceError
+    warnings: List[str] = []
+    for item in data:
+        if not isinstance(item, dict):
+            continue
+        ref = str(item.get("section") or '')
+        section = section_for(survey.pk, ref) if ref else None
+        if section is None or not section.has_map:
+            warnings.append(f"A section study area named section '{ref}', which is not a section with a map in "
+                            "this archive; skipped.")
+            continue
+        try:
+            if item.get("mode") == svc_area.KIND_NONE:
+                svc_area.set_section_mode(None, section, svc_area.KIND_NONE)
+            elif item.get("mode") == svc_area.KIND_OWN:
+                svc_area.set_section_area(
+                    None, section, item.get("geometry"), source=item.get("source") or 'upload',
+                    place_name=item.get("place_name") or '', fog=item.get("fog", True),
+                    refuse_outside=bool(item.get("refuse_outside")),
+                    message=item.get("message") if isinstance(item.get("message"), dict) else {})
+        except ServiceError as exc:
+            warnings.append(f"The study area of section '{ref}' was skipped: {exc.message or exc}")
+    return warnings
 
 
 def resolve_question_layers(survey: SurveyHeader, code_remap: Dict[str, str]) -> List[str]:

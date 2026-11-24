@@ -33,6 +33,7 @@
   .sae-error:empty { display:none; }
   .sae-credit { font-size:.7rem; color:var(--color-text-muted); margin-top:1rem; }
   .sae-banner { background:var(--color-warning-soft); border-bottom:1px solid var(--color-warning-line); color:var(--color-warning); padding:.45rem 1.5rem; font-size:.8rem; }
+  .sae-banner--info { background:var(--accent-light); border-bottom-color:var(--border-color); color:var(--color-text); }
 </style>
 {% endblock %}
 {% block navbar_content %}
@@ -40,7 +41,7 @@
 {% include "editor/partials/_survey_nav_tabs.html" with active_tab="build" %}
 {% endblock %}
 {% block content %}
-<div class="sae" id="sae"
+<div class="sae" id="sae"{% if section %} data-section="{{ section.pk }}"{% endif %}
      data-urls='{
        "lookup": "{% url 'editor_study_area_lookup' survey.uuid %}",
        "candidate": "{% url 'editor_study_area_candidate' survey.uuid %}",
@@ -49,7 +50,7 @@
        "clear": "{% url 'editor_study_area_clear' survey.uuid %}",
        "upload": "{% url 'editor_study_area_upload' survey.uuid %}",
        "fromLayer": "{% url 'editor_study_area_from_layer' survey.uuid %}",
-       "back": "{% url 'editor_survey_detail' survey.uuid %}"
+       "back": "{{ back_url }}"
      }'
      data-strings='{
        "noBoundary": "{% filter escapejs %}{% trans "No boundary in OpenStreetMap — starts as a rectangle you can adjust" %}{% endfilter %}",
@@ -61,22 +62,26 @@
        "unsaved": "{% filter escapejs %}{% trans "Not saved yet — adjust the outline, then Save" %}{% endfilter %}",
        "drawHint": "{% filter escapejs %}{% trans "Click to add corners; click the first corner to close the area" %}{% endfilter %}",
        "editHint": "{% filter escapejs %}{% trans "Drag a corner to move it, a middle handle to add one; click a corner to remove it" %}{% endfilter %}",
-       "removeAsk": "{% filter escapejs %}{% trans "Remove the study area? The map then opens as before and nothing is refused." %}{% endfilter %}",
-       "remove": "{% filter escapejs %}{% trans "Remove" %}{% endfilter %}"
+       "removeAsk": "{% if section %}{% filter escapejs %}{% trans "Use the survey's area on this section again? Its own outline is kept for later." %}{% endfilter %}{% else %}{% filter escapejs %}{% trans "Remove the study area? The map then opens as before and nothing is refused." %}{% endfilter %}{% endif %}",
+       "remove": "{% if section %}{% filter escapejs %}{% trans "Use the survey's area" %}{% endfilter %}{% else %}{% filter escapejs %}{% trans "Remove" %}{% endfilter %}{% endif %}"
      }'>
   <div class="pr-ctxbar" style="flex-shrink:0;">
     <span class="ico"><i class="fas fa-vector-square"></i></span>
     <div>
-      <div class="t"><a href="{% url 'editor_survey_detail' survey.uuid %}" style="color:var(--color-text-muted);font-weight:400;">{{ survey.name }}</a> › {% trans "Study area" %}</div>
+      <div class="t"><a href="{{ back_url }}" style="color:var(--color-text-muted);font-weight:400;">{{ survey.name }}</a> › {% if section %}{{ section.title|default:section.name }} › {% trans "Own study area" %}{% else %}{% trans "Study area" %}{% endif %}</div>
       <div class="s" id="sae-summary">{% if area %}{{ area.place_name|default:"" }}{% else %}{% trans "Not set" %}{% endif %}</div>
     </div>
     <span style="flex:1;"></span>
     <span class="sae-status" id="sae-status" aria-live="polite"></span>
-    {% if area %}<button type="button" class="btn btn-sm btn-outline-danger" id="sae-remove">{% trans "Remove" %}</button>{% endif %}
+    {% if section %}{% if area %}<button type="button" class="btn btn-sm btn-outline-secondary" id="sae-remove">{% trans "Use the survey's area" %}</button>{% endif %}
+    {% elif area %}<button type="button" class="btn btn-sm btn-outline-danger" id="sae-remove">{% trans "Remove" %}</button>{% endif %}
     <button type="button" class="btn btn-sm btn-primary" id="sae-save" disabled>{% trans "Save" %}</button>
-    <a class="btn btn-sm btn-outline-secondary" href="{% url 'editor_survey_detail' survey.uuid %}"><i class="fas fa-arrow-left"></i> {% trans "Back to survey" %}</a>
+    <a class="btn btn-sm btn-outline-secondary" href="{{ back_url }}"><i class="fas fa-arrow-left"></i> {% if section %}{% trans "Back to the section" %}{% else %}{% trans "Back to survey" %}{% endif %}</a>
   </div>
 
+  {% if section %}
+  <div class="sae-banner sae-banner--info"><i class="fas fa-info-circle"></i> {% if start_area_json != 'null' %}{% trans "This section's own area. It starts from the survey's outline: adjust it, then Save. The survey's area stays as it is." %}{% else %}{% trans "This section's own area: only this section's map uses it. The survey's area stays as it is." %}{% endif %}</div>
+  {% endif %}
   {% if survey.status == 'published' %}
   <div class="sae-banner"><i class="fas fa-globe"></i> {% trans "This survey is published: a saved study area applies to respondents at once. Answers already given are not re-checked." %}</div>
   {% endif %}
@@ -131,6 +136,7 @@
   </div>
 </div>
 <script type="application/json" id="sae-area">{{ area_json|safe }}</script>
+<script type="application/json" id="sae-start-area">{{ start_area_json|safe }}</script>
 {% endblock %}
 {% block extra_scripts %}
 <script>

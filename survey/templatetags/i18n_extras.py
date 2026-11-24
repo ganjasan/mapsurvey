@@ -61,6 +61,7 @@ def i18n_json():
         # Geocoding search
         'searchAddress': _('Search address...'),
         'noResultsFound': _('No results found'),
+        'moreResults': _('More results'),
         'searchFailed': _('Search failed — check your connection and try again.'),
 
         # Multi-feature geo questions

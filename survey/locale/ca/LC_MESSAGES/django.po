@@ -1389,3 +1389,7 @@ msgstr "en queden {left} després"
 #. change map-layers-study-area
 msgid "On this map"
 msgstr "En aquest mapa"
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "Més resultats"

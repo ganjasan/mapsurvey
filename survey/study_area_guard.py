@@ -5,7 +5,7 @@ The browser refuses first (`study_area.js`); this is the check a scripted or tam
 Rules: a point must lie in the area; a line or a polygon must be covered by the area buffered 5 m
 (snapping tolerance, so a corner drawn on the boundary passes); a spray cloud keeps only its dots
 inside. A refused mark is skipped like an unreadable chunk — the section POST has no error-render
-path — logged with the question code, and counted on `StudyArea.refused_marks`. Answers about a
+path — logged with the question code, and counted on the refusing area's `refused_marks`. Answers about a
 layer's objects are never checked: the creator placed those objects.
 
 The buffered area is computed once per POST in PostGIS (on the spheroid) and checked with a
@@ -46,11 +46,11 @@ class Guard:
         self.refused += 1
         logger.info('study area: refused a mark outside the area for %s', question_code)
 
-    def finish(self, survey):
-        """Add this POST's refusals to the survey's counter."""
+    def finish(self, survey=None):
+        """Add this POST's refusals to the counter of the area that refused them."""
         if self.refused:
             from .services.study_area import count_refused
-            count_refused(survey, self.refused)
+            count_refused(self.area, self.refused)
 
 
 def _buffered(geometry, metres):
@@ -63,12 +63,11 @@ def _buffered(geometry, metres):
 
 
 def for_section(section):
-    """The guard for a section POST, or None when nothing is refused there (no study area, the
-    rule is off, or the section has no map)."""
-    if not section.has_map:
-        return None
-    from .services.study_area import get
-    area = get(section.survey_header)
+    """The guard for a section POST, or None when nothing is refused there: the section's
+    effective area (its own, the survey's, or none — change section-study-area) is missing, its
+    rule is off, or the section has no map."""
+    from .services.study_area import effective_area
+    area = effective_area(section)
     if area is None or not area.refuse_outside:
         return None
     return Guard(area)

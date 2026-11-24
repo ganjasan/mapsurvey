@@ -839,7 +839,22 @@ def editor_survey_settings_panel(request, survey_uuid):
         'layer_icons': LAYER_ICONS,
         'layers_enabled': settings.MAP_REFERENCE_LAYERS,
         'survey_tags_text': _survey_tags_text(survey),
+        **_survey_area_context(survey),
     })
+
+
+def _survey_area_context(survey):
+    """Survey settings' study area (change section-study-area): the survey's area, its size and the
+    map sections that chose their own area or none."""
+    if not settings.MAP_REFERENCE_LAYERS:
+        return {}
+    from .services import study_area as svc_area
+    area = svc_area.get(survey)
+    return {
+        'survey_area': area,
+        'survey_area_km2': svc_area.area_km2(area) if area else None,
+        'own_area_sections': [c['title'] for c in svc_area.section_choices(survey) if c['mode'] != svc_area.KIND_SURVEY],
+    }
 
 
 @survey_permission_required('editor')
@@ -1522,12 +1537,18 @@ def _map_card(request, survey, section):
         })
     on_rows = sorted((r for r in rows if r['on']), key=lambda r: (
         getattr(svc_placements.get(survey, r['layer'].pk), 'position', 0)))
+    # The section's area (change section-study-area): the survey's (default), its own, or none.
     area = svc_area.get(survey)
+    own_row = svc_area.section_row(section)
+    own = own_row if own_row is not None and own_row.geometry is not None else None
     role = getattr(request, 'effective_survey_role', None)
     return {
         'rows': on_rows + [r for r in rows if not r['on']],
         'area': area,
         'area_km2': svc_area.area_km2(area) if area else None,
+        'area_mode': svc_area.section_mode(section, own_row),
+        'own': own,
+        'own_km2': svc_area.area_km2(own) if own else None,
         'can_place': role in ('editor', 'owner'),
         'can_add': role == 'owner',
         'data_choices': _data_choices(survey) if role == 'owner' else [],
@@ -2436,7 +2457,7 @@ def editor_section_map_picker(request, survey_uuid, section_id):
 def editor_section_preview(request, survey_uuid, section_name):
     # Local import: views imports editor_forms, so a module-level import here
     # would close the circle (the two thanks-page helpers above do the same).
-    from .views import _build_map_layers_metadata, _on_this_map, study_area_meta
+    from .views import _build_map_layers_metadata, _on_this_map
     from .layers import section_layer_ids
 
     survey = request.survey
@@ -2506,9 +2527,8 @@ def editor_section_preview(request, survey_uuid, section_name):
         # two hand-built contexts, and a layer list built twice would drift.
         'map_layers': _build_map_layers_metadata(survey),
         'visible_layers_json': json.dumps(preview_layer_ids := section_layer_ids(section)),
-        # The study area and the "On this map" legend, as the respondent page has them
-        # (change map-layers-study-area): the preview never shows a map the respondent won't.
-        'study_area_meta': study_area_meta(survey),
+        # The "On this map" legend as the respondent page has it (change map-layers-study-area);
+        # the section's study area rides #section-data like on the respondent page.
         'on_this_map': _on_this_map(survey, preview_layer_ids),
         # Same-section rules so the preview plays both branches live, exactly
         # like the respondent page (conditional_visibility.js reads this).

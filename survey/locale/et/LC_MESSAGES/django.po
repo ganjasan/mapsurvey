@@ -15411,3 +15411,72 @@ msgstr "Kasuta piiri: %%(place)s"
 #. change map-layers-study-area
 msgid "Drag a corner to move it"
 msgstr "Lohista nurka, et seda liigutada"
+
+# change section-study-area (#781)
+msgid "Survey's area"
+msgstr "Küsitluse ala"
+
+msgid "The survey has none yet."
+msgstr "Küsitlusel seda veel pole."
+
+msgid "Set it in Survey settings"
+msgstr "Määra see küsitluse seadetes"
+
+msgid "Own area"
+msgstr "Oma ala"
+
+msgid "Only this section: e.g. one street of the city."
+msgstr "Ainult see jaotis: nt üks linna tänav."
+
+msgid "No area"
+msgstr "Ala puudub"
+
+msgid "No fog, answers anywhere on this section."
+msgstr "Halli pole, vastused kõikjal selles jaotises."
+
+msgid "Use the survey's area on this section again? Its own outline is kept for later."
+msgstr "Kas kasutada selles jaotises jälle küsitluse ala? Oma piirjoon jääb hilisemaks alles."
+
+msgid "Use the survey's area"
+msgstr "Kasuta küsitluse ala"
+
+msgid "Own study area"
+msgstr "Oma uuringuala"
+
+msgid "Back to the section"
+msgstr "Tagasi jaotise juurde"
+
+msgid "This section's own area. It starts from the survey's outline: adjust it, then Save. The survey's area stays as it is."
+msgstr "Selle jaotise oma ala. See algab küsitluse piirjoonest: kohanda seda ja vajuta Salvesta. Küsitluse ala jääb samaks."
+
+msgid "This section's own area: only this section's map uses it. The survey's area stays as it is."
+msgstr "Selle jaotise oma ala: seda kasutab ainult selle jaotise kaart. Küsitluse ala jääb samaks."
+
+msgid "Drawn area"
+msgstr "Joonistatud ala"
+
+msgid "Not set. The map opens on it, can grey out the rest and refuse answers outside."
+msgstr "Määramata. Kaart avaneb sellel, võib ülejäänu halliks teha ja väljaspool olevad vastused tagasi lükata."
+
+msgid "Refuse map answers outside"
+msgstr "Lükka kaardivastused väljaspool ala tagasi"
+
+msgid "the mark is not placed; the message is in the editor"
+msgstr "märki ei panda; teade on redaktoris"
+
+#, python-format
+msgid "Sections with their own choice: %(names)s."
+msgstr "Jaotised oma valikuga: %(names)s."
+
+msgid "Each map section can use this area, its own or none — on its Map card."
+msgstr "Iga kaardiga jaotis võib kasutada seda ala, oma ala või mitte ühtegi — oma Kaardi-kaardil."
+
+msgid "The base map, starting position, zoom and study area respondents open on. Sections can override the position and the area individually."
+msgstr "Aluskaart, algasukoht, suum ja uuringuala, millega vastajad alustavad. Jaotised võivad asukohta ja ala eraldi muuta."
+
+msgid "Pick a section."
+msgstr "Vali jaotis."
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "Rohkem tulemusi"

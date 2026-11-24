@@ -146,7 +146,7 @@
 
       <div class="pr-card">
         <h6>{% trans "Respondent map" %}</h6>
-        <div class="pr-help" style="margin-top:0;margin-bottom:.75rem;">{% trans "The base map, starting position, and zoom respondents open on. Sections can override the position individually." %}</div>
+        <div class="pr-help" style="margin-top:0;margin-bottom:.75rem;">{% trans "The base map, starting position, zoom and study area respondents open on. Sections can override the position and the area individually." %}</div>
         <div class="pr-field">
           <label for="{{ form.basemaps.id_for_label }}">{{ form.basemaps.label }}</label>
           {{ form.basemaps }}
@@ -173,6 +173,7 @@
           <span>{% trans "Auto-center on respondent's location" %} <small class="pr-help">{% trans "uses the visitor's browser geolocation on entry" %}</small></span>
           <input type="checkbox" id="survey-use-geolocation" {% if survey.use_geolocation %}checked{% endif %}>
         </label>
+        {% if layers_enabled %}{% include "editor/partials/_survey_study_area.html" %}{% endif %}
         <span class="autosave-indicator" id="survey-map-status" data-state="saved" role="status" aria-live="polite" style="margin-top:.5rem;">
           <i class="fas fa-circle autosave-dot"></i>
           <span class="autosave-label">{% trans "All changes saved" %}</span>
@@ -504,7 +505,7 @@
         MapPlaceSearch.attach(map, {
             accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
             container: document.getElementById('survey-map-search'),
-            labels: { placeholder: '{{ lbl_search|escapejs }}' }
+            labels: { placeholder: '{{ lbl_search|escapejs }}', moreResults: '{% filter escapejs %}{% trans "More results" %}{% endfilter %}' }
         });
 
         setTimeout(function() { map.invalidateSize(); }, 200);

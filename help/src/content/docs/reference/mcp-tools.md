@@ -713,7 +713,7 @@ Permission `surveys:write` · role **editor**
 
 ### `get_study_area`
 
-The area the survey is about: its outline (GeoJSON), where it came from, whether the map is greyed outside, whether map answers outside are refused, the message respondents then see, its size in km² — or null.
+The area the survey is about: its outline (GeoJSON), where it came from, whether the map is greyed outside, whether map answers outside are refused, the message respondents then see, its size in km² — or null; and `sections`: each map section's choice (`survey`, `own`, `none`).
 
 Permission `surveys:read` · role **viewer** · read-only
 
@@ -759,6 +759,35 @@ Permission `surveys:write` · role **editor**
 | Argument | Type | | Notes |
 |---|---|---|---|
 | `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+
+### `get_section_study_area`
+
+A map section's choice of study area: `survey` (the survey's area, the default), `own` (its own outline, also returned while not in use) or `none`; `effective` says what its map shows.
+
+Permission `surveys:read` · role **viewer** · read-only
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `section_id` | integer | **required** | A section id from get_survey. |
+
+### `set_section_study_area`
+
+Choose a map section's study area: `mode` "survey" (the survey's area), "own" (this section's own area — pass `geometry` to set or replace the outline, with `fog`, `refuse_outside`, `message` like set_study_area; without `geometry` the stored own outline is used) or "none" (no fog, nothing refused on this section). E.g. a street corridor on one section of a city-wide survey. Applies to a published survey at once. Needs the editor role.
+
+Permission `surveys:write` · role **editor**
+
+| Argument | Type | | Notes |
+|---|---|---|---|
+| `mode` | string | **required** | `survey` — the survey's study area (the default); `own` — this section's own area; `none` — no area on this section (no fog, nothing refused). |
+| `geometry` | map |  | `own` only: a Polygon or MultiPolygon in WGS 84 that replaces the own outline. Without it the stored own outline is used; a section without one is refused. |
+| `source` | string |  | place, upload, layer or draw (with `geometry`). Default `draw`. |
+| `place_name` | string |  |  |
+| `fog` | boolean |  | `own` only: grey out the map outside. |
+| `refuse_outside` | boolean |  | `own` only: refuse map answers outside the area. |
+| `message` | map |  | `own` only: the refusal message per language code. |
+| `survey` | uuid | **required** | The survey uuid (from list_surveys). |
+| `section_id` | integer | **required** | A section id from get_survey. |
 
 ### `list_groups`
 

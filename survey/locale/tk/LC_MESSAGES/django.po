@@ -1389,3 +1389,7 @@ msgstr "ondan soň {left} galýar"
 #. change map-layers-study-area
 msgid "On this map"
 msgstr "Bu kartada"
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "Has köp netije"

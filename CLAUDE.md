@@ -119,7 +119,9 @@ Each block: the rules you must not break. Detail → the linked file.
   only shared-map layers. `layers_for` resolves both, never copied.
 - A layer is on a map ONLY through a `LayerPlacement` (`services/placements.py`, the one writer;
   section refs via `section_refs`) — never because a question binds it. The study area is
-  `StudyArea` (`services/study_area.py`), not a layer; POST refusal in `study_area_guard`.
+  `StudyArea` (`services/study_area.py`), not a layer; POST refusal in `study_area_guard`. A map
+  section may override it (`SectionStudyArea`, own / none): respondent-side readers go through
+  `study_area.effective(section)`, never `get(survey)`; Responses and Reports keep the survey's.
 - Sub-questions are the one "ask about an object" mechanism; object answers use `Answer.layer_object`,
   never `parent_answer_id`. Shared-map objects keyed `s<session>-<n>`, never by answer id.
 - One density renderer: `L.SprayAgreementLayer` (spray, coverage).

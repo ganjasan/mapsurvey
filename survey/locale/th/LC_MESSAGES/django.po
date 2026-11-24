@@ -1388,3 +1388,7 @@ msgstr "เหลือ {left} หลังจากนี้"
 #. change map-layers-study-area
 msgid "On this map"
 msgstr "บนแผนที่นี้"
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "ผลลัพธ์เพิ่มเติม"

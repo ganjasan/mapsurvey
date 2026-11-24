@@ -93,6 +93,11 @@ THANKS_KEY = 'survey:thanks'
 STUDY_AREA_MESSAGE_KEY = 'survey:study_area_message'
 
 
+def section_study_area_message_key(section):
+    """`section:<ref>:study_area_message` — a section's own area message (change section-study-area)."""
+    return f'{section_prefix(section)}:study_area_message'
+
+
 def prefix_for(owner_field, owner):
     """The key prefix of a translation row's owner, from the `owner_field`
     `save_translations` is called with."""
@@ -378,6 +383,21 @@ def occurrences(survey, language, source_language=None):
             len(sections) + 1, _('Map'), _('Study area message'), _('Study area message'),
             'study_area', area, 'message', CAPS.get('study_area:message', 0),
             shown=message.get(source_language, ''), link={'study_area': True})
+    # A section's own area message (change section-study-area), keyed by the section's reference.
+    from .services.study_area import KIND_OWN, section_mode, section_row
+    for page, section in enumerate(sections, start=1):
+        if not section.has_map:
+            continue
+        row = section_row(section)
+        if row is None or section_mode(section, row) != KIND_OWN or not row.refuse_outside:
+            continue
+        message = row.message or {}
+        title = section.title or section.name or ''
+        element = _('Study area message')
+        add(section_study_area_message_key(section), PLAIN, message.get(primary, ''), message.get(language, ''),
+            page, _('Page %(n)s: %(title)s') % {'n': page, 'title': title}, element, f'{title} · {element}',
+            'section_study_area', row, 'message', CAPS.get('study_area:message', 0),
+            shown=message.get(source_language, ''), link={'study_area': True, 'area_section': section.id})
     return out
 
 
@@ -513,6 +533,13 @@ def apply(actor, survey, language, values, *, overwrite=False, clear_empty=False
             set_thanks(actor, survey, {language: fields.get('thanks', '')}, languages=[language])
             thanks = survey.thanks_html if isinstance(survey.thanks_html, dict) else {}
             record_hashes(survey, language, [(THANKS_KEY, thanks.get(_primary(survey), ''), RICH, fields.get('thanks', ''))])
+        elif kind == 'section_study_area':
+            from .services.study_area import set_section_message_translation
+            row = set_section_message_translation(entity, language, fields.get('message', ''))
+            key = next((o.key for o, _t in planned.values() if o.entity_kind == kind and o.entity.id == row.id), None)
+            if key:
+                record_hashes(survey, language, [(key, (row.message or {}).get(_primary(survey), ''),
+                                                  PLAIN, fields.get('message', ''))])
         elif kind == 'study_area':
             from .services.study_area import set_message_translation
             area = set_message_translation(survey, language, fields.get('message', ''))

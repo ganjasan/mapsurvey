@@ -1390,3 +1390,7 @@ msgstr "pēc tam paliek {left}"
 #. change map-layers-study-area
 msgid "On this map"
 msgstr "Šajā kartē"
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "Vairāk rezultātu"

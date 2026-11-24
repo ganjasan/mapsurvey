@@ -1,9 +1,12 @@
 /* The study area on the respondent map (change map-layers-study-area, spec survey-study-area).
  *
- * window.StudyArea.init(map, meta) — meta from the "study-area-data" json_script: {url, fog,
- * refuse_outside, message, bounds}. The outline is fetched from the gated endpoint (never inlined),
- * drawn under the answers with a grey fog outside when the creator kept fog on, and the map opens
- * on the area unless the section's own start lies inside it.
+ * window.StudyArea.show(map, meta) — meta from the section's #section-data[data-study-area]: {url,
+ * fog, refuse_outside, message, bounds}, or null when the section uses no area (change
+ * section-study-area: a section uses the survey's area, its own, or none). The outline is fetched
+ * from the gated endpoint (never inlined), drawn under the answers with a grey fog outside when the
+ * creator kept fog on; a different area on the next section replaces it, null removes it. show()
+ * answers whether the area changed, and the page then opens the map on it unless the section's own
+ * start lies inside (openOn).
  *
  * StudyArea.admit(layer, type) is asked from the draw:created handler, like BudgetQuestion.admit:
  * with the rule on, a point outside, or a line/area with a corner more than 5 m outside, is not
@@ -12,7 +15,7 @@
  */
 (function () {
     var TOLERANCE_M = 5;
-    var state = {map: null, meta: null, rings: [], bounds: null, toast: null, timer: null};
+    var state = {map: null, meta: null, rings: [], bounds: null, toast: null, timer: null, layers: [], token: 0};
 
     function ringsOf(geometry) {
         var polys = geometry.type === 'MultiPolygon' ? geometry.coordinates : [geometry.coordinates];
@@ -69,36 +72,65 @@
         state.timer = setTimeout(function () { box.hidden = true; }, 4000);
     }
 
-    function draw(geometry) {
-        var map = state.map;
-        state.rings = ringsOf(geometry);
+    function ensurePane(map) {
+        if (map.getPane('studyAreaPane')) return;
         map.createPane('studyAreaPane');
         map.getPane('studyAreaPane').style.zIndex = 345;   // above tiles, below reference layers (350)
         map.getPane('studyAreaPane').style.pointerEvents = 'none';
+    }
+    function removeDrawn() {
+        state.layers.forEach(function (layer) { if (state.map) state.map.removeLayer(layer); });
+        state.layers = [];
+        state.rings = [];
+    }
+    function draw(geometry) {
+        var map = state.map;
+        removeDrawn();
+        ensurePane(map);
+        state.rings = ringsOf(geometry);
         if (state.meta.fog) {
             var world = [[-89.9, -539.9], [-89.9, 539.9], [89.9, 539.9], [89.9, -539.9]];
             var holes = state.rings.map(function (r) { return r.map(function (c) { return [c[1], c[0]]; }); });
-            L.polygon([world].concat(holes), {pane: 'studyAreaPane', stroke: false, fillColor: '#1f2937',
-                fillOpacity: 0.35, interactive: false}).addTo(map);
+            state.layers.push(L.polygon([world].concat(holes), {pane: 'studyAreaPane', stroke: false,
+                fillColor: '#1f2937', fillOpacity: 0.35, interactive: false}).addTo(map));
         }
-        L.geoJSON(geometry, {pane: 'studyAreaPane', interactive: false,
-            style: {color: '#4f46e5', weight: 2, fill: false, opacity: 0.9}}).addTo(map);
+        state.layers.push(L.geoJSON(geometry, {pane: 'studyAreaPane', interactive: false,
+            style: {color: '#4f46e5', weight: 2, fill: false, opacity: 0.9}}).addTo(map));
     }
 
     window.StudyArea = {
         active: false,
-        init: function (map, meta) {
-            if (!map || !meta || !meta.url) return;
+        // Show a section's area (null = none). Returns whether the area changed.
+        show: function (map, meta) {
+            if (!map) return false;
+            var url = meta && meta.url ? meta.url : null;
+            var current = state.meta && state.meta.url ? state.meta.url : null;
+            if (url === current && state.map === map) return false;
             state.map = map;
+            state.token += 1;
+            removeDrawn();
+            if (state.toast) state.toast.hidden = true;
+            if (!url) {
+                state.meta = null;
+                state.bounds = null;
+                this.active = false;
+                return current !== null;
+            }
             state.meta = meta;
             this.active = true;
-            if (meta.bounds) state.bounds = L.latLngBounds([meta.bounds[1], meta.bounds[0]], [meta.bounds[3], meta.bounds[2]]);
-            fetch(meta.url, {credentials: 'same-origin'}).then(function (r) {
+            state.bounds = meta.bounds ? L.latLngBounds([meta.bounds[1], meta.bounds[0]], [meta.bounds[3], meta.bounds[2]]) : null;
+            var token = state.token;
+            fetch(url, {credentials: 'same-origin'}).then(function (r) {
                 if (!r.ok) throw new Error('study area HTTP ' + r.status);
                 return r.json();
-            }).then(function (fc) { var f = (fc.features || [])[0]; if (f) draw(f.geometry); })
-              .catch(function (err) { console.warn('Study area failed:', err); });
+            }).then(function (fc) {
+                if (token !== state.token) return;   // the respondent has moved on to another area
+                var f = (fc.features || [])[0];
+                if (f) draw(f.geometry);
+            }).catch(function (err) { console.warn('Study area failed:', err); });
+            return true;
         },
+        init: function (map, meta) { return this.show(map, meta); },
         // The map opens on the area unless the section's own start lies inside it.
         openOn: function (lat, lng) {
             if (!state.bounds || !state.map) return false;

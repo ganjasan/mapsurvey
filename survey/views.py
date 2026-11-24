@@ -1333,26 +1333,33 @@ def _add_shell_context(ctx, survey, section):
 
 	ctx['initial_use_geolocation'] = survey.use_geolocation
 	ctx['map_layers'] = _build_map_layers_metadata(survey)
-	ctx['study_area_meta'] = study_area_meta(survey)
 	return ctx
 
 
-def study_area_meta(survey, language=None):
-	"""What the respondent map needs about the study area (change map-layers-study-area): the
-	gated outline URL, fog, the refusal rule and its message in the page language, and the
-	bounds to open on. None when the survey has none or layers are switched off."""
+def study_area_meta(section, language=None):
+	"""What the respondent map needs about a section's effective study area (changes
+	map-layers-study-area, section-study-area): the gated outline URL, fog, the refusal rule and
+	its message in the page language, and the bounds to open on. None when the section uses no
+	area (its choice, a survey without one, a mapless section) or layers are switched off. The
+	section partial carries it (`#section-data[data-study-area]`), so every render of a section —
+	respondent, operator entry, Live preview — has the area it will enforce."""
 	from django.conf import settings as django_settings
 	from django.urls import reverse
 	if not django_settings.MAP_REFERENCE_LAYERS:
 		return None
 	from .services import study_area as svc_area
-	area = svc_area.get(survey)
+	kind, area = svc_area.effective(section)
 	if area is None:
 		return None
+	survey = section.survey_header
 	language = language or translation.get_language()
 	primary = (survey.available_languages or ['en'])[0]
+	url = reverse('survey_study_area_geojson', kwargs={'survey_slug': str(survey.uuid)})
+	# `v` changes with the outline, so the page notices a new area and the cache never serves an old one.
+	version = int(area.updated_at.timestamp())
+	url += f'?section={section.pk}&v={version}' if kind == svc_area.KIND_OWN else f'?v={version}'
 	return {
-		'url': reverse('survey_study_area_geojson', kwargs={'survey_slug': str(survey.uuid)}),
+		'url': url,
 		'fog': area.fog,
 		'refuse_outside': area.refuse_outside,
 		'message': svc_area.message_for(area, language, [primary]) if area.refuse_outside else '',

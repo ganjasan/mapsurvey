@@ -152,4 +152,21 @@ def survey_translation_gaps(survey):
             missing = _with_outdated(missing, stale.get(('study_area', area.id), ()))
             if missing:
                 gaps.append({'label': 'Study area message', 'missing': missing})
+    # Sections' own area messages (change section-study-area).
+    from .models import SurveySection
+    from .services.study_area import KIND_OWN, section_mode, section_row
+    primary = (survey.available_languages or ['en'])[0]
+    for section in SurveySection.objects.filter(survey_header=survey).order_by('id'):
+        if not section.has_map:
+            continue
+        row = section_row(section)
+        if row is None or section_mode(section, row) != KIND_OWN or not row.refuse_outside:
+            continue
+        message = row.message or {}
+        if not (message.get(primary) or '').strip():
+            continue
+        missing = [lang for lang in translation_languages(survey) if not (message.get(lang) or '').strip()]
+        missing = _with_outdated(missing, stale.get(('section_study_area', row.id), ()))
+        if missing:
+            gaps.append({'label': 'Study area message · %s' % (section.title or section.name), 'missing': missing})
     return gaps

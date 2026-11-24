@@ -1389,3 +1389,7 @@ msgstr "utána {left} marad"
 #. change map-layers-study-area
 msgid "On this map"
 msgstr "Ezen a térképen"
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "További találatok"

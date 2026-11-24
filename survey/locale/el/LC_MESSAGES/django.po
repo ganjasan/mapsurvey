@@ -1390,3 +1390,7 @@ msgstr "μετά απομένουν {left}"
 #. change map-layers-study-area
 msgid "On this map"
 msgstr "Σε αυτόν τον χάρτη"
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "Περισσότερα αποτελέσματα"

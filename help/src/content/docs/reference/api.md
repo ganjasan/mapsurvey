@@ -1090,7 +1090,8 @@ Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `p
 
 ### `GET /surveys/{uuid}/study-area`
 
-The survey's study area (geometry, source, fog, refusal rule, message, size), or null.
+The survey's study area (geometry, source, fog, refusal rule, message, size), or null, and each
+map section's choice (`survey`, `own` or `none`).
 
 | Parameter | In | Type | Required |
 |---|---|---|---|
@@ -1150,6 +1151,46 @@ Remove the study area. Editor role.
 | Parameter | In | Type | Required |
 |---|---|---|---|
 | `uuid` | path | uuid | yes |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `GET /surveys/{uuid}/sections/{section_id}/study-area`
+
+A map section's choice of study area (`survey`, `own` or `none`), its own outline (kept while not
+in use) and the kind of area its map shows.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `section_id` | path | integer | yes |
+
+**200** no body
+
+Errors: `forbidden_role`, `invalid_token`, `method_not_allowed`, `not_found`, `pro_required`, `rate_limited`, `scope_missing`, `server_error`, `validation`
+
+### `PUT /surveys/{uuid}/sections/{section_id}/study-area`
+
+Choose a map section's study area: the survey's, its own (with `geometry` to replace the outline)
+or none. A safe edit, applied in place on a published survey. Editor role.
+
+| Parameter | In | Type | Required |
+|---|---|---|---|
+| `uuid` | path | uuid | yes |
+| `section_id` | path | integer | yes |
+
+**Body**
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `mode` | string | yes | `survey` — the survey's study area (the default); `own` — this section's own area; `none` — no area on this section (no fog, nothing refused). |
+| `geometry` | object or null |  | `own` only: a Polygon or MultiPolygon in WGS 84 that replaces the own outline. Without it the stored own outline is used; a section without one is refused. |
+| `source` | string |  | place, upload, layer or draw (with `geometry`). |
+| `place_name` | string or null |  |  |
+| `fog` | boolean or null |  | `own` only: grey out the map outside. |
+| `refuse_outside` | boolean or null |  | `own` only: refuse map answers outside the area. |
+| `message` | object or null |  | `own` only: the refusal message per language code. |
 
 **200** no body
 

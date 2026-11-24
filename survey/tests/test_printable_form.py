@@ -113,11 +113,48 @@ class FrameResolutionTest(_MapFixture):
         self.assertAlmostEqual(spec.lat, 33.785, places=3)
         self.assertAlmostEqual(spec.lng, -84.385, places=3)
         image = static_map.Image.new('RGB', (spec.width * SCALE, spec.height * SCALE), (255, 255, 255))
-        self.assertTrue(static_map.draw_study_area(image, self.survey, spec))
+        self.assertTrue(static_map.draw_study_area(image, self.section, spec))
         centre = image.getpixel((image.width // 2, image.height // 2))
         corner = image.getpixel((5, 5))
         self.assertEqual(centre, (255, 255, 255))
         self.assertLess(corner[0], 200)
+
+    def test_section_own_area_frames_its_map(self):
+        """
+        GIVEN a survey area over Midtown, Atlanta and a second section with its own area 10 km east
+        WHEN both frames are resolved and the second is rendered on an empty basemap
+        THEN the first is centred on the survey's area, the second on its own area and draws it
+             (spec printable-form "A printed map uses its section's effective area")
+        """
+        from survey.services import study_area as svc_area
+        svc_area.set_area(None, self.survey, {'type': 'Polygon', 'coordinates': [[
+            [-84.39, 33.78], [-84.38, 33.78], [-84.38, 33.79], [-84.39, 33.79], [-84.39, 33.78]]]})
+        second = SurveySection.objects.create(survey_header=self.survey, name='map2', title='Corridor', code='S2')
+        svc_area.set_section_area(None, second, {'type': 'Polygon', 'coordinates': [[
+            [-84.29, 33.78], [-84.28, 33.78], [-84.28, 33.79], [-84.29, 33.79], [-84.29, 33.78]]]})
+        self.assertAlmostEqual(static_map.resolve_frame(self.section, self.survey).lng, -84.385, places=3)
+        spec = static_map.resolve_frame(second, self.survey)
+        self.assertAlmostEqual(spec.lng, -84.285, places=3)
+        image = static_map.Image.new('RGB', (spec.width * SCALE, spec.height * SCALE), (255, 255, 255))
+        self.assertTrue(static_map.draw_study_area(image, second, spec))
+
+    def test_section_without_area_prints_without_one(self):
+        """
+        GIVEN a survey area and a section that chose No area with its own start position
+        WHEN its frame is resolved
+        THEN the frame is the section's start and nothing is drawn
+        """
+        from survey.services import study_area as svc_area
+        svc_area.set_area(None, self.survey, {'type': 'Polygon', 'coordinates': [[
+            [-84.39, 33.78], [-84.38, 33.78], [-84.38, 33.79], [-84.39, 33.79], [-84.39, 33.78]]]})
+        self.section.start_map_postion = Point(-84.2, 33.9)
+        self.section.start_map_zoom = 14
+        self.section.save()
+        svc_area.set_section_mode(None, self.section, 'none')
+        spec = static_map.resolve_frame(self.section, self.survey)
+        self.assertEqual((spec.lat, spec.lng, spec.zoom), (33.9, -84.2, 14))
+        image = static_map.Image.new('RGB', (spec.width * SCALE, spec.height * SCALE), (255, 255, 255))
+        self.assertFalse(static_map.draw_study_area(image, self.section, spec))
 
     def test_section_start_inside_the_area_wins(self):
         """

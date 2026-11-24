@@ -1320,6 +1320,13 @@ svg.marker-icon-svg-glyph {
 
 /* ODbL attribution, shown only when the list holds OSM-derived results. A
    footnote, not a row you can pick. */
+.map-search-more {
+  align-items: center;
+  color: var(--accent);
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
 .map-search-attribution {
   padding: 5px 12px 3px;
   border-top: 1px solid var(--card-border);

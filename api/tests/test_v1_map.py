@@ -98,3 +98,36 @@ class MapApiTest(TestCase):
         self.assertEqual(response.status_code, 422)
         self.assertIn('geometry', response.json().get('fields', {}))
         self.assertFalse(StudyArea.objects.exists())
+
+    def test_section_study_area(self):
+        """
+        GIVEN a survey with a study area and a map section
+        WHEN a client PUTs an own area for the section, reads it, then PUTs `none`, and reads the
+             survey's study area
+        THEN the section reports `own` with its outline, then `none` (outline kept), and the survey
+             read lists the section's choice (change section-study-area)
+        """
+        from survey.services import study_area as svc_area
+        svc_area.set_area(None, self.survey, SQUARE)
+        url = f'{self.base}/sections/{self.section.pk}/study-area'
+        own = {'type': 'Polygon', 'coordinates': [[
+            [13.40, 52.50], [13.405, 52.50], [13.405, 52.505], [13.40, 52.505], [13.40, 52.50]]]}
+        response = self.api.call('PUT', url, {'mode': 'own', 'geometry': own, 'refuse_outside': True})
+        self.assertEqual(response.status_code, 200, response.content)
+        body = self.api.get(url).json()
+        self.assertEqual((body['mode'], body['effective'], body['own_area']['refuse_outside']), ('own', 'own', True))
+        self.assertEqual(self.api.call('PUT', url, {'mode': 'none'}).json()['mode'], 'none')
+        self.assertIsNotNone(self.api.get(url).json()['own_area'])
+        sections = self.api.get(f'{self.base}/study-area').json()['sections']
+        self.assertEqual([(s['section_id'], s['mode']) for s in sections], [(self.section.pk, 'none')])
+
+    def test_section_own_without_outline(self):
+        """
+        GIVEN a section that never had an own area
+        WHEN a client PUTs `mode: own` without a geometry
+        THEN 422 and nothing changes
+        """
+        response = self.api.call('PUT', f'{self.base}/sections/{self.section.pk}/study-area', {'mode': 'own'})
+        self.assertEqual(response.status_code, 422)
+        from survey.models import SectionStudyArea
+        self.assertFalse(SectionStudyArea.objects.exists())

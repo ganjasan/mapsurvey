@@ -15413,3 +15413,72 @@ msgstr "Gunakan batas %%(place)s"
 #. change map-layers-study-area
 msgid "Drag a corner to move it"
 msgstr "Seret sudut untuk memindahkannya"
+
+# change section-study-area (#781)
+msgid "Survey's area"
+msgstr "Area survei"
+
+msgid "The survey has none yet."
+msgstr "Survei belum memilikinya."
+
+msgid "Set it in Survey settings"
+msgstr "Atur di Pengaturan survei"
+
+msgid "Own area"
+msgstr "Area sendiri"
+
+msgid "Only this section: e.g. one street of the city."
+msgstr "Hanya bagian ini: mis. satu jalan di kota."
+
+msgid "No area"
+msgstr "Tanpa area"
+
+msgid "No fog, answers anywhere on this section."
+msgstr "Tanpa kabut, jawaban di mana saja di bagian ini."
+
+msgid "Use the survey's area on this section again? Its own outline is kept for later."
+msgstr "Gunakan lagi area survei di bagian ini? Garis batasnya sendiri disimpan untuk nanti."
+
+msgid "Use the survey's area"
+msgstr "Gunakan area survei"
+
+msgid "Own study area"
+msgstr "Area studi sendiri"
+
+msgid "Back to the section"
+msgstr "Kembali ke bagian"
+
+msgid "This section's own area. It starts from the survey's outline: adjust it, then Save. The survey's area stays as it is."
+msgstr "Area sendiri bagian ini. Dimulai dari garis batas survei: sesuaikan, lalu Simpan. Area survei tetap seperti semula."
+
+msgid "This section's own area: only this section's map uses it. The survey's area stays as it is."
+msgstr "Area sendiri bagian ini: hanya peta bagian ini yang memakainya. Area survei tetap seperti semula."
+
+msgid "Drawn area"
+msgstr "Area yang digambar"
+
+msgid "Not set. The map opens on it, can grey out the rest and refuse answers outside."
+msgstr "Belum diatur. Peta terbuka di area ini, dapat mengaburkan sisanya dan menolak jawaban di luar."
+
+msgid "Refuse map answers outside"
+msgstr "Tolak jawaban peta di luar area"
+
+msgid "the mark is not placed; the message is in the editor"
+msgstr "tanda tidak dipasang; pesannya ada di editor"
+
+#, python-format
+msgid "Sections with their own choice: %(names)s."
+msgstr "Bagian dengan pilihan sendiri: %(names)s."
+
+msgid "Each map section can use this area, its own or none — on its Map card."
+msgstr "Setiap bagian berpeta dapat memakai area ini, area sendiri, atau tanpa area — di kartu Peta-nya."
+
+msgid "The base map, starting position, zoom and study area respondents open on. Sections can override the position and the area individually."
+msgstr "Peta dasar, posisi awal, zoom, dan area studi saat responden membuka peta. Bagian dapat mengganti posisi dan area masing-masing."
+
+msgid "Pick a section."
+msgstr "Pilih bagian."
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "Hasil lainnya"

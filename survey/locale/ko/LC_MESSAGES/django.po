@@ -1388,3 +1388,7 @@ msgstr "이후 {left} 남음"
 #. change map-layers-study-area
 msgid "On this map"
 msgstr "이 지도에 표시"
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "결과 더 보기"

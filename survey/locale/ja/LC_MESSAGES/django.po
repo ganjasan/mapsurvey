@@ -1388,3 +1388,7 @@ msgstr "この後の残り {left}"
 #. change map-layers-study-area
 msgid "On this map"
 msgstr "この地図に表示中"
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "さらに表示"

@@ -63,3 +63,23 @@ class MapToolsTest(TestCase):
             'type': 'LineString', 'coordinates': [[13.4, 52.5], [13.5, 52.6]]}}))
         self.assertEqual(error['error'], 'validation')
         self.assertFalse(StudyArea.objects.exists())
+
+    def test_section_study_area_tools(self):
+        """
+        GIVEN a map section
+        WHEN set_section_study_area gives it an own area with refusal, then get_section_study_area reads it,
+             and own without a geometry is asked on a fresh survey's section
+        THEN the section is on its own area with the rule on; the second call is a validation error
+             (change section-study-area)
+        """
+        ref = {**self.ref, 'section_id': self.section.pk}
+        data = data_of(self.mcp.call('set_section_study_area', {**ref, 'mode': 'own', 'geometry': SQUARE,
+                                                                'refuse_outside': True}))
+        self.assertEqual(data['mode'], 'own')
+        read = data_of(self.mcp.call('get_section_study_area', ref))
+        self.assertEqual((read['effective'], read['own_area']['refuse_outside']), ('own', True))
+        data_of(self.mcp.call('set_section_study_area', {**ref, 'mode': 'survey'}))
+        error = error_of(self.mcp.call('set_section_study_area', {**ref, 'mode': 'nowhere'}))
+        self.assertEqual(error['error'], 'validation')
+        sections = data_of(self.mcp.call('get_study_area', self.ref))['sections']
+        self.assertEqual([s['mode'] for s in sections], ['survey'])

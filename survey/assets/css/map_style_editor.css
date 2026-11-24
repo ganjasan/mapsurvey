@@ -79,3 +79,4 @@
 .mse-search .map-search-context { font-size: .75rem; color: var(--color-text-muted); }
 .mse-search .map-search-message, .mse-search .map-search-attribution { padding: 6px 10px; font-size: .8rem; color: var(--color-text-muted); }
 .mse-hex.is-base .mse-hex-text { color: var(--color-text-faint); font-style: italic; }
+.mse-search .map-search-more { align-items: center; font-weight: 500; color: var(--color-action); }

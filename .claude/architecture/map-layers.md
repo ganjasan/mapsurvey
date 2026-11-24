@@ -41,6 +41,19 @@ first; it overrides the older notes below where they disagree.
   `survey:study_area_message`. Print frames on the area (`print.static_map.resolve_frame`,
   `draw_study_area`, only placed layers drawn); Responses adds it as reference meta `study_area`;
   Reports map blocks carry `payload['study_area']` unless `config.study_area is False`.
+- **Section choice (change section-study-area, #781)**: a map section uses the survey's area (default,
+  also "no row"), its own, or none — `SectionStudyArea` (canonical survey + section ref, like
+  placements; `mode` survey/own/none; a row off `own` keeps its outline). ONE resolver
+  `study_area.effective(section)` → `(kind, area)`; every respondent-side reader goes through it:
+  `views.study_area_meta(section)` (on `#section-data[data-study-area]` via the `study_area_json`
+  filter — no shell `json_script`), `StudyArea.show(map, meta)` swaps/clears per section and
+  `initSection()` re-opens on a changed area, `study_area_guard.for_section`, print
+  `resolve_frame`/`draw_study_area(image, section, spec)`. Own outline URL =
+  `survey_study_area_geojson?section=<id>`. Refusals count on the refusing row. Responses and Reports
+  read `get(survey)` only. The survey's area is edited from Survey settings → Respondent map
+  (`_survey_study_area.html`); the Map card picks the mode (`editor_study_area_section_mode`); the
+  editor endpoints take `section`. Message occurrence `section:<ref>:study_area_message`. ZIP
+  `section_study_areas`; REST/MCP `…/sections/{id}/study-area`, `get/set_section_study_area`.
 
 **Reference overlay layers (`SurveyMapLayer`, kill switch `MAP_REFERENCE_LAYERS`)**: creator-uploaded
 GeoJSON rendered read-only beneath answer geometry on four surfaces — the respondent map, the editor

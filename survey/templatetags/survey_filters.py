@@ -15,6 +15,17 @@ STATUS_BADGE_CLASSES = {
 
 
 @register.filter
+def study_area_json(section):
+    """The section's effective study area metadata as JSON for `#section-data[data-study-area]`
+    (change section-study-area), or `null`."""
+    import json
+    from survey.views import study_area_meta
+    if section is None or not getattr(section, 'pk', None):
+        return 'null'
+    return json.dumps(study_area_meta(section))
+
+
+@register.filter
 def status_badge_class(status):
     return STATUS_BADGE_CLASSES.get(status, 'secondary')
 

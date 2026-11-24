@@ -15470,3 +15470,72 @@ msgstr "Grens van %%(place)s gebruiken"
 #. change map-layers-study-area
 msgid "Drag a corner to move it"
 msgstr "Sleep een hoek om hem te verplaatsen"
+
+# change section-study-area (#781)
+msgid "Survey's area"
+msgstr "Gebied van de enquête"
+
+msgid "The survey has none yet."
+msgstr "De enquête heeft er nog geen."
+
+msgid "Set it in Survey settings"
+msgstr "Stel het in bij Enquête-instellingen"
+
+msgid "Own area"
+msgstr "Eigen gebied"
+
+msgid "Only this section: e.g. one street of the city."
+msgstr "Alleen deze sectie: bijv. één straat van de stad."
+
+msgid "No area"
+msgstr "Geen gebied"
+
+msgid "No fog, answers anywhere on this section."
+msgstr "Geen grijs, antwoorden overal in deze sectie."
+
+msgid "Use the survey's area on this section again? Its own outline is kept for later."
+msgstr "Weer het gebied van de enquête gebruiken in deze sectie? De eigen omtrek blijft bewaard voor later."
+
+msgid "Use the survey's area"
+msgstr "Gebied van de enquête gebruiken"
+
+msgid "Own study area"
+msgstr "Eigen studiegebied"
+
+msgid "Back to the section"
+msgstr "Terug naar de sectie"
+
+msgid "This section's own area. It starts from the survey's outline: adjust it, then Save. The survey's area stays as it is."
+msgstr "Het eigen gebied van deze sectie. Het begint bij de omtrek van de enquête: pas het aan en klik op Opslaan. Het gebied van de enquête blijft zoals het is."
+
+msgid "This section's own area: only this section's map uses it. The survey's area stays as it is."
+msgstr "Het eigen gebied van deze sectie: alleen de kaart van deze sectie gebruikt het. Het gebied van de enquête blijft zoals het is."
+
+msgid "Drawn area"
+msgstr "Getekend gebied"
+
+msgid "Not set. The map opens on it, can grey out the rest and refuse answers outside."
+msgstr "Niet ingesteld. De kaart opent erop, kan de rest grijs maken en antwoorden erbuiten weigeren."
+
+msgid "Refuse map answers outside"
+msgstr "Kaartantwoorden erbuiten weigeren"
+
+msgid "the mark is not placed; the message is in the editor"
+msgstr "de markering wordt niet geplaatst; het bericht staat in de editor"
+
+#, python-format
+msgid "Sections with their own choice: %(names)s."
+msgstr "Secties met een eigen keuze: %(names)s."
+
+msgid "Each map section can use this area, its own or none — on its Map card."
+msgstr "Elke kaartsectie kan dit gebied, een eigen of geen gebruiken — op haar Kaart-kaart."
+
+msgid "The base map, starting position, zoom and study area respondents open on. Sections can override the position and the area individually."
+msgstr "De basiskaart, startpositie, zoom en het studiegebied waarmee respondenten beginnen. Secties kunnen de positie en het gebied afzonderlijk aanpassen."
+
+msgid "Pick a section."
+msgstr "Kies een sectie."
+
+# change section-study-area: place search
+msgid "More results"
+msgstr "Meer resultaten"

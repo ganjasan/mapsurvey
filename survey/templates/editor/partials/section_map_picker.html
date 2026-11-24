@@ -144,7 +144,7 @@
         MapPlaceSearch.attach(map, {
             accessToken: '{{ MAPBOX_ACCESS_TOKEN }}',
             container: document.getElementById('map-picker-search'),
-            labels: { placeholder: '{{ lbl_search|escapejs }}' },
+            labels: { placeholder: '{{ lbl_search|escapejs }}', moreResults: '{% filter escapejs %}{% trans "More results" %}{% endfilter %}' },
             onSelect: picker.touched
         });
     }, 300);
