@@ -1393,3 +1393,7 @@ msgstr "Ezen a térképen"
 # change section-study-area: place search
 msgid "More results"
 msgstr "További találatok"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Pozíció módosítása"

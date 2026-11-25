@@ -1394,3 +1394,7 @@ msgstr "Pe această hartă"
 # change section-study-area: place search
 msgid "More results"
 msgstr "Mai multe rezultate"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Schimbă poziția"

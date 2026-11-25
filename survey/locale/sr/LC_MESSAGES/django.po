@@ -1394,3 +1394,7 @@ msgstr "На овој мапи"
 # change section-study-area: place search
 msgid "More results"
 msgstr "Још резултата"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Промени положај"

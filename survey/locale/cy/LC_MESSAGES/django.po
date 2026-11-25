@@ -1395,3 +1395,7 @@ msgstr "Ar y map hwn"
 # change section-study-area: place search
 msgid "More results"
 msgstr "Rhagor o ganlyniadau"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Newid y safle"

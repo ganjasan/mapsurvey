@@ -1393,3 +1393,7 @@ msgstr "Дар ин харита"
 # change section-study-area: place search
 msgid "More results"
 msgstr "Натиҷаҳои бештар"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Тағйир додани мавқеъ"

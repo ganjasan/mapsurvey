@@ -1393,3 +1393,7 @@ msgstr "Bu kartada"
 # change section-study-area: place search
 msgid "More results"
 msgstr "Has köp netije"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Ýerini üýtget"

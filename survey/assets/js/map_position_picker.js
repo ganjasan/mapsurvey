@@ -18,8 +18,10 @@
  *       extraFields: function () { return {use_geolocation: '1'}; },
  *       watch: [checkbox, select],    // save now on their `change`
  *       locate: true,                 // "My location" control
+ *       lock: true,                   // inline maps: locked until asked (below)
  *       labels: {centre, zoom, inheriting, saving, saved, error,
- *                myLocation, locating, locateFailed, noGeolocation}
+ *                myLocation, locating, locateFailed, noGeolocation,
+ *                unlock, lock}
  *   });
  *   picker.touched()   // a creator gesture the module cannot see (search result)
  *   picker.rebase()    // "this view is already the saved one": after a courtesy
@@ -29,6 +31,16 @@
  * position at once. While ticked, moves are not saved (the fly itself must not
  * come back as a position). Any creator gesture unticks it — moving the map is
  * how a section gets a position of its own. Programmatic moves never untick.
+ *
+ * Lock (openspec: map-picker-lock): a map that sits inline in a scrolling
+ * page — the two settings surfaces — is in the way of every scroll, and with
+ * autosave a wheel tick over it silently rewrote a framed position. With
+ * `lock: true` the map opens with its interaction handlers off under an
+ * overlay; "Change position" (or a click anywhere on the map) unlocks, and it
+ * locks again on "Done", on a press outside the map and when it leaves the
+ * viewport. Programmatic moves (place search) are not gestures and still
+ * move and save a locked map. The section modal is opened to move the map and
+ * does not lock.
  */
 (function (window, document) {
     'use strict';
@@ -281,6 +293,98 @@
             map.addControl(new LocateControl());
         }
 
+        // ── Lock ──
+        // The handlers a creator can move the map with. `tap` is Leaflet's
+        // touch shim on older mobile Safari; absent ones are skipped.
+        var GESTURES = ['dragging', 'touchZoom', 'doubleClickZoom', 'scrollWheelZoom',
+                        'boxZoom', 'keyboard', 'tap'];
+        var locked = false;
+        var lockOverlay = null, lockDone = null;
+
+        function setGestures(enabled) {
+            GESTURES.forEach(function (name) {
+                var handler = map[name];
+                if (!handler) return;
+                if (enabled) handler.enable(); else handler.disable();
+            });
+        }
+
+        function lock() {
+            if (!lockOverlay || locked) return;
+            locked = true;
+            setGestures(false);
+            map.getContainer().classList.add('is-locked');
+            lockOverlay.hidden = false;
+            lockDone.hidden = true;
+        }
+
+        function unlock() {
+            if (!lockOverlay || !locked) return;
+            locked = false;
+            setGestures(true);
+            map.getContainer().classList.remove('is-locked');
+            lockOverlay.hidden = true;
+            lockDone.hidden = false;
+        }
+
+        function lockButton(className, icon, text) {
+            var button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'btn btn-light btn-sm ' + className;
+            var i = document.createElement('i');
+            i.className = 'fas ' + icon + ' mr-1';
+            i.setAttribute('aria-hidden', 'true');
+            button.appendChild(i);
+            button.appendChild(document.createTextNode(text));
+            return button;
+        }
+
+        if (o.lock) {
+            var lockEl = map.getContainer();
+            // Covers the whole map, Leaflet's own controls included: the one
+            // thing a click on a locked map can do is unlock it. A plain div,
+            // so a wheel or a touch scroll over it scrolls the page.
+            lockOverlay = document.createElement('div');
+            lockOverlay.className = 'map-lock-overlay';
+            lockOverlay.appendChild(lockButton('map-lock-button', 'fa-arrows-alt',
+                labels.unlock || 'Change position'));
+            lockEl.appendChild(lockOverlay);
+            on(lockOverlay, 'click', function (e) {
+                e.preventDefault();
+                unlock();
+            });
+
+            lockDone = lockButton('map-lock-done', 'fa-check', labels.lock || 'Done');
+            lockEl.appendChild(lockDone);
+            // Not a map gesture: keep the press and the double-click from
+            // reaching Leaflet's drag and zoom underneath.
+            L.DomEvent.disableClickPropagation(lockDone);
+            on(lockDone, 'click', function (e) {
+                e.preventDefault();
+                lock();
+            });
+
+            // Lock again without being asked, or one framing leaves the map
+            // unprotected for the rest of the visit.
+            on(document, 'pointerdown', function (e) {
+                if (!lockEl.contains(e.target)) lock();
+            }, true);
+            if (window.IntersectionObserver) {
+                var seen = new IntersectionObserver(function (entries) {
+                    if (!entries[entries.length - 1].isIntersecting) lock();
+                });
+                seen.observe(lockEl);
+                teardown.push(function () { seen.disconnect(); });
+            }
+            teardown.push(function () {
+                if (lockOverlay.parentNode) lockOverlay.parentNode.removeChild(lockOverlay);
+                if (lockDone.parentNode) lockDone.parentNode.removeChild(lockDone);
+                lockEl.classList.remove('is-locked');
+            });
+
+            lock();
+        }
+
         // Stop everything. A pending save is dropped rather than fired at a DOM
         // that is no longer there; calling it twice is harmless, so a caller can
         // wire it to both a modal close and an HTMX teardown without guarding.
@@ -303,7 +407,8 @@
         // The view the page opened with is the stored one.
         rebase();
 
-        return { save: save, sync: sync, touched: touched, rebase: rebase, detach: detach };
+        return { save: save, sync: sync, touched: touched, rebase: rebase, detach: detach,
+                 lock: lock, unlock: unlock };
     }
 
     window.MapPositionPicker = { attach: attach };

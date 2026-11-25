@@ -1394,3 +1394,7 @@ msgstr "Šajā kartē"
 # change section-study-area: place search
 msgid "More results"
 msgstr "Vairāk rezultātu"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Mainīt pozīciju"

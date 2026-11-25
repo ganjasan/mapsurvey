@@ -1392,3 +1392,7 @@ msgstr "ຢູ່ໃນແຜນທີ່ນີ້"
 # change section-study-area: place search
 msgid "More results"
 msgstr "ຜົນເພີ່ມເຕີມ"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "ປ່ຽນຕຳແໜ່ງ"

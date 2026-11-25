@@ -1395,3 +1395,7 @@ msgstr "Šiame žemėlapyje"
 # change section-study-area: place search
 msgid "More results"
 msgstr "Daugiau rezultatų"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Keisti padėtį"

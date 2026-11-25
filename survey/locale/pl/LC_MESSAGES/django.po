@@ -15639,3 +15639,7 @@ msgstr "Wybierz sekcję."
 # change section-study-area: place search
 msgid "More results"
 msgstr "Więcej wyników"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Zmień położenie"

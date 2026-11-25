@@ -1393,3 +1393,7 @@ msgstr "En aquest mapa"
 # change section-study-area: place search
 msgid "More results"
 msgstr "Més resultats"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Canvia la posició"

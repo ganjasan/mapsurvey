@@ -1396,3 +1396,7 @@ msgstr "Ar an léarscáil seo"
 # change section-study-area: place search
 msgid "More results"
 msgstr "Tuilleadh torthaí"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Athraigh an suíomh"

@@ -1392,3 +1392,7 @@ msgstr "この地図に表示中"
 # change section-study-area: place search
 msgid "More results"
 msgstr "さらに表示"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "位置を変更"

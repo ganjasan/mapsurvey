@@ -1393,3 +1393,7 @@ msgstr "ఈ మ్యాప్‌లో"
 # change section-study-area: place search
 msgid "More results"
 msgstr "మరిన్ని ఫలితాలు"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "స్థానాన్ని మార్చండి"

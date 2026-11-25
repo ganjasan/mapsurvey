@@ -129,6 +129,14 @@ ships — the URL name, the account-menu item "API & connections" in BOTH bases 
 item stay. New creator strings go into all offered catalogs (`TranslationCatalogHygieneTest`
 enforces it); the entries are appended by hand like PR #274, not by `makemessages`.
 
+**Map position lock (change `map-picker-lock`)**: a `MapPositionPicker` that sits inline in a
+scrolling page is attached with `lock: true` — both settings surfaces (page and in-editor panel).
+The map opens with every Leaflet gesture handler off under `.map-lock-overlay`; "Change position"
+or a click on the map unlocks, and it locks again on "Done", on a `pointerdown` outside the map
+and when it leaves the viewport. Reason: the centre autosaves, so a wheel tick while scrolling the
+settings rewrote a framed position. Programmatic moves (place search) still move and save a locked
+map. The section modal does not lock. A new inline position map must pass `lock: true`.
+
 **Design tokens (change `design-tokens`)**: the creator app's colours, text sizes, spacing, radii and
 shadows are `survey/assets/css/tokens.css`, loaded by `base.html` and `editor_base.html` right after
 Bootstrap — never by the respondent or marketing bases. Two layers: a palette (`--gray-500`,

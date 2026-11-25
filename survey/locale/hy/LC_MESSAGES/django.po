@@ -1393,3 +1393,7 @@ msgstr "Այս քարտեզի վրա"
 # change section-study-area: place search
 msgid "More results"
 msgstr "Ավելի շատ արդյունքներ"
+
+# change map-picker-lock
+msgid "Change position"
+msgstr "Փոխել դիրքը"
