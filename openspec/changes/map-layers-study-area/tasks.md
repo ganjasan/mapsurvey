@@ -78,7 +78,17 @@
 - [x] 8.4 Full suite once (`./run_tests.sh survey billing api mcp newsletter`), `/verify` on a seeded survey (Map card, study area editor, respondent fog + refusal)
 - [ ] 8.5 Offer commit / push / PR 1
 
+## 8b. Hotfix after release: one layer, one legend row (2026-11-26)
+
+A creator's two live surveys use Map-only Objects questions WITH sub-questions; after PR 1 each of
+those layers was listed twice (placement row + question row, one shared toggle). Reproduced on a
+local copy; journey board row F0–F3.
+
+- [x] 8b.1 `views._on_this_map(survey, ids, section)` leaves out layers a Map-only question of the section with sub-questions (and no visibility rule, own or group's) already draws a row for; respondent page and editor preview
+- [x] 8b.2 Tests `OneLayerOneLegendRowTest` in `test_map_layer_placement.py` (only row, other layers/sections, list mode, visibility rule, legend-only question)
+- [ ] 8b.3 Follow-up (board F2/F3, own change): "Name on the map" on the placement, the Map card refuses to untick a layer asked about on the section, a re-ticked layer keeps its order, "On the map" / "In a list" replaces `panel_mode`
+
 ## 9. Follow-up release (PR 2)
 
-- [ ] 9.1 Delete legend-only `layer_objects` questions in every header; drop `Question.panel_mode`, `SurveySection.hidden_layers` and `SurveyMapLayer.show_tallies` / `show_comments` (moved from `layers-by-question`)
+- [ ] 9.1 Delete legend-only `layer_objects` questions in every header; drop `SurveySection.hidden_layers` and `SurveyMapLayer.show_tallies` / `show_comments` (moved from `layers-by-question`). Drop `Question.panel_mode` only after 8b.3 gives Map-only questions with sub-questions their replacement
 - [ ] 9.2 Remove the PR 1 hiding shims and their tests; archive the change

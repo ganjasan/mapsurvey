@@ -1257,22 +1257,37 @@ def _build_section_context(request, survey, session_survey, section, selected_la
 		# The shell loads every layer of the survey once; this list says which ones this
 		# section shows, and the panel's "On this map" legend lists them.
 		'visible_layers_json': json.dumps(visible_ids := section_layer_ids(section)),
-		'on_this_map': _on_this_map(section.survey_header, visible_ids),
+		'on_this_map': _on_this_map(section.survey_header, visible_ids, section),
 		'visibility_rules_json': json.dumps(client_rules),
 		'popup_visibility_rules_json': json.dumps(popup_rules),
 		'entry': entry,
 	}
 
 
-def _on_this_map(survey, layer_ids):
+def _on_this_map(survey, layer_ids, section=None):
 	"""The panel's "On this map" legend (spec map-layer-placement "The map's legend comes from
 	placements"): the section's placed layers in stacking order, each with the name, colour and
 	legend rows the map draws with — from the same metadata builder, so a private field never
-	becomes a legend label."""
+	becomes a legend label. A layer that a Map-only Objects question of `section` already lists
+	as its own legend row is left out, so one layer is one row."""
 	if not layer_ids:
 		return []
+	own_rows = _layers_with_question_legend_row(section) if section is not None else set()
 	metas = {m['id']: m for m in build_map_layers_metadata(survey)}
-	return [metas[pk] for pk in layer_ids if pk in metas]
+	return [metas[pk] for pk in layer_ids if pk in metas and pk not in own_rows]
+
+
+def _layers_with_question_legend_row(section):
+	"""Layers a Map-only (`panel_mode='legend'`) Objects question of this section draws a legend
+	row for: its name, count, answered counter and a switch wired to the layer
+	(layer_objects.html). Questions that only show (no sub-question) are hidden and draw nothing,
+	so `section.questions()` already leaves them out. A question under a visibility rule, its
+	own or its group's, keeps the placement row too: when the rule hides it, the layer would
+	otherwise have no row at all."""
+	return set(section.questions().filter(
+		input_type='layer_objects', panel_mode='legend', layer__isnull=False,
+		visibility_rule__isnull=True,
+	).filter(Q(group__isnull=True) | Q(group__visibility_rule__isnull=True)).values_list('layer_id', flat=True))
 
 
 # Moved to survey/layers.py (shared with the Responses tab); kept under the old
