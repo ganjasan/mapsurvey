@@ -372,6 +372,85 @@ class MapCardTest(_Fixture):
         self.assertIn('checked data-otm-toggle', html)
 
 
+class OneLayerOneLegendRowTest(_Fixture):
+    """Spec map-layer-placement / Requirement: The map's legend comes from placements — a layer a
+    Map-only Objects question already lists is not listed again (two live surveys showed every
+    asked layer twice after PR 1, one switch for both rows)."""
+
+    def setUp(self):
+        super().setUp()
+        self.survey.status = 'published'
+        self.survey.save()
+        svc_placements.place(self.actor, self.survey, self.layer.pk)
+
+    def objects_question(self, panel_mode='legend', **extra):
+        q = Question.objects.create(survey_section=self.s1, code='DAMS', name='Dams: estimated to be passable',
+                                    input_type='layer_objects', layer=self.layer, panel_mode=panel_mode,
+                                    order_number=1, **extra)
+        Question.objects.create(survey_section=self.s1, code='DAMS_C', name='Other comments', input_type='text',
+                                parent_question_id=q, order_number=1)
+        return q
+
+    def page(self):
+        return self.client.get(f'/surveys/{self.survey.name}/{self.s1.name}/').content.decode()
+
+    def test_map_only_question_with_sub_questions_is_the_only_row(self):
+        """
+        GIVEN a placed layer and a Map-only Objects question about it with a sub-question
+        WHEN a respondent opens the section
+        THEN "On this map" does not list the layer and the question's own legend row names it
+        """
+        self.objects_question()
+        html = self.page()
+        self.assertNotIn('data-otm-toggle="%d"' % self.layer.pk, html)
+        self.assertIn('data-lo-legend', html)
+        self.assertIn('Dams: estimated to be passable', html)
+
+    def test_other_layers_and_sections_keep_their_rows(self):
+        """
+        GIVEN the layer is asked about Map-only in section 1 and a second layer is placed too
+        WHEN the legend of sections 1 and 2 is built
+        THEN section 1 lists only the second layer and section 2 lists both
+        """
+        from survey.views import _on_this_map
+        other = _objects_layer(self.survey, name='Bike lanes')
+        svc_placements.place(self.actor, self.survey, other.pk)
+        self.objects_question()
+        ids = lambda section: [m['id'] for m in _on_this_map(self.survey, section_layer_ids(section), section)]
+        self.assertEqual(ids(self.s1), [other.pk])
+        self.assertEqual(ids(self.s2), [self.layer.pk, other.pk])
+
+    def test_list_question_keeps_the_placement_row(self):
+        """
+        GIVEN an Objects question about the layer in list mode
+        WHEN a respondent opens the section
+        THEN "On this map" still lists the layer (the list block has no switch of its own)
+        """
+        self.objects_question(panel_mode='list')
+        self.assertIn('data-otm-toggle="%d"' % self.layer.pk, self.page())
+
+    def test_question_under_a_visibility_rule_keeps_the_placement_row(self):
+        """
+        GIVEN a Map-only Objects question that a visibility rule may hide
+        WHEN a respondent opens the section
+        THEN "On this map" still lists the layer, so hiding the question never leaves it without a row
+        """
+        self.objects_question(visibility_rule={'question_code': 'Q1', 'choice_codes': [1]})
+        self.assertIn('data-otm-toggle="%d"' % self.layer.pk, self.page())
+
+    def test_legend_only_question_leaves_the_placement_row(self):
+        """
+        GIVEN a Map-only Objects question with no sub-question (hidden since PR 1)
+        WHEN a respondent opens the section
+        THEN the placement row is the layer's only row
+        """
+        Question.objects.create(survey_section=self.s1, code='SHOW', name='Study area', input_type='layer_objects',
+                                layer=self.layer, panel_mode='legend', order_number=1)
+        html = self.page()
+        self.assertIn('data-otm-toggle="%d"' % self.layer.pk, html)
+        self.assertNotIn('data-lo-legend', html)
+
+
 class QuestionPlacesItsLayerTest(_Fixture):
     """Spec layer-objects-question / Requirement: The `layer_objects` question type — picking a layer places it."""
 

@@ -2529,7 +2529,7 @@ def editor_section_preview(request, survey_uuid, section_name):
         'visible_layers_json': json.dumps(preview_layer_ids := section_layer_ids(section)),
         # The "On this map" legend as the respondent page has it (change map-layers-study-area);
         # the section's study area rides #section-data like on the respondent page.
-        'on_this_map': _on_this_map(survey, preview_layer_ids),
+        'on_this_map': _on_this_map(survey, preview_layer_ids, section),
         # Same-section rules so the preview plays both branches live, exactly
         # like the respondent page (conditional_visibility.js reads this).
         'visibility_rules_json': json.dumps(section_rules_for_client(section)),

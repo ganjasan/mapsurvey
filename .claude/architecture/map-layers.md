@@ -16,7 +16,10 @@ first; it overrides the older notes below where they disagree.
   `placements.ensure_on_section`. Legacy legend-only questions (`panel_mode='legend'`, no
   sub-question; `models.legend_only_q()`) are hidden everywhere (`SurveySection.questions()`, the
   editor lists) until release PR 2 deletes them and drops `panel_mode` / `hidden_layers` /
-  `show_tallies` / `show_comments`.
+  `show_tallies` / `show_comments`. A Map-only question WITH sub-questions still draws its layer's
+  legend row (name, count, answered, toggle), so `views._on_this_map(survey, ids, section)` leaves
+  that layer out of "On this map" — one layer, one row (hotfix 8b, 2026-11-26). Keep `panel_mode`
+  until its replacement (task 8b.3) ships.
 - **Uploaded and drawn layers live in Data**: `services.layers.new_layer` creates a workspace layer
   (`survey=NULL`), its `public` Dataset row and a `DatasetLink` to the canonical survey, then
   `place(scope='all')`. A survey OWNS only its shared-map (`question`) layers (and, without a

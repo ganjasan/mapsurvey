@@ -62,12 +62,26 @@ as in Survey settings.
 ### Requirement: The map's legend comes from placements
 The respondent panel of a map section SHALL show an "On this map" legend listing the section's
 placed layers in placement order (swatch or rule legend, layer name, on/off toggle wired to the
-layers control). The legend SHALL NOT depend on questions. The editor preview SHALL render exactly
-the placements of the previewed section through the respondent metadata builder.
+layers control). Which layers are on the map SHALL NOT depend on questions. One exception keeps one
+layer to one legend row: a layer that a Map-only Objects question of the section (`panel_mode`
+`legend`, with sub-questions, no visibility rule of its own or its group's) asks about SHALL NOT be
+listed in "On this map", because that question already draws the layer's row (its name, object
+count, answered counter and a toggle wired to the same layer). The editor preview SHALL render
+exactly the placements of the previewed section through the respondent metadata builder, with the
+same exception.
 
 #### Scenario: Legend without questions
 - **WHEN** a section has two placed layers and no Objects question
 - **THEN** the panel shows both in the legend and the toggles hide and show them on the map
+
+#### Scenario: A Map-only question is the layer's only row
+- **GIVEN** "Dams" is placed on section 1 and a Map-only Objects question with sub-questions asks about it there
+- **WHEN** a respondent opens section 1
+- **THEN** "On this map" does not list "Dams", the question's row names it with its count, and its toggle hides and shows the layer
+
+#### Scenario: A question that may be hidden keeps the placement row
+- **WHEN** that question carries a visibility rule
+- **THEN** "On this map" lists "Dams" as well, so the layer keeps a row when the rule hides the question
 
 ### Requirement: The publish check lists what the map shows
 The publish confirmation and "Publish changes" SHALL list the study area (source, size, fog,
