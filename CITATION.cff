@@ -1,0 +1,25 @@
+# How to cite Mapsurvey. GitHub shows this as "Cite this repository" (APA, BibTeX);
+# Zenodo reads it when a release is archived. Keep it in step with
+# help/src/content/docs/reference/citing-mapsurvey.md (survey/tests/test_help_site.py checks both).
+cff-version: 1.2.0
+message: "If you use Mapsurvey in your research, please cite it as below."
+type: software
+title: Mapsurvey
+abstract: >-
+  Mapsurvey is an open-source platform for participatory mapping surveys:
+  respondents answer by marking places, drawing routes and outlining areas
+  on a map, and every answer lands on one map with its survey answers.
+authors:
+  - family-names: Koniukhov
+    given-names: Artem
+    email: konuchovartem@mapsurvey.org
+url: "https://mapsurvey.org"
+repository-code: "https://github.com/ganjasan/mapsurvey"
+license: AGPL-3.0-only
+keywords:
+  - participatory mapping
+  - PPGIS
+  - public participation GIS
+  - map survey
+  - citizen engagement
+  - GeoDjango
