@@ -128,3 +128,42 @@ class HelpSiteLinksTest(TestCase):
         self.assertTrue(config(signed_in)['open_on_load'])
         self.assertFalse(config(plain)['open_on_load'])
         self.assertFalse(config(anonymous)['open_on_load'])
+
+
+class CitationTest(TestCase):
+    """Spec: help-site / Requirement: Citation reference page; project-governance-docs / Citation file (#789)."""
+
+    def _read(self, *parts):
+        with open(os.path.join(settings.BASE_DIR, *parts), encoding='utf-8') as f:
+            return f.read()
+
+    def test_citation_file_is_complete(self):
+        """
+        GIVEN the repository root
+        WHEN CITATION.cff is read
+        THEN it carries the CFF 1.2.0 keys, the author named in the README copyright, the license and both URLs
+        """
+        cff = self._read('CITATION.cff')
+        for line in ('cff-version: 1.2.0', 'type: software', 'title: Mapsurvey', 'family-names: Koniukhov',
+                     'given-names: Artem', 'license: AGPL-3.0-only', 'url: "https://mapsurvey.org"',
+                     'repository-code: "https://github.com/ganjasan/mapsurvey"'):
+            self.assertRegex(cff, rf'(?m)^\s*(- )?{re.escape(line)}\s*$', line)
+        self.assertIn('Artem Koniukhov', self._read('README.md'))
+
+    def test_help_page_matches_the_citation_file(self):
+        """
+        GIVEN the citation help page and CITATION.cff
+        WHEN both are read
+        THEN the page cites the same author and title, has a BibTeX entry, links the file and offers Academic Pro
+        """
+        cff = self._read('CITATION.cff')
+        family = re.search(r'family-names:\s*(\S+)', cff).group(1)
+        given = re.search(r'given-names:\s*(\S+)', cff).group(1)
+        title = re.search(r'(?m)^title:\s*(.+)$', cff).group(1).strip()
+        page = self._read('help', 'src', 'content', 'docs', 'reference', 'citing-mapsurvey.md')
+        self.assertIn(f'{family}, {given[0]}. (', page)
+        self.assertIn(f'*{title}* [Computer software]', page)
+        self.assertIn(f'author  = {{{family}, {given}}}', page)
+        self.assertIn('@software{', page)
+        self.assertIn('/blob/master/CITATION.cff', page)
+        self.assertIn('## Academic Pro', page)
